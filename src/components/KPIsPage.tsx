@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -28,8 +29,16 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import CircularProgress from '@mui/material/CircularProgress';
 import LinearProgress from '@mui/material/LinearProgress';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardActionArea from '@mui/material/CardActionArea';
 import { HOSPITAL_INFO } from '../config/hospitalConfig';
+import { NABH_KPIS, NABH_KPI_CATEGORIES, generateSampleKPIData } from '../data/kpiData';
+import type { KPIDefinition } from '../data/kpiData';
 import { extractFromDocument, extractKPIData, generateImprovedDocument } from '../services/documentExtractor';
+import { generateAllKPIDataWithScenario } from '../services/kpiDataGenerator';
+import { saveKPIGraph, loadAllKPIGraphs } from '../services/kpiStorage';
+import type { KPIGraphRecord } from '../services/kpiStorage';
 
 interface KPIEntry {
   month: string;
@@ -38,84 +47,19 @@ interface KPIEntry {
   remarks?: string;
 }
 
-interface KPI {
-  id: string;
-  name: string;
-  category: string;
-  unit: string;
-  frequency: string;
-  target: number;
-  formula: string;
-  responsible: string;
-  entries: KPIEntry[];
-  createdAt: string;
-}
-
-const KPI_CATEGORIES = [
-  { id: 'clinical', label: 'Clinical Indicators', icon: 'medical_services' },
-  { id: 'patient_safety', label: 'Patient Safety', icon: 'health_and_safety' },
-  { id: 'infection', label: 'Infection Control', icon: 'sanitizer' },
-  { id: 'nursing', label: 'Nursing Indicators', icon: 'local_hospital' },
-  { id: 'laboratory', label: 'Laboratory', icon: 'science' },
-  { id: 'radiology', label: 'Radiology', icon: 'radio_button_checked' },
-  { id: 'operational', label: 'Operational', icon: 'settings' },
-  { id: 'patient_experience', label: 'Patient Experience', icon: 'sentiment_satisfied' },
-];
-
 const UPLOAD_WORKFLOW_STEPS = ['Upload Document', 'Extract KPIs', 'Review & Edit', 'Generate Report'];
 
-const NABH_STANDARD_KPIS = [
-  // Clinical Indicators
-  { name: 'Return to ICU within 48 hours', category: 'clinical', unit: '%', target: 5, formula: '(Returns to ICU / Total ICU Discharges) x 100', frequency: 'Monthly' },
-  { name: 'Unplanned Return to OT', category: 'clinical', unit: '%', target: 2, formula: '(Unplanned Returns / Total Surgeries) x 100', frequency: 'Monthly' },
-  { name: 'Re-exploration Rate', category: 'clinical', unit: '%', target: 2, formula: '(Re-explorations / Total Surgeries) x 100', frequency: 'Monthly' },
-  { name: 'Mortality Rate', category: 'clinical', unit: '%', target: 2, formula: '(Deaths / Total Admissions) x 100', frequency: 'Monthly' },
-  // Patient Safety
-  { name: 'Patient Fall Rate', category: 'patient_safety', unit: 'per 1000 patient days', target: 1, formula: '(Falls / Patient Days) x 1000', frequency: 'Monthly' },
-  { name: 'Pressure Ulcer Rate', category: 'patient_safety', unit: '%', target: 1, formula: '(New Pressure Ulcers / Total Patients) x 100', frequency: 'Monthly' },
-  { name: 'Medication Error Rate', category: 'patient_safety', unit: 'per 1000 doses', target: 0.5, formula: '(Errors / Total Doses) x 1000', frequency: 'Monthly' },
-  { name: 'Wrong Site Surgery', category: 'patient_safety', unit: 'count', target: 0, formula: 'Total count', frequency: 'Monthly' },
-  // Infection Control
-  { name: 'SSI Rate', category: 'infection', unit: '%', target: 2, formula: '(SSIs / Total Surgeries) x 100', frequency: 'Monthly' },
-  { name: 'CLABSI Rate', category: 'infection', unit: 'per 1000 line days', target: 2, formula: '(CLABSIs / Central Line Days) x 1000', frequency: 'Monthly' },
-  { name: 'CAUTI Rate', category: 'infection', unit: 'per 1000 catheter days', target: 3, formula: '(CAUTIs / Catheter Days) x 1000', frequency: 'Monthly' },
-  { name: 'VAP Rate', category: 'infection', unit: 'per 1000 ventilator days', target: 5, formula: '(VAPs / Ventilator Days) x 1000', frequency: 'Monthly' },
-  { name: 'Hand Hygiene Compliance', category: 'infection', unit: '%', target: 85, formula: '(Compliant Observations / Total) x 100', frequency: 'Monthly' },
-  // Nursing
-  { name: 'Nursing Hours per Patient Day', category: 'nursing', unit: 'hours', target: 6, formula: 'Total Nursing Hours / Patient Days', frequency: 'Monthly' },
-  { name: 'Nursing Documentation Compliance', category: 'nursing', unit: '%', target: 95, formula: '(Compliant Records / Total) x 100', frequency: 'Monthly' },
-  // Laboratory
-  { name: 'Lab TAT - Routine', category: 'laboratory', unit: 'hours', target: 4, formula: 'Average turnaround time', frequency: 'Monthly' },
-  { name: 'Lab TAT - Stat', category: 'laboratory', unit: 'minutes', target: 60, formula: 'Average turnaround time', frequency: 'Monthly' },
-  { name: 'Critical Value Reporting Time', category: 'laboratory', unit: 'minutes', target: 30, formula: 'Average notification time', frequency: 'Monthly' },
-  // Patient Experience
-  { name: 'Patient Satisfaction Score', category: 'patient_experience', unit: '%', target: 85, formula: 'Average satisfaction score', frequency: 'Monthly' },
-  { name: 'Complaint Resolution Time', category: 'patient_experience', unit: 'hours', target: 48, formula: 'Average resolution time', frequency: 'Monthly' },
-  { name: 'AMA Rate', category: 'patient_experience', unit: '%', target: 2, formula: '(AMA Discharges / Total) x 100', frequency: 'Monthly' },
-];
-
 export default function KPIsPage() {
-  const [kpis, setKpis] = useState<KPI[]>([]);
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
-  const [selectedKPI, setSelectedKPI] = useState<KPI | null>(null);
-  const [newKPI, setNewKPI] = useState({
-    name: '',
-    category: 'clinical',
-    unit: '%',
-    target: 0,
-    formula: '',
-    frequency: 'Monthly',
-    responsible: '',
-  });
-  const [newEntry, setNewEntry] = useState({
-    month: new Date().toISOString().slice(0, 7),
-    value: 0,
-    target: 0,
-    remarks: '',
-  });
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'graphs'>('cards');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
+
+  // Graph generation states
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [savedGraphs, setSavedGraphs] = useState<Record<string, KPIGraphRecord>>({});
+  const [isLoadingGraphs, setIsLoadingGraphs] = useState(false);
 
   // Upload workflow states
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -130,105 +74,255 @@ export default function KPIsPage() {
   const [activeUploadTab, setActiveUploadTab] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load KPIs from localStorage
+  // Load saved graphs on mount
   useEffect(() => {
-    const saved = localStorage.getItem('nabh_kpis');
-    if (saved) {
-      setKpis(JSON.parse(saved));
-    } else {
-      // Initialize with standard NABH KPIs
-      const initialKPIs: KPI[] = NABH_STANDARD_KPIS.map((k, i) => ({
-        id: `kpi_${i}`,
-        name: k.name,
-        category: k.category,
-        unit: k.unit,
-        frequency: k.frequency,
-        target: k.target,
-        formula: k.formula,
-        responsible: '',
-        entries: [],
-        createdAt: new Date().toISOString(),
-      }));
-      setKpis(initialKPIs);
-    }
+    loadSavedGraphs();
   }, []);
 
-  // Save KPIs to localStorage
-  useEffect(() => {
-    if (kpis.length > 0) {
-      localStorage.setItem('nabh_kpis', JSON.stringify(kpis));
+  const loadSavedGraphs = async () => {
+    setIsLoadingGraphs(true);
+    try {
+      const result = await loadAllKPIGraphs();
+      if (result.success && result.data) {
+        setSavedGraphs(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading saved graphs:', error);
+    } finally {
+      setIsLoadingGraphs(false);
     }
-  }, [kpis]);
-
-  const handleAddKPI = () => {
-    if (!newKPI.name.trim()) {
-      setSnackbar({ open: true, message: 'Please enter KPI name', severity: 'error' });
-      return;
-    }
-
-    const kpi: KPI = {
-      id: `kpi_${Date.now()}`,
-      ...newKPI,
-      entries: [],
-      createdAt: new Date().toISOString(),
-    };
-
-    setKpis([...kpis, kpi]);
-    setIsAddDialogOpen(false);
-    setNewKPI({ name: '', category: 'clinical', unit: '%', target: 0, formula: '', frequency: 'Monthly', responsible: '' });
-    setSnackbar({ open: true, message: 'KPI added successfully', severity: 'success' });
   };
 
-  const handleAddEntry = () => {
-    if (!selectedKPI) return;
+  // Generate all dummy data and save graphs
+  const handleGenerateAllData = async () => {
+    setIsGeneratingData(true);
+    setGenerationProgress(0);
 
-    const entry: KPIEntry = {
-      month: newEntry.month,
-      value: newEntry.value,
-      target: newEntry.target || selectedKPI.target,
-      remarks: newEntry.remarks,
-    };
+    try {
+      // Step 1: Generate data for all KPIs
+      setSnackbar({ open: true, message: 'Generating dummy data for all 16 KPIs...', severity: 'info' });
+      const allData = generateAllKPIDataWithScenario('improving');
 
-    setKpis(prev => prev.map(k =>
-      k.id === selectedKPI.id
-        ? { ...k, entries: [...k.entries.filter(e => e.month !== entry.month), entry].sort((a, b) => a.month.localeCompare(b.month)) }
-        : k
-    ));
+      // Save to localStorage
+      Object.entries(allData).forEach(([kpiId, data]) => {
+        localStorage.setItem(`kpi_data_${kpiId}`, JSON.stringify(data));
+      });
 
-    setIsEntryDialogOpen(false);
-    setNewEntry({ month: new Date().toISOString().slice(0, 7), value: 0, target: 0, remarks: '' });
-    setSnackbar({ open: true, message: 'Entry added successfully', severity: 'success' });
+      setGenerationProgress(30);
+
+      // Step 2: Generate and save graphs for each KPI
+      setSnackbar({ open: true, message: 'Saving graphs to Supabase...', severity: 'info' });
+
+      for (let i = 0; i < NABH_KPIS.length; i++) {
+        const kpi = NABH_KPIS[i];
+        const data = allData[kpi.id];
+
+        // Create a temporary canvas to draw the chart
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+
+        if (ctx && data) {
+          // Draw full chart
+          drawFullChart(ctx, canvas.width, canvas.height, data, kpi);
+
+          // Convert to data URL and save
+          const dataUrl = canvas.toDataURL('image/png');
+          await saveKPIGraph(
+            kpi.id,
+            kpi.number,
+            kpi.name,
+            dataUrl,
+            data,
+            'Auto-generated dummy data',
+            'Improving trend scenario'
+          );
+        }
+
+        setGenerationProgress(30 + Math.round(((i + 1) / NABH_KPIS.length) * 70));
+      }
+
+      // Reload saved graphs
+      await loadSavedGraphs();
+
+      setSnackbar({ open: true, message: 'All 16 KPIs generated and saved to Supabase!', severity: 'success' });
+    } catch (error) {
+      console.error('Error generating data:', error);
+      setSnackbar({ open: true, message: 'Error generating data', severity: 'error' });
+    } finally {
+      setIsGeneratingData(false);
+      setGenerationProgress(0);
+    }
   };
 
-  const handleDeleteKPI = (id: string) => {
-    setKpis(prev => prev.filter(k => k.id !== id));
-    setSnackbar({ open: true, message: 'KPI deleted', severity: 'success' });
+  // Draw a full chart on a canvas context
+  const drawFullChart = (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    data: KPIEntry[],
+    kpi: KPIDefinition
+  ) => {
+    const padding = { top: 40, right: 40, bottom: 60, left: 60 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Clear
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    // Calculate bounds
+    const values = data.map(d => d.value);
+    const targets = data.map(d => d.target);
+    const allValues = [...values, ...targets];
+    const minValue = Math.min(...allValues) * 0.9;
+    const maxValue = Math.max(...allValues) * 1.1;
+
+    // Draw grid
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = padding.top + (chartHeight * i / gridLines);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(width - padding.right, y);
+      ctx.stroke();
+
+      const value = maxValue - ((maxValue - minValue) * i / gridLines);
+      ctx.fillStyle = '#64748B';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(value.toFixed(1), padding.left - 10, y + 4);
+    }
+
+    // Draw target line
+    const targetY = padding.top + chartHeight - ((kpi.suggestedTarget - minValue) / (maxValue - minValue) * chartHeight);
+    ctx.strokeStyle = '#D32F2F';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, targetY);
+    ctx.lineTo(width - padding.right, targetY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#D32F2F';
+    ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Target: ${kpi.suggestedTarget}`, width - padding.right + 5, targetY + 4);
+
+    // Draw line
+    const pointWidth = chartWidth / (data.length - 1 || 1);
+    ctx.strokeStyle = '#1565C0';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+
+    data.forEach((d, i) => {
+      const x = padding.left + (i * pointWidth);
+      const y = padding.top + chartHeight - ((d.value - minValue) / (maxValue - minValue) * chartHeight);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Draw area
+    ctx.fillStyle = 'rgba(21, 101, 192, 0.15)';
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      const x = padding.left + (i * pointWidth);
+      const y = padding.top + chartHeight - ((d.value - minValue) / (maxValue - minValue) * chartHeight);
+      if (i === 0) {
+        ctx.moveTo(x, height - padding.bottom);
+        ctx.lineTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.lineTo(padding.left + ((data.length - 1) * pointWidth), height - padding.bottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw points
+    data.forEach((d, i) => {
+      const x = padding.left + (i * pointWidth);
+      const y = padding.top + chartHeight - ((d.value - minValue) / (maxValue - minValue) * chartHeight);
+      const isGood = kpi.targetDirection === 'lower' ? d.value <= d.target : d.value >= d.target;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = isGood ? '#2E7D32' : '#D32F2F';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // X-axis labels
+      ctx.fillStyle = '#64748B';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      const monthLabel = new Date(d.month + '-01').toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      ctx.fillText(monthLabel, x, height - padding.bottom + 20);
+    });
+
+    // Title
+    ctx.fillStyle = '#1E293B';
+    ctx.font = 'bold 14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`KPI ${kpi.number}: ${kpi.shortName} - Trend Analysis`, width / 2, 20);
+
+    // Unit label
+    ctx.fillStyle = '#64748B';
+    ctx.font = '12px Inter, sans-serif';
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(kpi.unit, 0, 0);
+    ctx.restore();
+  };
+
+  // Get latest values for each KPI
+  const getLatestKPIValue = (kpiId: string): { value: number; target: number } | null => {
+    const savedData = localStorage.getItem(`kpi_data_${kpiId}`);
+    if (savedData) {
+      const data: KPIEntry[] = JSON.parse(savedData);
+      if (data.length > 0) {
+        return data[data.length - 1];
+      }
+    }
+    // Generate sample data if none exists
+    const sampleData = generateSampleKPIData(kpiId, 12);
+    if (sampleData.length > 0) {
+      return sampleData[sampleData.length - 1];
+    }
+    return null;
+  };
+
+  const getPerformanceStatus = (kpi: KPIDefinition) => {
+    const latest = getLatestKPIValue(kpi.id);
+    if (!latest) return { status: 'no_data', color: 'default', label: 'No Data' };
+
+    const isGood = kpi.targetDirection === 'lower' ? latest.value <= latest.target : latest.value >= latest.target;
+    const threshold = kpi.targetDirection === 'lower' ? latest.target * 1.2 : latest.target * 0.8;
+    const isNear = kpi.targetDirection === 'lower' ? latest.value <= threshold : latest.value >= threshold;
+
+    if (isGood) return { status: 'good', color: 'success', label: 'On Target' };
+    if (isNear) return { status: 'warning', color: 'warning', label: 'Near Target' };
+    return { status: 'bad', color: 'error', label: 'Off Target' };
   };
 
   const filteredKPIs = selectedCategory === 'all'
-    ? kpis
-    : kpis.filter(k => k.category === selectedCategory);
+    ? NABH_KPIS
+    : NABH_KPIS.filter(k => k.category === selectedCategory);
 
-  const getPerformanceColor = (value: number, target: number, unit: string) => {
-    // For rates and percentages where lower is better
-    const lowerIsBetter = ['%', 'per 1000', 'count', 'hours', 'minutes'].some(u => unit.includes(u)) &&
-      !['Compliance', 'Satisfaction', 'Hours per'].some(n => unit.includes(n));
-
-    if (lowerIsBetter) {
-      if (value <= target) return 'success';
-      if (value <= target * 1.5) return 'warning';
-      return 'error';
-    } else {
-      if (value >= target) return 'success';
-      if (value >= target * 0.8) return 'warning';
-      return 'error';
-    }
-  };
-
-  const getLatestValue = (kpi: KPI) => {
-    if (kpi.entries.length === 0) return null;
-    return kpi.entries[kpi.entries.length - 1];
-  };
+  // Calculate stats
+  const totalKPIs = NABH_KPIS.length;
+  const kpisOnTarget = NABH_KPIS.filter(k => getPerformanceStatus(k).status === 'good').length;
+  const kpisNearTarget = NABH_KPIS.filter(k => getPerformanceStatus(k).status === 'warning').length;
+  const kpisOffTarget = NABH_KPIS.filter(k => getPerformanceStatus(k).status === 'bad').length;
 
   // Upload workflow handlers
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,30 +381,6 @@ export default function KPIsPage() {
     }
   };
 
-  const handleImportExtractedKPIs = () => {
-    if (extractedKPIs.length === 0) {
-      setSnackbar({ open: true, message: 'No KPIs to import', severity: 'error' });
-      return;
-    }
-
-    const newKPIs: KPI[] = extractedKPIs.map((k, i) => ({
-      id: `kpi_imported_${Date.now()}_${i}`,
-      name: k.name,
-      category: k.category || 'clinical',
-      unit: k.unit || '%',
-      frequency: 'Monthly',
-      target: k.target || 0,
-      formula: k.formula || '',
-      responsible: '',
-      entries: [],
-      createdAt: new Date().toISOString(),
-    }));
-
-    setKpis([...kpis, ...newKPIs]);
-    resetUploadWorkflow();
-    setSnackbar({ open: true, message: `${newKPIs.length} KPIs imported successfully`, severity: 'success' });
-  };
-
   const resetUploadWorkflow = () => {
     setIsUploadDialogOpen(false);
     setUploadWorkflowStep(0);
@@ -350,14 +420,131 @@ export default function KPIsPage() {
     }
   };
 
-  // Calculate summary stats
-  const totalKPIs = kpis.length;
-  const kpisWithData = kpis.filter(k => k.entries.length > 0).length;
-  const kpisMeetingTarget = kpis.filter(k => {
-    const latest = getLatestValue(k);
-    if (!latest) return false;
-    return latest.value <= k.target; // Simplified - assuming lower is better
-  }).length;
+  const generateMasterReport = () => {
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>NABH KPI Dashboard - ${HOSPITAL_INFO.name}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Times New Roman', serif; padding: 15mm; line-height: 1.5; }
+          .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+          .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; }
+          .report-title { font-size: 18px; margin-top: 10px; background: #1565C0; color: white; padding: 10px; }
+          .section { margin-bottom: 20px; page-break-inside: avoid; }
+          .section-title { font-size: 14px; font-weight: bold; background: #f5f5f5; padding: 8px; margin-bottom: 10px; border-left: 4px solid #1565C0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+          th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+          th { background: #1565C0; color: white; }
+          .status-good { background: #e8f5e9; color: #2E7D32; font-weight: bold; }
+          .status-warning { background: #fff3e0; color: #ED6C02; font-weight: bold; }
+          .status-bad { background: #ffebee; color: #D32F2F; font-weight: bold; }
+          .stats-box { display: inline-block; width: 24%; text-align: center; padding: 15px; border: 1px solid #ddd; margin: 0.5%; }
+          .stats-value { font-size: 28px; font-weight: bold; }
+          .category-header { background: #f0f7ff; padding: 10px; margin: 15px 0 10px 0; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+          @media print { .page-break { page-break-before: always; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+          <div style="font-size: 12px;">${HOSPITAL_INFO.address} | ${HOSPITAL_INFO.phone}</div>
+          <div class="report-title">NABH KEY PERFORMANCE INDICATORS DASHBOARD</div>
+          <div style="font-size: 12px; margin-top: 10px;">Report Generated: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Executive Summary</div>
+          <div style="text-align: center; margin: 20px 0;">
+            <div class="stats-box">
+              <div class="stats-value" style="color: #1565C0;">${totalKPIs}</div>
+              <div>Total KPIs</div>
+            </div>
+            <div class="stats-box">
+              <div class="stats-value" style="color: #2E7D32;">${kpisOnTarget}</div>
+              <div>On Target</div>
+            </div>
+            <div class="stats-box">
+              <div class="stats-value" style="color: #ED6C02;">${kpisNearTarget}</div>
+              <div>Near Target</div>
+            </div>
+            <div class="stats-box">
+              <div class="stats-value" style="color: #D32F2F;">${kpisOffTarget}</div>
+              <div>Off Target</div>
+            </div>
+          </div>
+        </div>
+
+        ${NABH_KPI_CATEGORIES.map(cat => {
+          const categoryKPIs = NABH_KPIS.filter(k => k.category === cat.id);
+          return `
+            <div class="section">
+              <div class="category-header">${cat.label} (${categoryKPIs.length} KPIs)</div>
+              <table>
+                <tr>
+                  <th style="width: 5%">#</th>
+                  <th style="width: 8%">Standard</th>
+                  <th style="width: 30%">Indicator</th>
+                  <th style="width: 15%">Formula</th>
+                  <th style="width: 10%">Unit</th>
+                  <th style="width: 8%">Target</th>
+                  <th style="width: 10%">Current</th>
+                  <th style="width: 14%">Status</th>
+                </tr>
+                ${categoryKPIs.map(kpi => {
+                  const latest = getLatestKPIValue(kpi.id);
+                  const status = getPerformanceStatus(kpi);
+                  return `
+                    <tr>
+                      <td>${kpi.number}</td>
+                      <td>${kpi.standard}</td>
+                      <td><strong>${kpi.shortName}</strong></td>
+                      <td style="font-size: 10px;">${kpi.formula}</td>
+                      <td>${kpi.unit}</td>
+                      <td>${kpi.suggestedTarget}</td>
+                      <td>${latest ? latest.value.toFixed(2) : 'N/A'}</td>
+                      <td class="status-${status.status === 'good' ? 'good' : status.status === 'warning' ? 'warning' : 'bad'}">${status.label}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+            </div>
+          `;
+        }).join('')}
+
+        <div class="section page-break">
+          <div class="section-title">KPI Definitions Reference</div>
+          ${NABH_KPIS.map(kpi => `
+            <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; page-break-inside: avoid;">
+              <div style="font-weight: bold; color: #1565C0;">KPI ${kpi.number}: ${kpi.name}</div>
+              <div style="font-size: 11px; margin-top: 5px;"><strong>Definition:</strong> ${kpi.definition}</div>
+              <div style="font-size: 11px;"><strong>Formula:</strong> ${kpi.formula}</div>
+              <div style="font-size: 11px;"><strong>Frequency:</strong> ${kpi.frequency} | <strong>Sampling:</strong> ${kpi.sampling ? 'Yes (' + kpi.samplingMethodology + ')' : 'No'}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="footer">
+          <p>This report is generated as per NABH SHCO Standards 3rd Edition, August 2022</p>
+          <p>${HOSPITAL_INFO.name} | Quality Management System | Controlled Document</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([reportHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `NABH_KPI_Dashboard_${HOSPITAL_INFO.name.replace(/\s+/g, '_')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSnackbar({ open: true, message: 'Master KPI report downloaded successfully', severity: 'success' });
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -365,26 +552,59 @@ export default function KPIsPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} color="primary">
-            Key Performance Indicators
+            NABH Key Performance Indicators
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Track and monitor NABH quality indicators
+            16 Official KPIs as per NABH SHCO Standards 3rd Edition (August 2022)
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title="Cards View">
+            <IconButton
+              onClick={() => setViewMode('cards')}
+              color={viewMode === 'cards' ? 'primary' : 'default'}
+            >
+              <Icon>grid_view</Icon>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Table View">
+            <IconButton
+              onClick={() => setViewMode('table')}
+              color={viewMode === 'table' ? 'primary' : 'default'}
+            >
+              <Icon>table_rows</Icon>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Graphs Gallery">
+            <IconButton
+              onClick={() => setViewMode('graphs')}
+              color={viewMode === 'graphs' ? 'primary' : 'default'}
+            >
+              <Icon>bar_chart</Icon>
+            </IconButton>
+          </Tooltip>
+          <Button
+            variant="outlined"
+            startIcon={isGeneratingData ? <CircularProgress size={20} /> : <Icon>auto_fix_high</Icon>}
+            onClick={handleGenerateAllData}
+            disabled={isGeneratingData}
+            color="secondary"
+          >
+            {isGeneratingData ? `Generating (${generationProgress}%)` : 'Generate All Data'}
+          </Button>
           <Button
             variant="outlined"
             startIcon={<Icon>upload_file</Icon>}
             onClick={() => setIsUploadDialogOpen(true)}
           >
-            Upload KPI Doc
+            Upload Doc
           </Button>
           <Button
             variant="contained"
-            startIcon={<Icon>add</Icon>}
-            onClick={() => setIsAddDialogOpen(true)}
+            startIcon={<Icon>download</Icon>}
+            onClick={generateMasterReport}
           >
-            Add KPI
+            Report
           </Button>
         </Box>
         <input
@@ -396,22 +616,7 @@ export default function KPIsPage() {
         />
       </Box>
 
-      {/* Category Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={selectedCategory}
-          onChange={(_, value) => setSelectedCategory(value)}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab value="all" label="All KPIs" icon={<Icon>dashboard</Icon>} iconPosition="start" />
-          {KPI_CATEGORIES.map(cat => (
-            <Tab key={cat.id} value={cat.id} label={cat.label} icon={<Icon>{cat.icon}</Icon>} iconPosition="start" />
-          ))}
-        </Tabs>
-      </Paper>
-
-      {/* Stats */}
+      {/* Stats Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.50' }}>
@@ -420,268 +625,309 @@ export default function KPIsPage() {
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.50' }}>
-            <Typography variant="h4" color="info.main" fontWeight={700}>{kpisWithData}</Typography>
-            <Typography variant="body2" color="text.secondary">With Data</Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 6, md: 3 }}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.50' }}>
-            <Typography variant="h4" color="success.main" fontWeight={700}>{kpisMeetingTarget}</Typography>
-            <Typography variant="body2" color="text.secondary">Meeting Target</Typography>
+            <Typography variant="h4" color="success.main" fontWeight={700}>{kpisOnTarget}</Typography>
+            <Typography variant="body2" color="text.secondary">On Target</Typography>
           </Paper>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.50' }}>
-            <Typography variant="h4" color="warning.main" fontWeight={700}>{totalKPIs - kpisWithData}</Typography>
-            <Typography variant="body2" color="text.secondary">Need Data Entry</Typography>
+            <Typography variant="h4" color="warning.main" fontWeight={700}>{kpisNearTarget}</Typography>
+            <Typography variant="body2" color="text.secondary">Near Target</Typography>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 6, md: 3 }}>
+          <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'error.50' }}>
+            <Typography variant="h4" color="error.main" fontWeight={700}>{kpisOffTarget}</Typography>
+            <Typography variant="body2" color="text.secondary">Off Target</Typography>
           </Paper>
         </Grid>
       </Grid>
 
-      {/* KPIs Table */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>KPI Name</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell align="center">Target</TableCell>
-                <TableCell align="center">Current Value</TableCell>
-                <TableCell align="center">Trend</TableCell>
-                <TableCell align="center">Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredKPIs.map(kpi => {
-                const latest = getLatestValue(kpi);
-                const performanceColor = latest ? getPerformanceColor(latest.value, kpi.target, kpi.unit) : 'default';
-
-                return (
-                  <TableRow key={kpi.id} hover>
-                    <TableCell>
-                      <Typography fontWeight={500}>{kpi.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{kpi.formula}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={KPI_CATEGORIES.find(c => c.id === kpi.category)?.label || kpi.category}
-                        size="small"
-                        icon={<Icon sx={{ fontSize: 16 }}>{KPI_CATEGORIES.find(c => c.id === kpi.category)?.icon}</Icon>}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography fontWeight={600}>{kpi.target} {kpi.unit}</Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      {latest ? (
-                        <Typography fontWeight={600} color={`${performanceColor}.main`}>
-                          {latest.value} {kpi.unit}
-                        </Typography>
-                      ) : (
-                        <Typography color="text.secondary">No data</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      {kpi.entries.length > 1 ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                          {kpi.entries.slice(-3).map((e, i) => (
-                            <Tooltip key={i} title={`${e.month}: ${e.value}`}>
-                              <Box
-                                sx={{
-                                  width: 8,
-                                  height: 20,
-                                  bgcolor: getPerformanceColor(e.value, kpi.target, kpi.unit) + '.main',
-                                  borderRadius: 1,
-                                }}
-                              />
-                            </Tooltip>
-                          ))}
-                        </Box>
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">-</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={latest ? (performanceColor === 'success' ? 'On Target' : performanceColor === 'warning' ? 'Near Target' : 'Off Target') : 'No Data'}
-                        size="small"
-                        color={performanceColor as any}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Add Entry">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => { setSelectedKPI(kpi); setNewEntry({ ...newEntry, target: kpi.target }); setIsEntryDialogOpen(true); }}
-                        >
-                          <Icon>add_circle</Icon>
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="View History">
-                        <IconButton size="small">
-                          <Icon>history</Icon>
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDeleteKPI(kpi.id)}>
-                          <Icon>delete</Icon>
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      {/* Category Tabs */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={selectedCategory}
+          onChange={(_, value) => setSelectedCategory(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab value="all" label="All KPIs (16)" icon={<Icon>dashboard</Icon>} iconPosition="start" />
+          {NABH_KPI_CATEGORIES.map(cat => (
+            <Tab
+              key={cat.id}
+              value={cat.id}
+              label={`${cat.label} (${NABH_KPIS.filter(k => k.category === cat.id).length})`}
+              icon={<Icon>{cat.icon}</Icon>}
+              iconPosition="start"
+            />
+          ))}
+        </Tabs>
       </Paper>
 
-      {/* Add KPI Dialog */}
-      <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Icon color="primary">add_chart</Icon>
-            Add New KPI
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="KPI Name"
-            value={newKPI.name}
-            onChange={(e) => setNewKPI({ ...newKPI, name: e.target.value })}
-            sx={{ mt: 2, mb: 2 }}
-          />
-          <Grid container spacing={2}>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                select
-                label="Category"
-                value={newKPI.category}
-                onChange={(e) => setNewKPI({ ...newKPI, category: e.target.value })}
-                slotProps={{ select: { native: true } }}
-              >
-                {KPI_CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.label}</option>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                label="Unit"
-                value={newKPI.unit}
-                onChange={(e) => setNewKPI({ ...newKPI, unit: e.target.value })}
-                placeholder="%, count, per 1000"
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Target Value"
-                value={newKPI.target}
-                onChange={(e) => setNewKPI({ ...newKPI, target: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                select
-                label="Frequency"
-                value={newKPI.frequency}
-                onChange={(e) => setNewKPI({ ...newKPI, frequency: e.target.value })}
-                slotProps={{ select: { native: true } }}
-              >
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Quarterly">Quarterly</option>
-              </TextField>
-            </Grid>
-          </Grid>
-          <TextField
-            fullWidth
-            label="Formula"
-            value={newKPI.formula}
-            onChange={(e) => setNewKPI({ ...newKPI, formula: e.target.value })}
-            sx={{ mt: 2 }}
-            placeholder="e.g., (Numerator / Denominator) x 100"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAddKPI}>Add KPI</Button>
-        </DialogActions>
-      </Dialog>
+      {/* KPIs Display */}
+      {viewMode === 'cards' ? (
+        <Grid container spacing={2}>
+          {filteredKPIs.map(kpi => {
+            const latest = getLatestKPIValue(kpi.id);
+            const status = getPerformanceStatus(kpi);
+            const category = NABH_KPI_CATEGORIES.find(c => c.id === kpi.category);
 
-      {/* Add Entry Dialog */}
-      <Dialog open={isEntryDialogOpen} onClose={() => setIsEntryDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Icon color="primary">edit</Icon>
-            Add Data Entry
-          </Box>
-          <Typography variant="body2" color="text.secondary">{selectedKPI?.name}</Typography>
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            type="month"
-            label="Month"
-            value={newEntry.month}
-            onChange={(e) => setNewEntry({ ...newEntry, month: e.target.value })}
-            sx={{ mt: 2, mb: 2 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label={`Value (${selectedKPI?.unit})`}
-            value={newEntry.value}
-            onChange={(e) => setNewEntry({ ...newEntry, value: Number(e.target.value) })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label="Target (optional)"
-            value={newEntry.target}
-            onChange={(e) => setNewEntry({ ...newEntry, target: Number(e.target.value) })}
-            helperText={`Default: ${selectedKPI?.target}`}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={2}
-            label="Remarks (optional)"
-            value={newEntry.remarks}
-            onChange={(e) => setNewEntry({ ...newEntry, remarks: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsEntryDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAddEntry}>Save Entry</Button>
-        </DialogActions>
-      </Dialog>
+            return (
+              <Grid key={kpi.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 4
+                    }
+                  }}
+                >
+                  <CardActionArea onClick={() => navigate(`/kpi/${kpi.id}`)} sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Chip
+                          label={`KPI ${kpi.number}`}
+                          size="small"
+                          sx={{ bgcolor: category?.color, color: 'white', fontWeight: 600 }}
+                        />
+                        <Chip label={kpi.standard} size="small" variant="outlined" />
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, minHeight: 48 }}>
+                        {kpi.shortName}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Icon sx={{ color: category?.color }}>{kpi.icon}</Icon>
+                        <Typography variant="h5" fontWeight={700}>
+                          {latest ? latest.value.toFixed(1) : 'N/A'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">{kpi.unit}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Target: {kpi.suggestedTarget}
+                        </Typography>
+                        <Chip
+                          label={status.label}
+                          size="small"
+                          color={status.color as any}
+                        />
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={Math.min(100, latest ? (kpi.targetDirection === 'lower'
+                          ? Math.max(0, 100 - ((latest.value - kpi.suggestedTarget) / kpi.suggestedTarget * 100))
+                          : (latest.value / kpi.suggestedTarget * 100)) : 0)}
+                        color={status.color as any}
+                        sx={{ mt: 1, height: 6, borderRadius: 1 }}
+                      />
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      ) : viewMode === 'table' ? (
+        <Paper>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Standard</TableCell>
+                  <TableCell>Indicator</TableCell>
+                  <TableCell>Unit</TableCell>
+                  <TableCell align="center">Target</TableCell>
+                  <TableCell align="center">Current</TableCell>
+                  <TableCell align="center">Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredKPIs.map(kpi => {
+                  const latest = getLatestKPIValue(kpi.id);
+                  const status = getPerformanceStatus(kpi);
+                  const category = NABH_KPI_CATEGORIES.find(c => c.id === kpi.category);
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+                  return (
+                    <TableRow key={kpi.id} hover sx={{ cursor: 'pointer' }} onClick={() => navigate(`/kpi/${kpi.id}`)}>
+                      <TableCell>
+                        <Chip
+                          label={kpi.number}
+                          size="small"
+                          sx={{ bgcolor: category?.color, color: 'white', fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      <TableCell>{kpi.standard}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Icon sx={{ color: category?.color, fontSize: 20 }}>{kpi.icon}</Icon>
+                          <Box>
+                            <Typography fontWeight={600}>{kpi.shortName}</Typography>
+                            <Typography variant="caption" color="text.secondary">{kpi.name}</Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>{kpi.unit}</TableCell>
+                      <TableCell align="center">
+                        <Typography fontWeight={600}>{kpi.suggestedTarget}</Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography fontWeight={600} color={`${status.color}.main`}>
+                          {latest ? latest.value.toFixed(2) : 'N/A'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label={status.label} size="small" color={status.color as any} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="View Details">
+                          <IconButton size="small" color="primary">
+                            <Icon>chevron_right</Icon>
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      ) : (
+        /* Graphs Gallery View */
+        <Box>
+          {isLoadingGraphs ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <CircularProgress size={48} />
+              <Typography sx={{ mt: 2 }}>Loading saved graphs...</Typography>
+            </Box>
+          ) : Object.keys(savedGraphs).length === 0 ? (
+            <Paper sx={{ p: 6, textAlign: 'center' }}>
+              <Icon sx={{ fontSize: 64, color: 'text.secondary' }}>image_not_supported</Icon>
+              <Typography variant="h6" sx={{ mt: 2 }}>No Saved Graphs Yet</Typography>
+              <Typography color="text.secondary" sx={{ mb: 3 }}>
+                Click "Generate All Data" to create dummy data and save graphs for all 16 KPIs
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Icon>auto_fix_high</Icon>}
+                onClick={handleGenerateAllData}
+                disabled={isGeneratingData}
+                color="secondary"
+              >
+                Generate All Data
+              </Button>
+            </Paper>
+          ) : (
+            <Grid container spacing={3}>
+              {filteredKPIs.map(kpi => {
+                const graph = savedGraphs[kpi.id];
+                const category = NABH_KPI_CATEGORIES.find(c => c.id === kpi.category);
+                const latest = getLatestKPIValue(kpi.id);
+                const status = getPerformanceStatus(kpi);
+
+                return (
+                  <Grid key={kpi.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
+                      }}
+                      onClick={() => navigate(`/kpi/${kpi.id}`)}
+                    >
+                      <CardContent sx={{ pb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <Chip
+                            label={`KPI ${kpi.number}`}
+                            size="small"
+                            sx={{ bgcolor: category?.color, color: 'white', fontWeight: 600 }}
+                          />
+                          <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }} noWrap>
+                            {kpi.shortName}
+                          </Typography>
+                          <Chip label={status.label} size="small" color={status.color as any} />
+                        </Box>
+                      </CardContent>
+
+                      {/* Graph Image */}
+                      {graph?.graph_url ? (
+                        <Box
+                          component="img"
+                          src={graph.graph_url}
+                          alt={`${kpi.shortName} Graph`}
+                          sx={{
+                            width: '100%',
+                            height: 200,
+                            objectFit: 'contain',
+                            bgcolor: '#fafafa',
+                            borderTop: '1px solid',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: 200,
+                            bgcolor: '#f5f5f5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderTop: '1px solid',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Icon sx={{ fontSize: 40, color: 'text.secondary' }}>show_chart</Icon>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              No graph saved
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
+
+                      <CardContent sx={{ pt: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Current</Typography>
+                            <Typography fontWeight={700} color={`${status.color}.main`}>
+                              {latest ? latest.value.toFixed(2) : 'N/A'} {kpi.unit}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="caption" color="text.secondary">Target</Typography>
+                            <Typography fontWeight={600}>{kpi.suggestedTarget} {kpi.unit}</Typography>
+                          </Box>
+                        </Box>
+                        {graph?.created_at && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                            Saved: {new Date(graph.created_at).toLocaleDateString('en-IN', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          )}
+        </Box>
+      )}
 
       {/* Upload KPI Document Dialog */}
       <Dialog
@@ -730,9 +976,6 @@ export default function KPIsPage() {
                   Supports PDF, Word, Excel, and Images
                 </Typography>
               </Paper>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Upload your existing KPI reports, quality indicator sheets, or any document containing performance data.
-              </Typography>
             </Box>
           )}
 
@@ -743,14 +986,11 @@ export default function KPIsPage() {
               <Typography variant="h6" sx={{ mt: 2 }}>
                 Extracting KPIs from {uploadedFile?.name}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Analyzing document structure...
-              </Typography>
               <LinearProgress sx={{ mt: 3, maxWidth: 400, mx: 'auto' }} />
             </Box>
           )}
 
-          {/* Step 2: Review & Edit Extracted Data */}
+          {/* Step 2: Review */}
           {uploadWorkflowStep === 2 && (
             <Box>
               <Tabs value={activeUploadTab} onChange={(_, v) => setActiveUploadTab(v)} sx={{ mb: 2 }}>
@@ -769,73 +1009,15 @@ export default function KPIsPage() {
                             <TableCell>Category</TableCell>
                             <TableCell align="right">Target</TableCell>
                             <TableCell>Unit</TableCell>
-                            <TableCell>Formula</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {extractedKPIs.map((kpi, i) => (
                             <TableRow key={i}>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  variant="standard"
-                                  value={kpi.name}
-                                  onChange={(e) => {
-                                    const updated = [...extractedKPIs];
-                                    updated[i].name = e.target.value;
-                                    setExtractedKPIs(updated);
-                                  }}
-                                  fullWidth
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  variant="standard"
-                                  select
-                                  slotProps={{ select: { native: true } }}
-                                  value={kpi.category}
-                                  onChange={(e) => {
-                                    const updated = [...extractedKPIs];
-                                    updated[i].category = e.target.value;
-                                    setExtractedKPIs(updated);
-                                  }}
-                                >
-                                  {KPI_CATEGORIES.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.label}</option>
-                                  ))}
-                                </TextField>
-                              </TableCell>
-                              <TableCell align="right">
-                                <TextField
-                                  size="small"
-                                  variant="standard"
-                                  type="number"
-                                  value={kpi.target}
-                                  onChange={(e) => {
-                                    const updated = [...extractedKPIs];
-                                    updated[i].target = Number(e.target.value);
-                                    setExtractedKPIs(updated);
-                                  }}
-                                  sx={{ width: 70 }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  variant="standard"
-                                  value={kpi.unit}
-                                  onChange={(e) => {
-                                    const updated = [...extractedKPIs];
-                                    updated[i].unit = e.target.value;
-                                    setExtractedKPIs(updated);
-                                  }}
-                                  sx={{ width: 80 }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant="caption">{kpi.formula || '-'}</Typography>
-                              </TableCell>
+                              <TableCell>{kpi.name}</TableCell>
+                              <TableCell>{kpi.category}</TableCell>
+                              <TableCell align="right">{kpi.target}</TableCell>
+                              <TableCell>{kpi.unit}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -845,7 +1027,7 @@ export default function KPIsPage() {
                     <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
                       <Icon sx={{ fontSize: 48, color: 'text.secondary' }}>search_off</Icon>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        No KPIs could be extracted. You can still generate an improved report.
+                        No KPIs could be extracted.
                       </Typography>
                     </Paper>
                   )}
@@ -853,13 +1035,13 @@ export default function KPIsPage() {
                   <Paper variant="outlined" sx={{ p: 2, mt: 2, bgcolor: 'warning.50' }}>
                     <Typography variant="subtitle2" color="warning.dark" gutterBottom>
                       <Icon sx={{ verticalAlign: 'middle', mr: 1 }}>lightbulb</Icon>
-                      Improvement Suggestions (Optional)
+                      Improvement Suggestions
                     </Typography>
                     <TextField
                       fullWidth
                       multiline
                       rows={2}
-                      placeholder="Add any specific improvements (e.g., 'Add infection control KPIs', 'Include trend analysis')"
+                      placeholder="Add specific improvements..."
                       value={userSuggestions}
                       onChange={(e) => setUserSuggestions(e.target.value)}
                     />
@@ -888,10 +1070,7 @@ export default function KPIsPage() {
                   Download HTML
                 </Button>
               </Box>
-              <Paper
-                variant="outlined"
-                sx={{ maxHeight: 500, overflow: 'auto', bgcolor: 'white' }}
-              >
+              <Paper variant="outlined" sx={{ maxHeight: 500, overflow: 'auto', bgcolor: 'white' }}>
                 <div dangerouslySetInnerHTML={{ __html: generatedReport }} />
               </Paper>
             </Box>
@@ -901,12 +1080,7 @@ export default function KPIsPage() {
           {isGenerating && (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <CircularProgress size={60} />
-              <Typography variant="h6" sx={{ mt: 2 }}>
-                Generating KPI Report
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Creating comprehensive KPI tracking document...
-              </Typography>
+              <Typography variant="h6" sx={{ mt: 2 }}>Generating KPI Report</Typography>
               <LinearProgress sx={{ mt: 3, maxWidth: 400, mx: 'auto' }} />
             </Box>
           )}
@@ -914,37 +1088,29 @@ export default function KPIsPage() {
         <DialogActions sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
           <Button onClick={resetUploadWorkflow}>Cancel</Button>
           {uploadWorkflowStep === 2 && (
-            <>
-              <Button
-                variant="outlined"
-                startIcon={<Icon>add_chart</Icon>}
-                onClick={handleImportExtractedKPIs}
-                disabled={extractedKPIs.length === 0}
-              >
-                Import KPIs ({extractedKPIs.length})
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<Icon>auto_awesome</Icon>}
-                onClick={handleGenerateKPIReport}
-                disabled={isGenerating}
-              >
-                Generate KPI Report
-              </Button>
-            </>
-          )}
-          {uploadWorkflowStep === 3 && (
             <Button
               variant="contained"
-              startIcon={<Icon>add_chart</Icon>}
-              onClick={handleImportExtractedKPIs}
-              disabled={extractedKPIs.length === 0}
+              startIcon={<Icon>auto_awesome</Icon>}
+              onClick={handleGenerateKPIReport}
+              disabled={isGenerating}
             >
-              Import KPIs & Close
+              Generate Report
             </Button>
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -26,6 +26,7 @@ interface ObjectiveEditRow {
   youtube_videos: unknown[] | null;
   training_materials: unknown[] | null;
   sop_documents: unknown[] | null;
+  auditor_priority_items: string[] | null; // Evidence items marked as priority for auditors
   created_at: string;
   updated_at: string;
 }
@@ -132,6 +133,7 @@ export async function saveObjectiveToSupabase(
       youtube_videos: objective.youtubeVideos || [],
       training_materials: objective.trainingMaterials || [],
       sop_documents: objective.sopDocuments || [],
+      auditor_priority_items: objective.auditorPriorityItems || [],
     };
 
     console.log('Saving to Supabase, payload size:', JSON.stringify(editData).length, 'bytes');
@@ -222,6 +224,7 @@ export async function loadObjectiveFromSupabase(
       youtubeVideos: (data.youtube_videos as ObjectiveElement['youtubeVideos']) ?? [],
       trainingMaterials: (data.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
       sopDocuments: (data.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
+      auditorPriorityItems: (data.auditor_priority_items as string[]) ?? [],
     };
 
     return { success: true, data: objectiveData };
@@ -283,6 +286,7 @@ export async function loadAllObjectiveEditsFromSupabase(): Promise<{
           youtubeVideos: (row.youtube_videos as ObjectiveElement['youtubeVideos']) ?? [],
           trainingMaterials: (row.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
           sopDocuments: (row.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
+          auditorPriorityItems: (row.auditor_priority_items as string[]) ?? [],
         };
       }
     }

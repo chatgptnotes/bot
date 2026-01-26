@@ -119,6 +119,7 @@ export default function ObjectiveDetailPage() {
     id: string;
     text: string;
     selected: boolean;
+    isAuditorPriority: boolean; // Marked as priority for auditors
   }
   const [parsedEvidenceItems, setParsedEvidenceItems] = useState<ParsedEvidenceItem[]>([]);
   const [isGeneratingDocuments, setIsGeneratingDocuments] = useState(false);
@@ -231,21 +232,24 @@ export default function ObjectiveDetailPage() {
 
     const lines = objective.evidencesList.split('\n').filter(line => line.trim());
     const items: ParsedEvidenceItem[] = [];
+    const auditorPriorityItems = objective.auditorPriorityItems || [];
 
     lines.forEach((line, index) => {
       const trimmed = line.trim();
       // Match lines that start with numbers, bullets, or dashes
       if (trimmed.match(/^(\d+[.):]|-|\*|•)/)) {
+        const itemId = `evidence-item-${index}`;
         items.push({
-          id: `evidence-item-${index}`,
+          id: itemId,
           text: trimmed,
           selected: false,
+          isAuditorPriority: auditorPriorityItems.includes(itemId),
         });
       }
     });
 
     setParsedEvidenceItems(items);
-  }, [objective?.evidencesList]);
+  }, [objective?.evidencesList, objective?.auditorPriorityItems]);
 
   // Load saved evidences when objective changes
   useEffect(() => {
@@ -648,6 +652,45 @@ Format your response as a numbered list (1-10) with each evidence item on a new 
       items.map(item => ({ ...item, selected: !allSelected }))
     );
   };
+
+  // Toggle auditor priority for an evidence item and save to Supabase
+  const handleToggleAuditorPriority = async (itemId: string) => {
+    if (!objective || !chapterId) return;
+
+    // Update local state
+    const updatedItems = parsedEvidenceItems.map(item =>
+      item.id === itemId ? { ...item, isAuditorPriority: !item.isAuditorPriority } : item
+    );
+    setParsedEvidenceItems(updatedItems);
+
+    // Get the new list of auditor priority items
+    const newAuditorPriorityItems = updatedItems
+      .filter(item => item.isAuditorPriority)
+      .map(item => item.id);
+
+    // Update objective with new auditor priority items
+    const updatedObjective = {
+      ...objective,
+      auditorPriorityItems: newAuditorPriorityItems,
+    };
+
+    // Save to Supabase
+    const result = await saveObjectiveToSupabase(chapterId, updatedObjective);
+    if (result.success) {
+      const item = updatedItems.find(i => i.id === itemId);
+      const isNowPriority = item?.isAuditorPriority;
+      setSnackbarMessage(isNowPriority ? 'Marked as auditor priority' : 'Removed from auditor priority');
+      setSnackbarOpen(true);
+    } else {
+      // Revert on error
+      setParsedEvidenceItems(parsedEvidenceItems);
+      setSnackbarMessage('Failed to update auditor priority');
+      setSnackbarOpen(true);
+    }
+  };
+
+  // Count auditor priority items
+  const auditorPriorityCount = parsedEvidenceItems.filter(item => item.isAuditorPriority).length;
 
   // Get formatted dates
   const getFormattedDate = (date: Date) => {
@@ -2505,6 +2548,14 @@ DESIGN REQUIREMENTS:
                       color="success"
                     />
                   )}
+                  {auditorPriorityCount > 0 && (
+                    <Chip
+                      icon={<Icon sx={{ fontSize: '16px !important' }}>star</Icon>}
+                      label={`${auditorPriorityCount} auditor priority`}
+                      size="small"
+                      color="warning"
+                    />
+                  )}
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
@@ -2538,32 +2589,52 @@ DESIGN REQUIREMENTS:
                 </Box>
 
                 {/* Evidence Items Checklist */}
-                <Paper variant="outlined" sx={{ p: 2, maxHeight: 300, overflow: 'auto', bgcolor: 'background.paper' }}>
+                <Paper variant="outlined" sx={{ p: 2, maxHeight: 400, overflow: 'auto', bgcolor: 'background.paper' }}>
+                  <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+                      Click checkbox to select for document generation. Click star to mark as auditor priority.
+                    </Typography>
+                  </Box>
                   <FormGroup>
                     {parsedEvidenceItems.map((item) => (
-                      <FormControlLabel
+                      <Box
                         key={item.id}
-                        control={
-                          <Checkbox
-                            checked={item.selected}
-                            onChange={() => handleToggleEvidenceItem(item.id)}
-                            color="success"
-                          />
-                        }
-                        label={
-                          <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                            {item.text}
-                          </Typography>
-                        }
                         sx={{
+                          display: 'flex',
                           alignItems: 'flex-start',
+                          gap: 1,
                           mb: 1,
                           p: 1,
                           borderRadius: 1,
-                          bgcolor: item.selected ? 'success.50' : 'transparent',
-                          '&:hover': { bgcolor: item.selected ? 'success.100' : 'grey.100' },
+                          bgcolor: item.isAuditorPriority ? 'warning.50' : item.selected ? 'success.50' : 'transparent',
+                          border: item.isAuditorPriority ? '1px solid' : 'none',
+                          borderColor: item.isAuditorPriority ? 'warning.300' : 'transparent',
+                          '&:hover': { bgcolor: item.isAuditorPriority ? 'warning.100' : item.selected ? 'success.100' : 'grey.100' },
                         }}
-                      />
+                      >
+                        <Checkbox
+                          checked={item.selected}
+                          onChange={() => handleToggleEvidenceItem(item.id)}
+                          color="success"
+                          size="small"
+                          sx={{ mt: -0.5 }}
+                        />
+                        <Typography variant="body2" sx={{ lineHeight: 1.6, flex: 1 }}>
+                          {item.text}
+                        </Typography>
+                        <Tooltip title={item.isAuditorPriority ? 'Remove from auditor priority' : 'Mark as auditor priority'}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleToggleAuditorPriority(item.id)}
+                            sx={{
+                              color: item.isAuditorPriority ? 'warning.main' : 'grey.400',
+                              '&:hover': { color: 'warning.main' },
+                            }}
+                          >
+                            <Icon>{item.isAuditorPriority ? 'star' : 'star_border'}</Icon>
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     ))}
                   </FormGroup>
                 </Paper>

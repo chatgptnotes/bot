@@ -15,6 +15,7 @@ import SharedEvidencePage from './components/SharedEvidencePage';
 import StationeryPage from './components/StationeryPage';
 import CommitteesPage from './components/CommitteesPage';
 import KPIsPage from './components/KPIsPage';
+import KPIDetailPage from './components/KPIDetailPage';
 import SlideDeckPage from './components/SlideDeckPage';
 import Footer from './components/Footer';
 import { useNABHStore } from './store/nabhStore';
@@ -238,6 +239,7 @@ function MainContent() {
   const isStationeryPage = location.pathname === '/stationery';
   const isCommitteesPage = location.pathname === '/committees';
   const isKPIsPage = location.pathname === '/kpis';
+  const isKPIDetailPage = location.pathname.startsWith('/kpi/');
   const isPresentationsPage = location.pathname === '/presentations';
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
@@ -261,6 +263,10 @@ function MainContent() {
     return <KPIsPage />;
   }
 
+  if (isKPIDetailPage) {
+    return <KPIDetailPage />;
+  }
+
   if (isPresentationsPage) {
     return <SlideDeckPage />;
   }
@@ -278,7 +284,8 @@ function AppContent() {
   const { selectedChapter } = useNABHStore();
   const isAIPage = location.pathname === '/ai-generator';
   const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
-  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations'].includes(location.pathname);
+  const isKPIDetailPage = location.pathname.startsWith('/kpi/');
+  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations'].includes(location.pathname) || isKPIDetailPage;
   const isLandingPage = location.pathname === '/' && !selectedChapter;
   const showSidebar = !isAIPage && !isLandingPage && !isObjectiveDetailPage || isManagementPage;
 
@@ -328,6 +335,7 @@ function App() {
         <Routes>
           <Route path="/evidence/:evidenceId" element={<SharedEvidencePage />} />
           <Route path="/objective/:chapterId/:objectiveId" element={<AppContent />} />
+          <Route path="/kpi/:kpiId" element={<AppContent />} />
           <Route path="/*" element={<AppContent />} />
         </Routes>
       </BrowserRouter>

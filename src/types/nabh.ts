@@ -66,6 +66,7 @@ export interface ObjectiveElement {
   sopDocuments: SOPDocument[];  // Hospital SOPs (Word/PDF documents)
   infographicSvg?: string;      // SVG content for bilingual infographic
   infographicDataUrl?: string;  // Base64 data URL for infographic storage
+  auditorPriorityItems?: string[]; // Evidence items marked as priority for auditors
   priority: Priority;
   assignee: string;
   status: Status;
