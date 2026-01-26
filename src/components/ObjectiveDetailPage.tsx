@@ -861,16 +861,16 @@ Generate the complete HTML with all sections filled in appropriately based on th
     // 2. Remove tagline text anywhere it appears
     processed = processed.replace(/Assured\s*\|\s*Committed\s*\|\s*Proficient/gi, '');
 
-    // 3. Fix the logo - replace any logo with correct one
+    // 3. Fix the logo - replace any logo with correct one (2px margin = ~0.5cm spacing)
     processed = processed.replace(
       /<img[^>]*class="logo"[^>]*>/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" class="logo" style="width: 180px; height: auto; margin: 0 auto 5px; display: block;" onerror="this.style.display='none'">`
+      `<img src="${logoUrl}" alt="Hope Hospital" class="logo" style="width: 180px; height: auto; margin: 0 auto 2px; display: block;" onerror="this.style.display='none'">`
     );
 
     // 4. Replace logo placeholders
     processed = processed.replace(
       /<div class="logo-area">[\s\S]*?<\/div>/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin: 0 auto 5px; display: block;">`
+      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin: 0 auto 2px; display: block;">`
     );
     processed = processed.replace(
       /HOSPITAL\s*(<br\s*\/?>)?\s*LOGO/gi,
@@ -928,19 +928,21 @@ Generate the complete HTML with all sections filled in appropriately based on th
       'Phone: +91-9373111709'
     );
 
-    // 10. Fix stamp area content
+    // 10. Fix stamp area content - just "HOPE HOSPITAL"
     processed = processed.replace(
       /<div[^>]*class="stamp-area"[^>]*>([\s\S]*?)<\/div>/gi,
       `<div class="stamp-area" style="border: 2px solid #1565C0; border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0; background: #f8f9fa;">
-        <div style="font-weight: bold; color: #1565C0; font-size: 14px;">DR. MURALI'S HOPE HOSPITAL</div>
+        <div style="font-weight: bold; color: #1565C0; font-size: 14px;">HOPE HOSPITAL</div>
         <div style="font-weight: 600; margin-top: 5px;">QUALITY MANAGEMENT SYSTEM</div>
         <div style="margin-top: 5px; font-size: 11px; color: #666;">Controlled Document</div>
       </div>`
     );
 
-    // 11. Fix margins
-    processed = processed.replace(/margin:\s*0\s*auto\s*10px/gi, 'margin: 0 auto 5px');
-    processed = processed.replace(/margin-bottom:\s*10px/gi, 'margin-bottom: 5px');
+    // 11. Fix margins - reduce to 2px for tighter spacing
+    processed = processed.replace(/margin:\s*0\s*auto\s*10px/gi, 'margin: 0 auto 2px');
+    processed = processed.replace(/margin:\s*0\s*auto\s*5px/gi, 'margin: 0 auto 2px');
+    processed = processed.replace(/margin-bottom:\s*10px/gi, 'margin-bottom: 2px');
+    processed = processed.replace(/margin-bottom:\s*5px/gi, 'margin-bottom: 2px');
 
     // 12. Final cleanup - remove any remaining tagline text
     processed = processed.replace(/>\s*Assured\s*\|\s*Committed\s*\|\s*Proficient\s*</gi, '><');
