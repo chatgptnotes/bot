@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Helper function to get Gemini API key
-export const getGeminiApiKey = () => {
-  return import.meta.env.VITE_GEMINI_API_KEY || '';
+// Helper function to get Claude API key
+export const getClaudeApiKey = () => {
+  return import.meta.env.VITE_CLAUDE_API_KEY || '';
 };

@@ -88,12 +88,12 @@ export const useNABHStore = create<NABHStore>()(
       },
     }),
     {
-      name: 'nabh-evidence-storage-v3',
-      version: 3,
+      name: 'nabh-evidence-storage-v4',
+      version: 4,
       migrate: (persistedState: unknown, version: number) => {
         // When version changes, merge persisted user data with fresh nabhData
-        // Version 3 adds: hindiExplanation, youtubeVideos, trainingMaterials
-        if (version < 3) {
+        // Version 4 adds: hindiExplanation, youtubeVideos, trainingMaterials
+        if (version < 4) {
           // Return fresh data from nabhData (which includes new fields)
           return {
             ...(persistedState as NABHStore),

@@ -32,7 +32,7 @@ import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
 import { useNABHStore } from '../store/nabhStore';
 import { HOSPITAL_INFO, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
-import { getGeminiApiKey } from '../lib/supabase';
+import { getClaudeApiKey } from '../lib/supabase';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -76,63 +76,71 @@ const defaultListPrompt = NABH_ASSESSOR_PROMPT;
 
 const getContentPrompt = (config: HospitalConfig) => `You are an expert in NABH (National Accreditation Board for Hospitals and Healthcare Providers) accreditation documentation for ${config.name}.
 
-Generate detailed, ready-to-use evidence content/template for the selected evidence item.
+Generate detailed, ready-to-use BILINGUAL (English and Hindi) evidence content/template for the selected evidence item.
+
+CRITICAL: ALL content must be BILINGUAL - provide both English AND Hindi text throughout the document. For every section, heading, and content, include both languages.
 
 IMPORTANT: Every document MUST include the following structure:
 
 ================================================================================
-                              DOCUMENT HEADER
+                              DOCUMENT HEADER / दस्तावेज़ शीर्षक
 ================================================================================
-                         [HOSPITAL LOGO PLACEHOLDER]
+                         [HOSPITAL LOGO PLACEHOLDER / अस्पताल लोगो]
 
                               ${config.name.toUpperCase()}
 ================================================================================
 
-[Document Title - Centered, Bold]
+[Document Title in English]
+[दस्तावेज़ शीर्षक हिंदी में]
 --------------------------------------------------------------------------------
-Document No: [DOC-XXX-001]     |  Version: 1.0      |  Page: 1 of X
-Effective Date: [DD/MM/YYYY]   |  Review Date: [DD/MM/YYYY]
-Department: [Department Name]  |  Category: [Policy/SOP/Register/Record]
+Document No / दस्तावेज़ संख्या: [DOC-XXX-001]  |  Version / संस्करण: 1.0  |  Page / पृष्ठ: 1 of X
+Effective Date / प्रभावी तिथि: [DD/MM/YYYY]    |  Review Date / समीक्षा तिथि: [DD/MM/YYYY]
+Department / विभाग: [Department Name]          |  Category / श्रेणी: [Policy/SOP/Register/Record]
 --------------------------------------------------------------------------------
 
-[MAIN CONTENT OF THE DOCUMENT]
+[MAIN CONTENT - BILINGUAL / मुख्य सामग्री - द्विभाषी]
 
 The content should be:
 1. Professional and compliant with NABH standards
-2. Ready to be customized with hospital-specific details
-3. Include all necessary sections, fields, and formatting
+2. BILINGUAL - Every heading, instruction, and content in both English and Hindi
+3. Ready to be customized with hospital-specific details
+4. Include all necessary sections, fields, and formatting
 
-If it's a policy or SOP, include:
-- Purpose, Scope, Definitions
-- Procedure/Policy statements with numbered steps
-- Responsibilities matrix
-- References to NABH standards
-- Related documents
+If it's a policy or SOP, include (in both languages):
+- Purpose / उद्देश्य
+- Scope / दायरा
+- Definitions / परिभाषाएं
+- Procedure/Policy statements with numbered steps / प्रक्रिया/नीति विवरण
+- Responsibilities matrix / जिम्मेदारियां
+- References to NABH standards / NABH मानक संदर्भ
+- Related documents / संबंधित दस्तावेज़
 
 If it's a register or record format, include:
-- Column headers in table format
-- Sample entries
-- Instructions for filling
+- Column headers in both languages
+- Sample entries in both languages
+- Instructions for filling in both languages
 
 ================================================================================
-                              DOCUMENT FOOTER
+                    DOCUMENT FOOTER / दस्तावेज़ पादलेख
 ================================================================================
 
-PREPARED BY:                    REVIEWED BY:                   APPROVED BY:
+PREPARED BY / तैयारकर्ता:       REVIEWED BY / समीक्षाकर्ता:     APPROVED BY / अनुमोदनकर्ता:
 _____________________          _____________________          _____________________
-Name:                          Name:                          Name: ${config.qualityCoordinator}
-Designation:                   Designation:                   Designation: ${config.qualityCoordinatorDesignation}
-Date:                          Date:                          Date:
-Signature:                     Signature:                     Digital Signature: [SIGNED]
+Name / नाम:                    Name / नाम:                    Name / नाम: ${config.qualityCoordinator}
+Designation / पदनाम:           Designation / पदनाम:           Designation / पदनाम: ${config.qualityCoordinatorDesignation}
+Date / तिथि:                   Date / तिथि:                   Date / तिथि:
+Signature / हस्ताक्षर:          Signature / हस्ताक्षर:          Digital Signature / डिजिटल हस्ताक्षर: [SIGNED]
 
 --------------------------------------------------------------------------------
-                         [HOSPITAL STAMP PLACEHOLDER]
+                         [HOSPITAL STAMP / अस्पताल मुहर]
 
         This is an official document of ${config.name}.
+        यह ${config.name} का आधिकारिक दस्तावेज़ है।
         Unauthorized reproduction or distribution is prohibited.
+        अनधिकृत प्रतिलिपि या वितरण निषेध है।
 --------------------------------------------------------------------------------
 ${config.name} | ${config.address}
-Phone: ${config.phone} | Email: ${config.email} | Website: ${config.website}
+Phone / फोन: ${config.phone} | Email / ईमेल: ${config.email} | Website / वेबसाइट: ${config.website}
 ================================================================================`;
 
 // Visual evidence types for image generation
@@ -162,80 +170,85 @@ interface GeneratedImage {
   type: string;
 }
 
-// Gemini API call for text generation
-async function callGeminiText(apiKey: string, prompt: string, userMessage: string): Promise<string> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: `${prompt}\n\n${userMessage}` }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 4096,
+// Claude API call for text generation
+async function callClaudeText(apiKey: string, prompt: string, userMessage: string): Promise<string> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: `${prompt}\n\n${userMessage}`,
         },
-      }),
-    }
-  );
+      ],
+    }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error?.message || 'Failed to generate content with Gemini');
+    throw new Error(errorData.error?.message || 'Failed to generate content');
   }
 
   const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return data.content?.[0]?.text || '';
 }
 
-// Gemini API call for image generation (using Imagen 3 via Gemini)
-async function callGeminiImage(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-        },
-      }),
-    }
-  );
+// Visual placeholder generation (bilingual English/Hindi)
+// Returns a styled SVG that can be used as visual evidence
+async function generateVisualPlaceholder(
+  topic: string,
+  type: string,
+  hospitalName: string,
+  hospitalAddress: string
+): Promise<string> {
+  // Create an SVG placeholder with bilingual text (English and Hindi)
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1565C0;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0D47A1;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#bg)"/>
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || 'Failed to generate image with Gemini');
-  }
+      <!-- Hospital Header -->
+      <text x="400" y="60" font-family="Arial, sans-serif" font-size="28" fill="white" text-anchor="middle" font-weight="bold">${hospitalName}</text>
+      <text x="400" y="90" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.8">${hospitalAddress}</text>
 
-  const data = await response.json();
+      <!-- Type Badge -->
+      <rect x="300" y="120" width="200" height="40" rx="20" fill="#D32F2F"/>
+      <text x="400" y="147" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle" font-weight="bold">${type.toUpperCase()}</text>
 
-  // Extract image from response
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
-    if (part.inlineData?.mimeType?.startsWith('image/')) {
-      return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-    }
-  }
+      <!-- Main Content (English) -->
+      <text x="400" y="220" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle" font-weight="bold">${topic.substring(0, 40)}${topic.length > 40 ? '...' : ''}</text>
 
-  throw new Error('No image generated in response');
+      <!-- Hindi Translation Placeholder -->
+      <text x="400" y="280" font-family="Noto Sans Devanagari, Arial, sans-serif" font-size="20" fill="white" text-anchor="middle" opacity="0.9">हिंदी में जानकारी</text>
+
+      <!-- Content Area -->
+      <rect x="100" y="320" width="600" height="180" rx="10" fill="white" opacity="0.1"/>
+      <text x="400" y="380" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">Content Area / सामग्री क्षेत्र</text>
+      <text x="400" y="420" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.8">Customize this template with your content</text>
+      <text x="400" y="450" font-family="Noto Sans Devanagari, Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.8">इस टेम्पलेट को अपनी सामग्री के साथ अनुकूलित करें</text>
+
+      <!-- Footer -->
+      <text x="400" y="540" font-family="Arial, sans-serif" font-size="12" fill="white" text-anchor="middle" opacity="0.7">NABH Accredited | NABH मान्यता प्राप्त</text>
+      <text x="400" y="570" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle" opacity="0.5">Quality Healthcare for All | सभी के लिए गुणवत्तापूर्ण स्वास्थ्य सेवा</text>
+    </svg>
+  `;
+
+  // Convert SVG to base64 data URL
+  const base64 = btoa(unescape(encodeURIComponent(svg)));
+  return `data:image/svg+xml;base64,${base64}`;
 }
 
 export default function AIEvidenceGenerator() {
@@ -251,7 +264,7 @@ export default function AIEvidenceGenerator() {
     return saved ? JSON.parse(saved) : defaultHospitalConfig;
   });
   // API key from environment variable
-  const apiKey = getGeminiApiKey();
+  const apiKey = getClaudeApiKey();
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
   const [generatedContents, setGeneratedContents] = useState<GeneratedContent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -340,7 +353,7 @@ export default function AIEvidenceGenerator() {
     setGeneratedContents([]);
 
     try {
-      const generatedText = await callGeminiText(
+      const generatedText = await callClaudeText(
         apiKey,
         listPrompt,
         `Objective Element Description:\n\n${description}`
@@ -398,10 +411,10 @@ export default function AIEvidenceGenerator() {
       setContentProgress({ current: i + 1, total: selectedItems.length });
 
       try {
-        const content = await callGeminiText(
+        const content = await callClaudeText(
           apiKey,
           contentPrompt,
-          `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}\n\nGenerate complete, ready-to-use content/template for this evidence with the hospital header, footer, signature and stamp sections as specified.`
+          `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}\n\nGenerate complete, ready-to-use BILINGUAL (English AND Hindi) content/template for this evidence with the hospital header, footer, signature and stamp sections as specified. IMPORTANT: All content must be in both English and Hindi languages throughout the document.`
         );
 
         contents.push({
@@ -433,26 +446,14 @@ export default function AIEvidenceGenerator() {
 
     const typeLabel = visualEvidenceTypes.find(t => t.value === visualType)?.label || visualType;
 
-    const imagePrompt = `Create a professional hospital ${typeLabel.toLowerCase()} for ${hospitalConfig.name}.
-
-Topic: ${visualTopic}
-Language: ${visualLanguage}
-
-Requirements:
-- Professional healthcare/hospital design
-- Clean, readable layout
-- Use hospital colors (blue and red theme)
-- Include relevant medical/healthcare icons
-- Text should be clear and legible
-- Suitable for printing and display in a hospital setting
-- NABH compliant healthcare messaging
-- Include hospital name: ${hospitalConfig.name}
-- Address: ${hospitalConfig.address}
-
-Style: Modern, professional healthcare design with clear typography`;
-
     try {
-      const imageUrl = await callGeminiImage(apiKey, imagePrompt);
+      // Generate a placeholder visual with bilingual text
+      const imageUrl = await generateVisualPlaceholder(
+        visualTopic,
+        typeLabel,
+        hospitalConfig.name,
+        hospitalConfig.address
+      );
 
       setGeneratedImages(prev => [
         {
@@ -463,7 +464,7 @@ Style: Modern, professional healthcare design with clear typography`;
         ...prev,
       ]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate image. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to generate visual. Please try again.');
     } finally {
       setIsGeneratingImage(false);
     }
