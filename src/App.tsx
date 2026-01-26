@@ -8,6 +8,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ObjectiveList from './components/ObjectiveList';
+import ObjectiveDetailPage from './components/ObjectiveDetailPage';
 import AIEvidenceGenerator from './components/AIEvidenceGenerator';
 import LandingPage from './components/LandingPage';
 import Footer from './components/Footer';
@@ -228,10 +229,15 @@ function MainContent() {
   const location = useLocation();
   const { selectedChapter } = useNABHStore();
   const isAIPage = location.pathname === '/ai-generator';
+  const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
   if (isAIPage) {
     return <AIEvidenceGenerator />;
+  }
+
+  if (isObjectiveDetailPage) {
+    return <ObjectiveDetailPage />;
   }
 
   if (isLandingPage) {
@@ -246,8 +252,9 @@ function AppContent() {
   const location = useLocation();
   const { selectedChapter } = useNABHStore();
   const isAIPage = location.pathname === '/ai-generator';
+  const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
   const isLandingPage = location.pathname === '/' && !selectedChapter;
-  const showSidebar = !isAIPage && !isLandingPage;
+  const showSidebar = !isAIPage && !isLandingPage && !isObjectiveDetailPage;
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -293,6 +300,7 @@ function App() {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
+          <Route path="/objective/:chapterId/:objectiveId" element={<AppContent />} />
           <Route path="/*" element={<AppContent />} />
         </Routes>
       </BrowserRouter>

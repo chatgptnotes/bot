@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -18,9 +17,9 @@ import Chip from '@mui/material/Chip';
 import IconButton from '@mui/material/IconButton';
 import Icon from '@mui/material/Icon';
 import Tooltip from '@mui/material/Tooltip';
+import { useNavigate } from 'react-router-dom';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status } from '../types/nabh';
-import ObjectiveDetail from './ObjectiveDetail';
 
 const statusColors: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
   Completed: 'success',
@@ -41,6 +40,7 @@ const priorityColors: Record<string, 'default' | 'error' | 'warning' | 'info'> =
 };
 
 export default function ObjectiveList() {
+  const navigate = useNavigate();
   const {
     chapters,
     selectedChapter,
@@ -54,18 +54,14 @@ export default function ObjectiveList() {
     setSelectedObjective,
   } = useNABHStore();
 
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedObj, setSelectedObj] = useState<string | null>(null);
-
   const chapter = chapters.find((c) => c.id === selectedChapter);
   if (!chapter) return null;
 
   const objectives = getFilteredObjectives(chapter.id);
 
   const handleViewDetail = (objectiveId: string) => {
-    setSelectedObj(objectiveId);
     setSelectedObjective(objectiveId);
-    setDetailOpen(true);
+    navigate(`/objective/${chapter.id}/${objectiveId}`);
   };
 
   return (
@@ -229,13 +225,6 @@ export default function ObjectiveList() {
           </Typography>
         </Box>
       )}
-
-      <ObjectiveDetail
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        chapterId={chapter.id}
-        objectiveId={selectedObj}
-      />
     </Box>
   );
 }
