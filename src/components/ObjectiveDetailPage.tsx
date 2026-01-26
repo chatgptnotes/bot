@@ -855,43 +855,39 @@ Generate the complete HTML with all sections filled in appropriately based on th
   const postProcessHTML = (html: string): string => {
     let processed = html;
 
-    // Replace any logo placeholder with actual logo (reduced margin - 5px instead of 10px)
+    // COMPLETELY REPLACE the entire header section
+    processed = processed.replace(
+      /<div class="header"[^>]*>[\s\S]*?<\/div>/gi,
+      `<div class="header" style="text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 10px; margin-bottom: 20px;">
+        <img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin: 0 auto 5px; display: block;" onerror="this.style.display='none'">
+        <div style="font-size: 11px; color: #666;">${hospitalConfig.address} | Phone: +91-9373111709</div>
+      </div>`
+    );
+
+    // Replace any remaining logo placeholders
     processed = processed.replace(
       /<div class="logo-area">[\s\S]*?<\/div>/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" class="logo" style="width: 180px; height: auto; margin: 0 auto 5px; display: block;" onerror="this.style.display='none'">`
+      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin: 0 auto 5px; display: block;">`
     );
-
-    // Replace "HOSPITAL<br>LOGO" or similar placeholders
     processed = processed.replace(
       /HOSPITAL\s*(<br\s*\/?>)?\s*LOGO/gi,
-      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto; margin-bottom: 5px;">`
+      `<img src="${logoUrl}" alt="Hope Hospital" style="width: 180px; height: auto;">`
     );
 
-    // Remove tagline "Assured | Committed | Proficient"
+    // Remove ALL instances of tagline
     processed = processed.replace(/<div class="tagline"[^>]*>[\s\S]*?<\/div>/gi, '');
     processed = processed.replace(/Assured\s*\|\s*Committed\s*\|\s*Proficient/gi, '');
+    processed = processed.replace(/<[^>]*>Assured[^<]*Proficient<\/[^>]*>/gi, '');
 
-    // Fix dates - replace empty or placeholder dates
+    // Fix dates
     processed = processed.replace(/Date:\s*<\/div>/gi, `Date: ${effectiveDate}</div>`);
     processed = processed.replace(/Date:\s*$/gm, `Date: ${effectiveDate}`);
     processed = processed.replace(/\[DD\/MM\/YYYY\]/g, effectiveDate);
     processed = processed.replace(/\[Date\]/g, effectiveDate);
+    processed = processed.replace(/Effective Date<\/th><td>[^<]*<\/td>/gi, `Effective Date</th><td>${effectiveDate}</td>`);
+    processed = processed.replace(/Review Date<\/th><td>[^<]*<\/td>/gi, `Review Date</th><td>${reviewDate}</td>`);
 
-    // Fix effective and review dates in tables
-    processed = processed.replace(
-      /<td>(\s*)(\[?Effective Date\]?|DD\/MM\/YYYY)(\s*)<\/td>/gi,
-      `<td>${effectiveDate}</td>`
-    );
-    processed = processed.replace(
-      /Effective Date<\/th><td>[^<]*<\/td>/gi,
-      `Effective Date</th><td>${effectiveDate}</td>`
-    );
-    processed = processed.replace(
-      /Review Date<\/th><td>[^<]*<\/td>/gi,
-      `Review Date</th><td>${reviewDate}</td>`
-    );
-
-    // Fix signature sections - replace generic names with actual staff
+    // Fix signature sections
     processed = processed.replace(
       /Name:\s*(Quality Manager|Quality Officer|Staff|Prepared By Staff|\[Name\])?(\s*<br|\s*$)/gi,
       `Name: Jagruti$2`
@@ -900,8 +896,6 @@ Generate the complete HTML with all sections filled in appropriately based on th
       /Designation:\s*(Quality Officer|Staff|\[Designation\])?(\s*<br|\s*$)/gi,
       `Designation: Quality Manager / HR$2`
     );
-
-    // Add signature lines if missing
     processed = processed.replace(
       /Signature:\s*<\/td>/gi,
       `Signature: <div style="font-family: 'Brush Script MT', cursive; font-size: 16px; color: #0D47A1; margin-top: 5px;">Sd/-</div></td>`
@@ -920,19 +914,22 @@ Generate the complete HTML with all sections filled in appropriately based on th
       );
     }
 
-    // Fix footer - use "Hope Hospital" and add mobile number
+    // COMPLETELY REPLACE footer
     processed = processed.replace(
-      /<div class="footer">([\s\S]*?)<\/div>/gi,
-      `<div class="footer">
+      /<div class="footer"[^>]*>[\s\S]*?<\/div>/gi,
+      `<div class="footer" style="margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666;">
         <strong>Hope Hospital</strong> | ${hospitalConfig.address}<br>
         Phone: +91-9373111709 | Email: ${hospitalConfig.email} | Website: ${hospitalConfig.website}<br>
         This is a controlled document. Unauthorized copying or distribution is prohibited.
       </div>`
     );
 
-    // Fix stamp area
+    // Also replace footer text content directly
+    processed = processed.replace(/Dr\.\s*Murali's\s*Hope\s*Hospital/gi, 'Hope Hospital');
+
+    // COMPLETELY REPLACE stamp area
     processed = processed.replace(
-      /<div class="stamp-area">([\s\S]*?)<\/div>/gi,
+      /<div class="stamp-area"[^>]*>[\s\S]*?<\/div>/gi,
       `<div class="stamp-area" style="border: 2px solid #1565C0; border-radius: 10px; padding: 15px; text-align: center; margin: 20px 0; background: #f8f9fa;">
         <div style="font-weight: bold; color: #1565C0; font-size: 14px;">DR. MURALI'S HOPE HOSPITAL</div>
         <div style="font-weight: 600; margin-top: 5px;">QUALITY MANAGEMENT SYSTEM</div>
@@ -940,7 +937,7 @@ Generate the complete HTML with all sections filled in appropriately based on th
       </div>`
     );
 
-    // Reduce logo margin in any remaining places
+    // Fix margins
     processed = processed.replace(/margin:\s*0\s*auto\s*10px/gi, 'margin: 0 auto 5px');
     processed = processed.replace(/margin-bottom:\s*10px/gi, 'margin-bottom: 5px');
 

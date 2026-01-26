@@ -64,6 +64,8 @@ export interface ObjectiveElement {
   youtubeVideos: YouTubeVideo[]; // YouTube training videos
   trainingMaterials: TrainingMaterial[]; // Internal training evidence
   sopDocuments: SOPDocument[];  // Hospital SOPs (Word/PDF documents)
+  infographicSvg?: string;      // SVG content for bilingual infographic
+  infographicDataUrl?: string;  // Base64 data URL for infographic storage
   priority: Priority;
   assignee: string;
   status: Status;

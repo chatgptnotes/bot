@@ -15,7 +15,7 @@ export const getClaudeApiKey = () => {
   return import.meta.env.VITE_CLAUDE_API_KEY || '';
 };
 
-// Helper function to get Gemini API key
+// Helper function to get Gemini API key (from environment variable only)
 export const getGeminiApiKey = () => {
-  return import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDq0UDfY02uLaxMhDWapiJSL_YVPCDAea4';
+  return import.meta.env.VITE_GEMINI_API_KEY || '';
 };
