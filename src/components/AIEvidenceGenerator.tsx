@@ -172,33 +172,55 @@ interface GeneratedImage {
 
 // Claude API call for text generation
 async function callClaudeText(apiKey: string, prompt: string, userMessage: string): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
-      messages: [
-        {
-          role: 'user',
-          content: `${prompt}\n\n${userMessage}`,
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || 'Failed to generate content');
+  // Validate API key
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('Claude API key is not configured. Please add VITE_CLAUDE_API_KEY to your .env file and restart the development server.');
   }
 
-  const data = await response.json();
-  return data.content?.[0]?.text || '';
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [
+          {
+            role: 'user',
+            content: `${prompt}\n\n${userMessage}`,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || `API request failed with status ${response.status}`;
+
+      if (response.status === 401) {
+        throw new Error('Invalid API key. Please check your VITE_CLAUDE_API_KEY in the .env file.');
+      } else if (response.status === 403) {
+        throw new Error('API access forbidden. The API key may not have the required permissions or CORS may be blocking the request.');
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data.content?.[0]?.text || '';
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to Claude API. Please check your internet connection.');
+    }
+    throw err;
+  }
 }
 
 // Visual placeholder generation (bilingual English/Hindi)
@@ -521,6 +543,23 @@ export default function AIEvidenceGenerator() {
             color="success"
             variant="outlined"
           />
+          {apiKey ? (
+            <Chip
+              icon={<Icon>check_circle</Icon>}
+              label="API Ready"
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          ) : (
+            <Chip
+              icon={<Icon>warning</Icon>}
+              label="API Key Missing"
+              color="error"
+              variant="outlined"
+              size="small"
+            />
+          )}
           <Button
             variant="outlined"
             startIcon={<Icon>settings</Icon>}
@@ -529,6 +568,15 @@ export default function AIEvidenceGenerator() {
             Hospital Settings
           </Button>
         </Box>
+
+        {/* API Key Warning */}
+        {!apiKey && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Claude API Key not configured.</strong> Add <code>VITE_CLAUDE_API_KEY</code> to your <code>.env</code> file and restart the development server.
+            </Typography>
+          </Alert>
+        )}
 
         {/* Tabs for Document vs Visual Evidence */}
         <Tabs
