@@ -27,7 +27,7 @@ export const HOSPITAL_INFO: HospitalInfo = {
   phone: '+91-XXXX-XXXXXX',
   email: 'info@hopehospital.com',
   website: 'www.hopehospital.com',
-  logo: '/assets/hope-hospital-logo.png',
+  logo: '/hospital-logo.png',
 };
 
 // NABH Team Structure

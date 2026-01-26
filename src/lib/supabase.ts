@@ -14,3 +14,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export const getClaudeApiKey = () => {
   return import.meta.env.VITE_CLAUDE_API_KEY || '';
 };
+
+// Helper function to get Gemini API key
+export const getGeminiApiKey = () => {
+  return import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDq0UDfY02uLaxMhDWapiJSL_YVPCDAea4';
+};

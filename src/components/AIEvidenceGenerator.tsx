@@ -32,7 +32,7 @@ import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
 import { useNABHStore } from '../store/nabhStore';
 import { HOSPITAL_INFO, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
-import { getClaudeApiKey } from '../lib/supabase';
+import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -182,12 +182,313 @@ interface EvidenceItem {
 interface GeneratedContent {
   evidenceItem: string;
   content: string;
+  editableText: string;
 }
 
 interface GeneratedImage {
   prompt: string;
   imageUrl: string;
   type: string;
+}
+
+// Helper function to extract editable text from HTML content
+function extractTextFromHTML(html: string): string {
+  // Create a temporary div to parse HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+
+  // Remove script and style elements
+  const scripts = tempDiv.querySelectorAll('script, style');
+  scripts.forEach(el => el.remove());
+
+  // Get text content with structure preserved
+  const sections: string[] = [];
+
+  // Extract title
+  const title = tempDiv.querySelector('.doc-title, h1, title');
+  if (title) {
+    sections.push(`TITLE: ${title.textContent?.trim() || ''}`);
+    sections.push('');
+  }
+
+  // Extract document info table
+  const infoTable = tempDiv.querySelector('.info-table');
+  if (infoTable) {
+    sections.push('DOCUMENT INFORMATION:');
+    const rows = infoTable.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('th, td');
+      const rowText: string[] = [];
+      cells.forEach((cell, i) => {
+        if (i % 2 === 0) {
+          rowText.push(`${cell.textContent?.trim()}: `);
+        } else {
+          rowText[rowText.length - 1] += cell.textContent?.trim();
+        }
+      });
+      sections.push(rowText.join(' | '));
+    });
+    sections.push('');
+  }
+
+  // Extract sections
+  const sectionElements = tempDiv.querySelectorAll('.section');
+  sectionElements.forEach(section => {
+    const sectionTitle = section.querySelector('.section-title');
+    const sectionContent = section.querySelector('.section-content');
+
+    if (sectionTitle) {
+      sections.push(`## ${sectionTitle.textContent?.trim()}`);
+    }
+    if (sectionContent) {
+      sections.push(sectionContent.textContent?.trim() || '');
+    }
+    sections.push('');
+  });
+
+  // Extract tables
+  const tables = tempDiv.querySelectorAll('.data-table');
+  tables.forEach(table => {
+    const headers = table.querySelectorAll('th');
+    const headerRow = Array.from(headers).map(h => h.textContent?.trim()).join(' | ');
+    if (headerRow) {
+      sections.push(headerRow);
+      sections.push('-'.repeat(headerRow.length));
+    }
+
+    const rows = table.querySelectorAll('tbody tr, tr:not(:first-child)');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length > 0) {
+        sections.push(Array.from(cells).map(c => c.textContent?.trim()).join(' | '));
+      }
+    });
+    sections.push('');
+  });
+
+  // If no structured content found, get all text
+  if (sections.length < 3) {
+    return tempDiv.textContent?.trim() || html;
+  }
+
+  return sections.join('\n');
+}
+
+// Helper function to update HTML content with edited text
+function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string }): string {
+  // Parse the edited text to extract sections
+  const lines = editedText.split('\n');
+
+  let title = '';
+  const sections: { title: string; content: string }[] = [];
+  let currentSection = { title: '', content: '' };
+  let inSection = false;
+
+  lines.forEach(line => {
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.startsWith('TITLE:')) {
+      title = trimmedLine.replace('TITLE:', '').trim();
+    } else if (trimmedLine.startsWith('## ')) {
+      if (inSection && currentSection.title) {
+        sections.push({ ...currentSection });
+      }
+      currentSection = { title: trimmedLine.replace('## ', ''), content: '' };
+      inSection = true;
+    } else if (inSection && trimmedLine) {
+      currentSection.content += (currentSection.content ? '\n' : '') + trimmedLine;
+    }
+  });
+
+  if (inSection && currentSection.title) {
+    sections.push(currentSection);
+  }
+
+  // Generate updated HTML
+  const sectionHTML = sections.map(s => `
+    <div class="section">
+      <div class="section-title">${s.title}</div>
+      <div class="section-content">${s.content.split('\n').map(p => `<p>${p}</p>`).join('')}</div>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${title || 'Evidence Document'} - ${hospitalConfig.name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo-area { width: 120px; height: 120px; margin: 0 auto 10px; border: 2px solid #1565C0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; font-size: 14px; font-weight: bold; }
+    .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; margin: 10px 0 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: #1565C0; color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .info-table th, .info-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .info-table th { background: #f5f5f5; font-weight: 600; width: 25%; }
+    .section { margin: 20px 0; }
+    .section-title { background: #e3f2fd; padding: 8px 12px; font-weight: bold; color: #1565C0; border-left: 4px solid #1565C0; margin-bottom: 10px; }
+    .section-content { padding: 10px 15px; }
+    .section-content p { margin-bottom: 8px; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
+    .auth-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .auth-table th { background: #1565C0; color: white; padding: 10px; text-align: center; }
+    .auth-table td { border: 1px solid #ddd; padding: 10px; text-align: center; vertical-align: top; min-height: 80px; }
+    @media print { body { padding: 0; } .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${hospitalConfig.name}</div>
+    <div class="hospital-address">${hospitalConfig.address}</div>
+  </div>
+
+  <div class="doc-title">${title || 'Evidence Document'}</div>
+
+  <table class="info-table">
+    <tr><th>Document No</th><td>DOC-001</td><th>Version</th><td>1.0</td></tr>
+    <tr><th>Effective Date</th><td>${new Date().toLocaleDateString()}</td><th>Review Date</th><td>${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString()}</td></tr>
+  </table>
+
+  ${sectionHTML}
+
+  <table class="auth-table">
+    <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
+    <tr>
+      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
+      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
+      <td>Name: ${hospitalConfig.qualityCoordinator}<br>Designation: ${hospitalConfig.qualityCoordinatorDesignation}<br>Date:<br><br>Signature:</td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <strong>${hospitalConfig.name}</strong> | ${hospitalConfig.address}<br>
+    Phone: ${hospitalConfig.phone} | Email: ${hospitalConfig.email} | Website: ${hospitalConfig.website}<br>
+    This is a controlled document. Unauthorized copying or distribution is prohibited.
+  </div>
+</body>
+</html>`;
+}
+
+// Gemini API call for text generation
+async function callGeminiText(apiKey: string, prompt: string, userMessage: string): Promise<string> {
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('Gemini API key is not configured.');
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `${prompt}\n\n${userMessage}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 8192,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Gemini API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to Gemini API.');
+    }
+    throw err;
+  }
+}
+
+// Gemini API call for image generation using Imagen
+async function callGeminiImageGen(apiKey: string, prompt: string): Promise<string> {
+  if (!apiKey || apiKey.trim() === '') {
+    throw new Error('Gemini API key is not configured.');
+  }
+
+  try {
+    // Use Gemini's image generation capability
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Generate a detailed SVG code for a professional hospital signage/poster with the following requirements:
+
+Topic: ${prompt}
+
+Requirements:
+- Create a complete, valid SVG with dimensions 800x600
+- Use professional healthcare color scheme (blues, greens, whites)
+- Include bilingual text (English and Hindi)
+- Add appropriate healthcare icons/symbols
+- Make it print-ready and visually appealing
+- Include proper text formatting and hierarchy
+- Add a professional border/frame
+
+Return ONLY the complete SVG code, starting with <svg and ending with </svg>. No explanation or markdown.`,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.8,
+            maxOutputTokens: 8192,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Gemini API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    let svgContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Extract SVG from response if wrapped in markdown
+    const svgMatch = svgContent.match(/<svg[\s\S]*<\/svg>/i);
+    if (svgMatch) {
+      svgContent = svgMatch[0];
+    }
+
+    // Convert SVG to data URL
+    const base64 = btoa(unescape(encodeURIComponent(svgContent)));
+    return `data:image/svg+xml;base64,${base64}`;
+  } catch (err) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to Gemini API.');
+    }
+    throw err;
+  }
 }
 
 // Claude API call for text generation
@@ -305,8 +606,9 @@ export default function AIEvidenceGenerator() {
     const saved = localStorage.getItem('hospital_config');
     return saved ? JSON.parse(saved) : defaultHospitalConfig;
   });
-  // API key from environment variable
-  const apiKey = getClaudeApiKey();
+  // API keys from environment variables
+  const claudeApiKey = getClaudeApiKey();
+  const geminiApiKey = getGeminiApiKey();
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
   const [generatedContents, setGeneratedContents] = useState<GeneratedContent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -322,6 +624,9 @@ export default function AIEvidenceGenerator() {
   const [visualLanguage, setVisualLanguage] = useState('English');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // Document view mode state (for each document: 0 = HTML preview, 1 = Edit text)
+  const [documentViewModes, setDocumentViewModes] = useState<Record<number, number>>({});
 
   const selectedChapterData = chapters.find(c => c.id === selectedChapter);
   const objectives = selectedChapterData?.objectives || [];
@@ -395,11 +700,37 @@ export default function AIEvidenceGenerator() {
     setGeneratedContents([]);
 
     try {
-      const generatedText = await callClaudeText(
-        apiKey,
-        listPrompt,
-        `Objective Element Description:\n\n${description}`
-      );
+      let generatedText: string;
+
+      // Try Gemini first, fallback to Claude
+      if (geminiApiKey) {
+        try {
+          generatedText = await callGeminiText(
+            geminiApiKey,
+            listPrompt,
+            `Objective Element Description:\n\n${description}`
+          );
+        } catch (geminiErr) {
+          console.warn('Gemini failed, trying Claude:', geminiErr);
+          if (claudeApiKey) {
+            generatedText = await callClaudeText(
+              claudeApiKey,
+              listPrompt,
+              `Objective Element Description:\n\n${description}`
+            );
+          } else {
+            throw geminiErr;
+          }
+        }
+      } else if (claudeApiKey) {
+        generatedText = await callClaudeText(
+          claudeApiKey,
+          listPrompt,
+          `Objective Element Description:\n\n${description}`
+        );
+      } else {
+        throw new Error('No API key configured. Please configure either Gemini or Claude API key.');
+      }
 
       const items = parseEvidenceList(generatedText);
       setEvidenceItems(items);
@@ -452,23 +783,45 @@ export default function AIEvidenceGenerator() {
       const item = selectedItems[i];
       setContentProgress({ current: i + 1, total: selectedItems.length });
 
+      const userMessage = `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`;
+
       try {
-        const content = await callClaudeText(
-          apiKey,
-          contentPrompt,
-          `Objective Element: ${description}\n\nEvidence Item to Generate:\n${item.text}\n\nGenerate complete, ready-to-use content/template for this evidence in ENGLISH ONLY (internal document) with the hospital header, footer, signature and stamp sections as specified.`
-        );
+        let content: string;
+
+        // Try Gemini first, fallback to Claude
+        if (geminiApiKey) {
+          try {
+            content = await callGeminiText(geminiApiKey, contentPrompt, userMessage);
+          } catch (geminiErr) {
+            console.warn('Gemini failed for content generation, trying Claude:', geminiErr);
+            if (claudeApiKey) {
+              content = await callClaudeText(claudeApiKey, contentPrompt, userMessage);
+            } else {
+              throw geminiErr;
+            }
+          }
+        } else if (claudeApiKey) {
+          content = await callClaudeText(claudeApiKey, contentPrompt, userMessage);
+        } else {
+          throw new Error('No API key configured.');
+        }
+
+        // Extract editable text from the generated HTML content
+        const editableText = extractTextFromHTML(content);
 
         contents.push({
           evidenceItem: item.text,
           content,
+          editableText,
         });
 
         setGeneratedContents([...contents]);
       } catch (err) {
+        const errorContent = `Error generating content: ${err instanceof Error ? err.message : 'Unknown error'}`;
         contents.push({
           evidenceItem: item.text,
-          content: `Error generating content: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          content: errorContent,
+          editableText: errorContent,
         });
         setGeneratedContents([...contents]);
       }
@@ -489,13 +842,36 @@ export default function AIEvidenceGenerator() {
     const typeLabel = visualEvidenceTypes.find(t => t.value === visualType)?.label || visualType;
 
     try {
-      // Generate a placeholder visual with bilingual text
-      const imageUrl = await generateVisualPlaceholder(
-        visualTopic,
-        typeLabel,
-        hospitalConfig.name,
-        hospitalConfig.address
-      );
+      let imageUrl: string;
+
+      // Try Gemini API first for AI-generated visual
+      if (geminiApiKey) {
+        try {
+          const fullPrompt = `${typeLabel} for ${hospitalConfig.name}: ${visualTopic}.
+Hospital Address: ${hospitalConfig.address}
+Language: ${visualLanguage}
+Style: Professional healthcare signage, NABH compliant`;
+
+          imageUrl = await callGeminiImageGen(geminiApiKey, fullPrompt);
+        } catch (geminiError) {
+          console.warn('Gemini image generation failed, falling back to placeholder:', geminiError);
+          // Fallback to placeholder if Gemini fails
+          imageUrl = await generateVisualPlaceholder(
+            visualTopic,
+            typeLabel,
+            hospitalConfig.name,
+            hospitalConfig.address
+          );
+        }
+      } else {
+        // Use placeholder if no Gemini API key
+        imageUrl = await generateVisualPlaceholder(
+          visualTopic,
+          typeLabel,
+          hospitalConfig.name,
+          hospitalConfig.address
+        );
+      }
 
       setGeneratedImages(prev => [
         {
@@ -521,6 +897,28 @@ export default function AIEvidenceGenerator() {
     document.body.removeChild(link);
   };
 
+  // Handle text editing and update HTML
+  const handleTextEdit = (index: number, newText: string) => {
+    setGeneratedContents(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        editableText: newText,
+        content: updateHTMLWithText(updated[index].content, newText, hospitalConfig),
+      };
+      return updated;
+    });
+  };
+
+  // Toggle document view mode (reserved for future use)
+  const _toggleDocumentViewMode = (index: number) => {
+    setDocumentViewModes(prev => ({
+      ...prev,
+      [index]: prev[index] === 1 ? 0 : 1,
+    }));
+  };
+  void _toggleDocumentViewMode; // Suppress unused variable warning
+
   const handleCopyContent = (content: string) => {
     navigator.clipboard.writeText(content);
   };
@@ -532,9 +930,53 @@ export default function AIEvidenceGenerator() {
     navigator.clipboard.writeText(allContent);
   };
 
-  // Check if content is HTML
+  // Check if content is HTML - more robust detection
   const isHTMLContent = (content: string): boolean => {
-    return content.trim().startsWith('<!DOCTYPE html>') || content.trim().startsWith('<html');
+    const trimmed = content.trim();
+    return trimmed.includes('<!DOCTYPE html>') ||
+           trimmed.includes('<html') ||
+           (trimmed.includes('<head>') && trimmed.includes('<body>')) ||
+           (trimmed.includes('<style>') && trimmed.includes('</style>'));
+  };
+
+  // Extract HTML content from mixed response
+  const extractHTMLContent = (content: string): string => {
+    const trimmed = content.trim();
+
+    // If starts with DOCTYPE or html tag, return as is
+    if (trimmed.startsWith('<!DOCTYPE html>') || trimmed.startsWith('<html')) {
+      return trimmed;
+    }
+
+    // Try to find the HTML document in the response
+    const doctypeIndex = trimmed.indexOf('<!DOCTYPE html>');
+    if (doctypeIndex !== -1) {
+      return trimmed.substring(doctypeIndex);
+    }
+
+    const htmlIndex = trimmed.indexOf('<html');
+    if (htmlIndex !== -1) {
+      return trimmed.substring(htmlIndex);
+    }
+
+    // If no full document, wrap content in basic HTML structure
+    if (trimmed.includes('<style>') || trimmed.includes('<div') || trimmed.includes('<table')) {
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+${trimmed}
+</body>
+</html>`;
+    }
+
+    return trimmed;
   };
 
   // Print content handler
@@ -542,7 +984,7 @@ export default function AIEvidenceGenerator() {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       if (isHTMLContent(content)) {
-        printWindow.document.write(content);
+        printWindow.document.write(extractHTMLContent(content));
       } else {
         printWindow.document.write(`
           <!DOCTYPE html>
@@ -568,7 +1010,7 @@ export default function AIEvidenceGenerator() {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       if (isHTMLContent(content)) {
-        printWindow.document.write(content);
+        printWindow.document.write(extractHTMLContent(content));
       } else {
         printWindow.document.write(`
           <!DOCTYPE html>
@@ -596,7 +1038,7 @@ export default function AIEvidenceGenerator() {
     const previewWindow = window.open('', '_blank');
     if (previewWindow) {
       if (isHTMLContent(content)) {
-        previewWindow.document.write(content);
+        previewWindow.document.write(extractHTMLContent(content));
       } else {
         previewWindow.document.write(`
           <!DOCTYPE html>
@@ -646,15 +1088,25 @@ export default function AIEvidenceGenerator() {
             color="success"
             variant="outlined"
           />
-          {apiKey ? (
+          {geminiApiKey && (
             <Chip
               icon={<Icon>check_circle</Icon>}
-              label="API Ready"
+              label="Gemini AI"
+              color="success"
+              variant="outlined"
+              size="small"
+            />
+          )}
+          {claudeApiKey && (
+            <Chip
+              icon={<Icon>check_circle</Icon>}
+              label="Claude AI"
               color="primary"
               variant="outlined"
               size="small"
             />
-          ) : (
+          )}
+          {!geminiApiKey && !claudeApiKey && (
             <Chip
               icon={<Icon>warning</Icon>}
               label="API Key Missing"
@@ -673,10 +1125,17 @@ export default function AIEvidenceGenerator() {
         </Box>
 
         {/* API Key Warning */}
-        {!apiKey && (
+        {!geminiApiKey && !claudeApiKey && (
           <Alert severity="error" sx={{ mb: 2 }}>
             <Typography variant="body2">
-              <strong>Claude API Key not configured.</strong> Add <code>VITE_CLAUDE_API_KEY</code> to your <code>.env</code> file and restart the development server.
+              <strong>No API keys configured.</strong> Add <code>VITE_GEMINI_API_KEY</code> or <code>VITE_CLAUDE_API_KEY</code> to your <code>.env</code> file.
+            </Typography>
+          </Alert>
+        )}
+        {geminiApiKey && !claudeApiKey && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              Using <strong>Gemini AI</strong> for content generation. Claude AI available as backup if configured.
             </Typography>
           </Alert>
         )}
@@ -1142,115 +1601,188 @@ export default function AIEvidenceGenerator() {
                           </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                          {/* Action buttons for content */}
-                          <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'flex-end' }}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<Icon>visibility</Icon>}
-                              onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                          {/* View mode tabs and action buttons */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Tabs
+                              value={documentViewModes[index] || 0}
+                              onChange={(_, newValue) => setDocumentViewModes(prev => ({ ...prev, [index]: newValue }))}
+                              sx={{ minHeight: 36 }}
                             >
-                              Preview
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<Icon>print</Icon>}
-                              onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
-                            >
-                              Print
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              startIcon={<Icon>picture_as_pdf</Icon>}
-                              onClick={() => handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`)}
-                            >
-                              Download PDF
-                            </Button>
+                              <Tab
+                                icon={<Icon sx={{ fontSize: 18 }}>article</Icon>}
+                                iconPosition="start"
+                                label="HTML Preview"
+                                sx={{ minHeight: 36, py: 0.5 }}
+                              />
+                              <Tab
+                                icon={<Icon sx={{ fontSize: 18 }}>edit_note</Icon>}
+                                iconPosition="start"
+                                label="Edit Text"
+                                sx={{ minHeight: 36, py: 0.5 }}
+                              />
+                            </Tabs>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Icon>visibility</Icon>}
+                                onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                              >
+                                Preview
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<Icon>print</Icon>}
+                                onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                              >
+                                Print
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                startIcon={<Icon>picture_as_pdf</Icon>}
+                                onClick={() => handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`)}
+                              >
+                                Download PDF
+                              </Button>
+                            </Box>
                           </Box>
 
-                          {/* Content display - render HTML or plain text */}
-                          {isHTMLContent(gc.content) ? (
-                            <Paper
-                              variant="outlined"
-                              sx={{
-                                p: 0,
-                                bgcolor: 'white',
-                                maxHeight: 600,
-                                overflow: 'auto',
-                              }}
-                            >
-                              <Box
+                          {/* Tab 0: HTML Preview */}
+                          {(documentViewModes[index] || 0) === 0 && (
+                            <>
+                              {isHTMLContent(gc.content) ? (
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 0,
+                                    bgcolor: 'white',
+                                    maxHeight: 600,
+                                    overflow: 'auto',
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      '& iframe': {
+                                        width: '100%',
+                                        height: '500px',
+                                        border: 'none',
+                                        backgroundColor: 'white',
+                                      },
+                                    }}
+                                  >
+                                    <iframe
+                                      srcDoc={extractHTMLContent(gc.content)}
+                                      title={`Evidence ${index + 1}`}
+                                      sandbox="allow-same-origin allow-popups"
+                                      style={{ display: 'block' }}
+                                    />
+                                  </Box>
+                                </Paper>
+                              ) : (
+                                <>
+                                  <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
+                                    {hospitalConfig.logo ? (
+                                      <img
+                                        src={hospitalConfig.logo}
+                                        alt="Hospital Logo"
+                                        style={{ height: 60, objectFit: 'contain', marginBottom: 8 }}
+                                      />
+                                    ) : (
+                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                                        <Icon color="primary">local_hospital</Icon>
+                                        <Typography variant="body2" color="text.secondary">[Hospital Logo]</Typography>
+                                      </Box>
+                                    )}
+                                    <Typography variant="h6" fontWeight={600}>{hospitalConfig.name}</Typography>
+                                  </Box>
+                                  <Paper
+                                    variant="outlined"
+                                    sx={{
+                                      p: 2,
+                                      bgcolor: 'grey.50',
+                                      maxHeight: 500,
+                                      overflow: 'auto',
+                                      whiteSpace: 'pre-wrap',
+                                      fontFamily: 'monospace',
+                                      fontSize: '0.875rem',
+                                      lineHeight: 1.6,
+                                    }}
+                                  >
+                                    {gc.content}
+                                  </Paper>
+                                  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {hospitalConfig.address}
+                                    </Typography>
+                                    <Divider sx={{ my: 1 }} />
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                      <Chip
+                                        size="small"
+                                        icon={<Icon fontSize="small">draw</Icon>}
+                                        label={`Signed: ${hospitalConfig.qualityCoordinator}`}
+                                        variant="outlined"
+                                      />
+                                      <Chip
+                                        size="small"
+                                        icon={<Icon fontSize="small">verified</Icon>}
+                                        label="Official Hospital Stamp"
+                                        color="primary"
+                                        variant="outlined"
+                                      />
+                                    </Box>
+                                  </Box>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {/* Tab 1: Edit Text */}
+                          {(documentViewModes[index] || 0) === 1 && (
+                            <Box>
+                              <Alert severity="info" sx={{ mb: 2 }}>
+                                <Typography variant="body2">
+                                  Edit the text below. Changes will automatically update the HTML document.
+                                  Use <strong>## Section Title</strong> format to create sections.
+                                </Typography>
+                              </Alert>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={15}
+                                maxRows={25}
+                                value={gc.editableText}
+                                onChange={(e) => handleTextEdit(index, e.target.value)}
                                 sx={{
-                                  '& iframe': {
-                                    width: '100%',
-                                    height: '500px',
-                                    border: 'none',
+                                  '& .MuiInputBase-root': {
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.875rem',
+                                    lineHeight: 1.6,
                                   },
                                 }}
-                              >
-                                <iframe
-                                  srcDoc={gc.content}
-                                  title={`Evidence ${index + 1}`}
-                                  sandbox="allow-same-origin"
-                                />
+                                placeholder="Edit document text here..."
+                              />
+                              <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Icon>content_copy</Icon>}
+                                  onClick={() => handleCopyContent(gc.editableText)}
+                                >
+                                  Copy Text
+                                </Button>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<Icon>article</Icon>}
+                                  onClick={() => setDocumentViewModes(prev => ({ ...prev, [index]: 0 }))}
+                                >
+                                  View Updated HTML
+                                </Button>
                               </Box>
-                            </Paper>
-                          ) : (
-                            <>
-                              <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
-                                {hospitalConfig.logo ? (
-                                  <img
-                                    src={hospitalConfig.logo}
-                                    alt="Hospital Logo"
-                                    style={{ height: 60, objectFit: 'contain', marginBottom: 8 }}
-                                  />
-                                ) : (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
-                                    <Icon color="primary">local_hospital</Icon>
-                                    <Typography variant="body2" color="text.secondary">[Hospital Logo]</Typography>
-                                  </Box>
-                                )}
-                                <Typography variant="h6" fontWeight={600}>{hospitalConfig.name}</Typography>
-                              </Box>
-                              <Paper
-                                variant="outlined"
-                                sx={{
-                                  p: 2,
-                                  bgcolor: 'grey.50',
-                                  maxHeight: 500,
-                                  overflow: 'auto',
-                                  whiteSpace: 'pre-wrap',
-                                  fontFamily: 'monospace',
-                                  fontSize: '0.875rem',
-                                  lineHeight: 1.6,
-                                }}
-                              >
-                                {gc.content}
-                              </Paper>
-                              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
-                                <Typography variant="caption" color="text.secondary">
-                                  {hospitalConfig.address}
-                                </Typography>
-                                <Divider sx={{ my: 1 }} />
-                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                                  <Chip
-                                    size="small"
-                                    icon={<Icon fontSize="small">draw</Icon>}
-                                    label={`Signed: ${hospitalConfig.qualityCoordinator}`}
-                                    variant="outlined"
-                                  />
-                                  <Chip
-                                    size="small"
-                                    icon={<Icon fontSize="small">verified</Icon>}
-                                    label="Official Hospital Stamp"
-                                    color="primary"
-                                    variant="outlined"
-                                  />
-                                </Box>
-                              </Box>
-                            </>
+                            </Box>
                           )}
                         </AccordionDetails>
                       </Accordion>

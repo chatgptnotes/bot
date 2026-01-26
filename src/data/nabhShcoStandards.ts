@@ -432,61 +432,109 @@ export const nabhShcoStandards: Chapter[] = [
     standards: [
       {
         code: 'COP.1',
-        title: 'Care of patients is guided by applicable national/international guidelines and includes care planning.',
-        intent: 'To ensure evidence-based, standardized care with proper planning.',
+        title: 'Uniform care to patients is provided in all settings of the organization and is guided by written guidance, and the applicable laws and regulations.',
+        intent: 'To ensure uniform, evidence-based care across all settings with proper documentation and legal compliance.',
         objectiveElements: [
           {
             code: 'COP.1.a',
-            description: 'Patient care is based on applicable national/international guidelines.',
+            description: 'The organization has a uniform process for identification of patients and at a minimum, uses two identifiers.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.1.b',
+            description: 'Care shall be provided in consonance with applicable laws and regulations.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'COP.1.b',
-            description: 'An individualized plan of care is developed for each patient.',
-            category: 'Core',
-            isCore: true
-          },
-          {
             code: 'COP.1.c',
-            description: 'The plan of care is documented in the patient record.',
-            category: 'Core',
-            isCore: true
+            description: 'The organization adopts evidence-based clinical practice guidelines and/or clinical protocols to guide uniform patient care.',
+            category: 'Achievement',
+            isCore: false
           },
           {
             code: 'COP.1.d',
-            description: 'The care plan is reviewed and modified as needed.',
+            description: 'Care delivery is uniform for a given clinical condition when similar care is provided in more than one setting.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.1.e',
-            description: 'Multi-disciplinary team is involved in care planning when required.',
-            category: 'Commitment',
+            description: 'Telemedicine facility is provided safely and securely based on written guidance.',
+            category: 'Excellence',
             isCore: false
           }
         ]
       },
       {
         code: 'COP.2',
-        title: 'Uniform care is provided to all patients.',
-        intent: 'To ensure equitable care regardless of patient background or status.',
+        title: 'Emergency services including ambulance, and management of disasters, are provided in accordance with written guidance, applicable laws and regulations.',
+        intent: 'To ensure comprehensive emergency care with proper infrastructure, personnel, and disaster management.',
         objectiveElements: [
           {
             code: 'COP.2.a',
-            description: 'Uniform care is provided irrespective of ability to pay or source of payment.',
-            category: 'Core',
-            isCore: true
+            description: 'There shall be an identified area in the organization, which is easily accessible to receive and manage emergency patients, with adequate and appropriate resources.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.2.b',
-            description: 'Uniform care is provided irrespective of gender, religion, caste, or socio-economic status.',
+            description: 'The organization manages medico-legal cases and provides emergency care in consonance with statutory requirements and in accordance with written guidance.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'COP.2.c',
-            description: 'Resources are allocated based on patient needs.',
+            description: 'Initiation of appropriate care is guided by a system of triage.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.d',
+            description: 'Patients waiting in the emergency are reassessed as appropriate for the change in status.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.e',
+            description: 'Admission, discharge to home or transfer to another organization is documented, and a discharge note shall be given to the patient.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.f',
+            description: 'The organization shall implement a quality assurance programme.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'COP.2.g',
+            description: 'The organization has systems in place for the management of patients found dead on arrival and patients who die within a few minutes of arrival.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.h',
+            description: 'The organization has access to ambulance services commensurate with the scope of services provided by it.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.i',
+            description: 'The ambulance(s) is fit for purpose, is operated by trained personnel, is appropriately equipped, and ensures that emergency medications are available in the ambulance.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.2.j',
+            description: 'The emergency department identifies opportunities to initiate treatment at the earliest, when the patient is in transit to the organization.',
+            category: 'Excellence',
+            isCore: false
+          },
+          {
+            code: 'COP.2.k',
+            description: 'The organization manages potential community emergencies, epidemics and other disasters as per a documented plan.',
             category: 'Commitment',
             isCore: false
           }
@@ -494,42 +542,30 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'COP.3',
-        title: 'The organization provides care to patients with emergency and urgent needs.',
-        intent: 'To ensure immediate and appropriate emergency care.',
+        title: 'Cardio-pulmonary resuscitation services are provided uniformly across the organization.',
+        intent: 'To ensure consistent and effective CPR services with proper equipment, training, and post-event analysis.',
         objectiveElements: [
           {
             code: 'COP.3.a',
-            description: 'Emergency care is available 24x7.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.3.b',
-            description: 'Emergency patients are triaged based on urgency of need.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.3.c',
-            description: 'Emergency equipment and medications are available.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.3.d',
-            description: 'Staff is trained in emergency care including basic life support.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.3.e',
-            description: 'Documented policies guide the emergency services.',
+            description: 'Resuscitation services are available to patients at all times.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'COP.3.f',
-            description: 'Transfer arrangements exist for cases beyond the scope of the facility.',
+            code: 'COP.3.b',
+            description: 'During cardiopulmonary resuscitation, assigned roles and responsibilities are complied with, and the events during cardiopulmonary resuscitation are recorded.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.3.c',
+            description: 'The equipment and medications for use during cardiopulmonary resuscitation are available in various areas of the organization.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.3.d',
+            description: 'A multidisciplinary committee does a post-event analysis of all cardiopulmonary resuscitations, and corrective and preventive measures are taken based on this.',
             category: 'Commitment',
             isCore: false
           }
@@ -537,202 +573,196 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'COP.4',
-        title: 'The organization identifies and provides care for patients with special needs.',
-        intent: 'To address needs of vulnerable patient populations.',
+        title: 'Nursing care is provided to patients in the organization in consonance with clinical protocols.',
+        intent: 'To ensure quality nursing care aligned with overall patient care and documented properly.',
         objectiveElements: [
           {
             code: 'COP.4.a',
-            description: 'The organization identifies patients with special needs.',
-            category: 'Commitment',
-            isCore: false
-          },
-          {
-            code: 'COP.4.b',
-            description: 'Special needs of pediatric patients are addressed.',
+            description: 'Nursing care is aligned and integrated with overall patient care, and is documented in the patient record.',
             category: 'Core',
             isCore: true
           },
           {
+            code: 'COP.4.b',
+            description: 'Assignment of patient care is done as per current good clinical / nursing practice guidelines.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
             code: 'COP.4.c',
-            description: 'Special needs of geriatric patients are addressed.',
+            description: 'Nurses are provided with appropriate and adequate equipment for providing safe and efficient nursing services.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.4.d',
-            description: 'Special needs of differently-abled patients are addressed.',
-            category: 'Commitment',
+            description: 'The organization develops and implements nursing clinical practice guidelines reflecting current standards of practice.',
+            category: 'Excellence',
             isCore: false
-          },
-          {
-            code: 'COP.4.e',
-            description: 'Patients at risk of abuse, neglect or violence are identified and protected.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.4.f',
-            description: 'Vulnerable patients including women and children are protected.',
-            category: 'Core',
-            isCore: true
           }
         ]
       },
       {
         code: 'COP.5',
-        title: 'Documented procedures guide the care of obstetric patients.',
-        intent: 'To ensure safe maternal and newborn care.',
+        title: 'Transfusion services are provided as per the scope of services of the organization, safely.',
+        intent: 'To ensure safe blood transfusion services with proper consent, availability, and monitoring.',
         objectiveElements: [
           {
             code: 'COP.5.a',
-            description: 'Documented procedures guide ante-natal care.',
+            description: 'Transfusion services are commensurate with the services provided by the organization, and are governed by the applicable laws and regulations.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.5.b',
-            description: 'Documented procedures guide intra-natal care.',
+            description: 'Transfusion of blood and blood components is done safely.',
             category: 'Core',
             isCore: true
           },
           {
             code: 'COP.5.c',
-            description: 'Documented procedures guide post-natal care.',
+            description: 'Blood and blood components are used rationally.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.5.d',
-            description: 'High-risk pregnancies are identified and managed appropriately.',
-            category: 'Core',
-            isCore: true
+            description: 'Informed consent is obtained for transfusion of blood and blood products, and for donation.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.5.e',
-            description: 'Newborn care including resuscitation is provided.',
-            category: 'Core',
-            isCore: true
+            description: 'Blood/blood components are available for use in emergency situations within a defined time frame.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.5.f',
-            description: 'Referral mechanisms for high-risk cases are in place.',
-            category: 'Core',
-            isCore: true
+            description: 'Post-transfusion form is collected, reactions if any identified and are analysed for corrective and preventive actions.',
+            category: 'Achievement',
+            isCore: false
           }
         ]
       },
       {
         code: 'COP.6',
-        title: 'Documented procedures guide the care of patients undergoing surgical procedures.',
-        intent: 'To ensure safe surgical care.',
+        title: 'Organization provides care in the intensive care and high dependency units, in a systematic manner.',
+        intent: 'To ensure systematic ICU/HDU care with proper admission criteria, infection control, and end-of-life care.',
         objectiveElements: [
           {
             code: 'COP.6.a',
-            description: 'Documented procedures guide pre-operative care.',
+            description: 'The defined admission and discharge criteria for its intensive care and high dependency units are implemented, and defined procedures for the situation of bed shortages are followed.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.6.b',
-            description: 'Informed consent is obtained prior to surgery.',
-            category: 'Core',
-            isCore: true
+            description: 'The care is provided in intensive care and high dependency units based on written guidance by adequately available staff and equipment.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.6.c',
-            description: 'Surgical safety checklist is used.',
-            category: 'Core',
-            isCore: true
+            description: 'Infection control practices are documented and followed.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.6.d',
-            description: 'Pre-anesthetic assessment is documented.',
-            category: 'Core',
-            isCore: true
+            description: 'The organization shall implement a quality-assurance programme.',
+            category: 'Achievement',
+            isCore: false
           },
           {
             code: 'COP.6.e',
-            description: 'Intra-operative care is documented.',
-            category: 'Core',
-            isCore: true
+            description: 'The organisation has a mechanism to counsel the patient and / or family periodically.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.6.f',
-            description: 'Post-operative care is documented.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.6.g',
-            description: 'Anesthesia is administered by qualified personnel.',
-            category: 'Core',
-            isCore: true
-          },
-          {
-            code: 'COP.6.h',
-            description: 'Patients are monitored during and after anesthesia.',
-            category: 'Core',
-            isCore: true
+            description: 'End of life care is provided in a consistent manner in the organization, and is in consonance with legal requirements.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'COP.7',
-        title: 'Documented procedures guide the nursing care.',
-        intent: 'To ensure quality nursing care delivery.',
+        title: 'Organization provides safe obstetric care.',
+        intent: 'To ensure safe obstetric care including high-risk case management and neonatal care.',
         objectiveElements: [
           {
             code: 'COP.7.a',
-            description: 'Nursing care is planned based on initial and ongoing assessment.',
+            description: 'Obstetric services are organised and provided safely.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.7.b',
-            description: 'Nursing care is documented in the patient record.',
-            category: 'Core',
-            isCore: true
+            description: 'The organization identifies and provides care to high risk obstetric cases with competent doctors and nurses, and where needed, refers them to another appropriate centre.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.7.c',
-            description: 'Nursing procedures are standardized.',
+            description: 'Antenatal assessment also includes maternal nutrition.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.7.d',
-            description: 'Vital signs monitoring is done as per patient condition.',
-            category: 'Core',
-            isCore: true
+            description: 'Appropriate peri-natal and post-natal monitoring is performed.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.7.e',
-            description: 'Patient safety measures are implemented.',
-            category: 'Core',
-            isCore: true
+            description: 'The organization caring for high risk obstetric cases has the human resources and facilities to take care of neonates of such cases.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       },
       {
         code: 'COP.8',
-        title: 'Patient and family are involved in care decisions.',
-        intent: 'To promote patient-centered care with family involvement.',
+        title: 'Organization provides safe paediatric services.',
+        intent: 'To ensure safe paediatric care with age-specific competency and child protection measures.',
         objectiveElements: [
           {
             code: 'COP.8.a',
-            description: 'Patient and family are involved in care decisions.',
+            description: 'Paediatric services are organised and provided safely.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.8.b',
-            description: 'Patient preferences are considered in care planning.',
+            description: 'Neonatal care is in consonance with the national/ international guidelines.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.8.c',
-            description: 'Communication with patient and family is documented.',
+            description: 'Those who care for children have age-specific competency.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.8.d',
+            description: 'Provisions are made for special care of children.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.8.e',
+            description: 'Patient assessment includes nutritional, growth, developmental and immunisation assessment.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.8.f',
+            description: 'The organization has measures in place to prevent child/neonate abduction and abuse.',
             category: 'Commitment',
             isCore: false
           }
@@ -740,24 +770,36 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'COP.9',
-        title: 'Procedures for pain management are in place.',
-        intent: 'To ensure effective pain assessment and management.',
+        title: 'Procedural sedation is provided consistently and safely.',
+        intent: 'To ensure safe procedural sedation with proper consent, monitoring, and discharge criteria.',
         objectiveElements: [
           {
             code: 'COP.9.a',
-            description: 'Pain is assessed using appropriate scales.',
-            category: 'Core',
-            isCore: true
+            description: 'Procedural sedation is administered in a consistent manner.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.9.b',
-            description: 'Pain management is provided as per patient needs.',
-            category: 'Core',
-            isCore: true
+            description: 'Informed consent for administration of procedural sedation is obtained.',
+            category: 'Commitment',
+            isCore: false
           },
           {
             code: 'COP.9.c',
-            description: 'Response to pain management is documented.',
+            description: 'Competent and trained persons perform and monitor sedation.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.9.d',
+            description: 'Intra-procedure monitoring includes at a minimum the heart rate, cardiac rhythm, respiratory rate, blood pressure, oxygen saturation, and level of sedation.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.9.e',
+            description: 'Post procedure monitoring is documented, and patients are discharged from the recovery area based on objective criteria.',
             category: 'Commitment',
             isCore: false
           }
@@ -765,32 +807,209 @@ export const nabhShcoStandards: Chapter[] = [
       },
       {
         code: 'COP.10',
-        title: 'End-of-life care is provided respecting patient wishes and dignity.',
-        intent: 'To ensure compassionate end-of-life care.',
+        title: 'Anaesthesia services are provided consistently and safely.',
+        intent: 'To ensure safe anaesthesia services with proper assessment, monitoring, and documentation.',
         objectiveElements: [
           {
             code: 'COP.10.a',
-            description: 'End-of-life care respects patient and family wishes.',
+            description: 'Anaesthesia services are administered in a consistent and safe manner.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.10.b',
-            description: 'Comfort and dignity are maintained.',
-            category: 'Commitment',
-            isCore: false
+            description: 'The pre-anaesthesia assessment results in the formulation of an anaesthesia plan which is documented.',
+            category: 'Core',
+            isCore: true
           },
           {
             code: 'COP.10.c',
-            description: 'Emotional support is provided to patient and family.',
+            description: 'A pre-induction assessment is performed and documented.',
             category: 'Commitment',
             isCore: false
           },
           {
             code: 'COP.10.d',
-            description: 'Death is handled with dignity and respect.',
+            description: 'Informed consent for administration of anaesthesia, is obtained.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.10.e',
+            description: 'Patients are monitored while under anaesthesia.',
             category: 'Core',
             isCore: true
+          },
+          {
+            code: 'COP.10.f',
+            description: 'Post anaesthesia monitoring is documented, and patients are discharged from the recovery area based on objective criteria.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.10.g',
+            description: 'The type of anaesthesia and anaesthetic medications used are documented in the patient record.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.10.h',
+            description: 'Intra-operative adverse anaesthesia events are recorded and monitored.',
+            category: 'Achievement',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'COP.11',
+        title: 'Clinical procedures, as well as procedures in the operation theatre are performed in a safe and consistent manner.',
+        intent: 'To ensure safe surgical and clinical procedures with proper consent, safety measures, and documentation.',
+        objectiveElements: [
+          {
+            code: 'COP.11.a',
+            description: 'Clinical procedures as well as procedures done in operation theatres are done in a consistent and safe manner.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.b',
+            description: 'Surgical patients have a preoperative assessment, a documented pre-operative diagnosis, and pre-operative instructions provided before surgery and documented.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.c',
+            description: 'Informed consent is obtained by the doctor prior to the procedure.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.d',
+            description: 'Care is taken to prevent adverse events like wrong site, wrong patient and wrong surgery.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.11.e',
+            description: 'The procedure is done adhering to standard precautions.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.f',
+            description: 'Procedures / operation notes, post procedure monitoring and post-operative care plan are documented accurately in the patient record.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.g',
+            description: 'Appropriate facilities, equipment, instruments and supplies are available in the operating theatre.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.11.h',
+            description: 'The organization shall implement a quality assurance programme.',
+            category: 'Achievement',
+            isCore: false
+          },
+          {
+            code: 'COP.11.i',
+            description: 'The organ transplant program shall be in consonance with the legal requirements and shall be conducted ethically.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.11.j',
+            description: 'The organization shall take measures to create awareness regarding organ donation.',
+            category: 'Core',
+            isCore: true
+          }
+        ]
+      },
+      {
+        code: 'COP.12',
+        title: 'The organization identifies and manages patients who are at higher risk of morbidity and mortality.',
+        intent: 'To ensure identification and management of high-risk patients including fall risk, pressure ulcers, and DVT.',
+        objectiveElements: [
+          {
+            code: 'COP.12.a',
+            description: 'The organization identifies and manages vulnerable patients.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.12.b',
+            description: 'The organization provides for a safe and secure environment for the vulnerable patient.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.12.c',
+            description: 'The organization identifies and manages patients who are at risk of fall.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.12.d',
+            description: 'The organization identifies and manages patients who are at risk of developing / worsening of pressure ulcers.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.12.e',
+            description: 'The organization identifies and manages patients who are at risk of developing / worsening of developing deep vein thrombosis.',
+            category: 'Core',
+            isCore: true
+          },
+          {
+            code: 'COP.12.f',
+            description: 'The organization identifies and manages patients who need restraints.',
+            category: 'Commitment',
+            isCore: false
+          }
+        ]
+      },
+      {
+        code: 'COP.13',
+        title: 'Pain management, rehabilitation services and nutritional therapy are provided to the patients in a safe, collaborative and consistent manner.',
+        intent: 'To ensure comprehensive pain management, rehabilitation, and nutritional care for patients.',
+        objectiveElements: [
+          {
+            code: 'COP.13.a',
+            description: 'Patients in pain are effectively managed.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.13.b',
+            description: 'Pain alleviation measures or medications are initiated and titrated according to the patient\'s need and response.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.13.c',
+            description: 'Scope of rehabilitation services at a minimum is commensurate to the services provided by the organization.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.13.d',
+            description: 'Care providers collaboratively plan rehabilitation services.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.13.e',
+            description: 'Patients admitted to the organization are screened for nutritional risk, and assessment is done for patients found at risk during nutritional screening.',
+            category: 'Commitment',
+            isCore: false
+          },
+          {
+            code: 'COP.13.f',
+            description: 'The therapeutic diet is planned and provided collaboratively.',
+            category: 'Commitment',
+            isCore: false
           }
         ]
       }

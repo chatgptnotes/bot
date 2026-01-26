@@ -88,12 +88,13 @@ export const useNABHStore = create<NABHStore>()(
       },
     }),
     {
-      name: 'nabh-evidence-storage-v5',
-      version: 5,
+      name: 'nabh-evidence-storage-v6',
+      version: 6,
       migrate: (persistedState: unknown, version: number) => {
         // When version changes, merge persisted user data with fresh nabhData
-        // Version 5 adds: sopDocuments for SOP upload and management
-        if (version < 5) {
+        // Version 6: Updated COP standards to match NABH SHCO 3rd Edition PDF exactly
+        // COP now has 13 standards (COP.1-COP.13) with correct objective elements and CORE designations
+        if (version < 6) {
           // Return fresh data from nabhData (which includes new fields)
           return {
             ...(persistedState as NABHStore),

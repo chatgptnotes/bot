@@ -32,34 +32,44 @@ const excelPriorityMap: Record<string, { priority: string; assignee: string; sta
   "AAC.5.h": { "priority": "Prev NC", "assignee": "Kashish", "status": "Completed" },
   "AAC.6.d": { "priority": "Prev NC", "assignee": "Kashish", "status": "Completed" },
   "AAC.7.c": { "priority": "Prev NC", "assignee": "Kashish", "status": "Completed" },
-  "COP.1.a": { "priority": "CORE", "assignee": "Gaurav", "status": "Not started" },
-  "COP.1.b": { "priority": "Prev NC", "assignee": "Chandra", "status": "In progress" },
-  "COP.1.c": { "priority": "P2", "assignee": "", "status": "Blocked" },
-  "COP.1.d": { "priority": "P3", "assignee": "", "status": "Completed" },
-  "COP.2.a": { "priority": "Prev NC", "assignee": "Kashish", "status": "" },
-  "COP.2.b": { "priority": "CORE", "assignee": "", "status": "" },
+  // COP - Care of Patients (NABH SHCO 3rd Edition - August 2022)
+  // COP.1 - Uniform care with patient identification
+  "COP.1.a": { "priority": "CORE", "assignee": "", "status": "" },  // Two identifiers - CORE per PDF
+  // COP.2 - Emergency services
+  "COP.2.b": { "priority": "CORE", "assignee": "", "status": "" },  // Medico-legal cases - CORE per PDF
   "COP.2.g": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
+  // COP.3 - CPR services
   "COP.3.b": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
   "COP.3.d": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
-  "COP.4.a": { "priority": "CORE", "assignee": "", "status": "" },
-  "COP.5.b": { "priority": "CORE", "assignee": "", "status": "" },
+  // COP.4 - Nursing care
+  "COP.4.a": { "priority": "CORE", "assignee": "", "status": "" },  // Nursing care documented - CORE per PDF
+  // COP.5 - Transfusion services
+  "COP.5.b": { "priority": "CORE", "assignee": "", "status": "" },  // Safe transfusion - CORE per PDF
   "COP.5.e": { "priority": "Prev NC", "assignee": "", "status": "" },
+  // COP.6 - ICU/HDU care
   "COP.6.d": { "priority": "Prev NC", "assignee": "", "status": "" },
+  // COP.7 - Obstetric care
   "COP.7.c": { "priority": "Prev NC", "assignee": "", "status": "" },
   "COP.7.d": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
+  // COP.9 - Procedural sedation
   "COP.9.b": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
   "COP.9.d": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
   "COP.9.e": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
-  "COP.10.e": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
+  // COP.10 - Anaesthesia services
+  "COP.10.b": { "priority": "CORE", "assignee": "", "status": "" },  // Pre-anaesthesia assessment - CORE per PDF
+  "COP.10.e": { "priority": "CORE", "assignee": "", "status": "" },  // Monitoring under anaesthesia - CORE per PDF
   "COP.10.f": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
   "COP.10.h": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
-  "COP.11.d": { "priority": "CORE", "assignee": "", "status": "" },
+  // COP.11 - Clinical procedures / OT
+  "COP.11.d": { "priority": "CORE", "assignee": "", "status": "" },  // Wrong site/patient/surgery prevention - CORE per PDF
   "COP.11.e": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
-  "COP.11.i": { "priority": "CORE", "assignee": "", "status": "" },
-  "COP.11.j": { "priority": "CORE", "assignee": "", "status": "" },
-  "COP.12.c": { "priority": "CORE", "assignee": "", "status": "" },
-  "COP.12.d": { "priority": "CORE", "assignee": "", "status": "" },
-  "COP.12.f": { "priority": "CORE", "assignee": "", "status": "" },
+  "COP.11.i": { "priority": "CORE", "assignee": "", "status": "" },  // Organ transplant legal compliance - CORE per PDF
+  "COP.11.j": { "priority": "CORE", "assignee": "", "status": "" },  // Organ donation awareness - CORE per PDF
+  // COP.12 - High risk patients
+  "COP.12.c": { "priority": "CORE", "assignee": "", "status": "" },  // Fall risk - CORE per PDF
+  "COP.12.d": { "priority": "CORE", "assignee": "", "status": "" },  // Pressure ulcer risk - CORE per PDF
+  "COP.12.e": { "priority": "CORE", "assignee": "", "status": "" },  // DVT risk - CORE per PDF
+  // COP.13 - Pain, rehabilitation, nutrition
   "COP.13.b": { "priority": "Prev NC", "assignee": "Neesha", "status": "Completed" },
   "MOM.1.c": { "priority": "P2", "assignee": "", "status": "" },
   "MOM.1.d": { "priority": "P3", "assignee": "", "status": "" },
@@ -255,7 +265,7 @@ export const nabhData: Chapter[] = [
   },
 
   // ============================================================================
-  // COP - Care of Patients
+  // COP - Care of Patients (NABH SHCO 3rd Edition - August 2022)
   // ============================================================================
   {
     id: 'cop',
@@ -264,74 +274,113 @@ export const nabhData: Chapter[] = [
     fullName: CHAPTER_NAMES.COP,
     type: CHAPTER_TYPES.COP,
     objectives: [
-      // COP.1 - Care guided by guidelines
-      obj('COP.1.a', 'Patient care is based on applicable national/international guidelines.', 'Commitment'),
-      obj('COP.1.b', 'An individualized plan of care is developed for each patient.', 'Core'),
-      obj('COP.1.c', 'The plan of care is documented in the patient record.', 'Core'),
-      obj('COP.1.d', 'The care plan is reviewed and modified as needed.', 'Commitment'),
-      obj('COP.1.e', 'Multi-disciplinary team is involved in care planning when required.', 'Commitment'),
+      // COP.1 - Uniform care to patients is provided in all settings
+      obj('COP.1.a', 'The organization has a uniform process for identification of patients and at a minimum, uses two identifiers.', 'Core'),
+      obj('COP.1.b', 'Care shall be provided in consonance with applicable laws and regulations.', 'Commitment'),
+      obj('COP.1.c', 'The organization adopts evidence-based clinical practice guidelines and/or clinical protocols to guide uniform patient care.', 'Achievement'),
+      obj('COP.1.d', 'Care delivery is uniform for a given clinical condition when similar care is provided in more than one setting.', 'Commitment'),
+      obj('COP.1.e', 'Telemedicine facility is provided safely and securely based on written guidance.', 'Excellence'),
 
-      // COP.2 - Uniform care
-      obj('COP.2.a', 'Uniform care is provided irrespective of ability to pay or source of payment.', 'Core'),
-      obj('COP.2.b', 'Uniform care is provided irrespective of gender, religion, caste, or socio-economic status.', 'Core'),
-      obj('COP.2.c', 'Resources are allocated based on patient needs.', 'Commitment'),
+      // COP.2 - Emergency services including ambulance, and management of disasters
+      obj('COP.2.a', 'There shall be an identified area in the organization, which is easily accessible to receive and manage emergency patients, with adequate and appropriate resources.', 'Commitment'),
+      obj('COP.2.b', 'The organization manages medico-legal cases and provides emergency care in consonance with statutory requirements and in accordance with written guidance.', 'Core'),
+      obj('COP.2.c', 'Initiation of appropriate care is guided by a system of triage.', 'Commitment'),
+      obj('COP.2.d', 'Patients waiting in the emergency are reassessed as appropriate for the change in status.', 'Commitment'),
+      obj('COP.2.e', 'Admission, discharge to home or transfer to another organization is documented, and a discharge note shall be given to the patient.', 'Commitment'),
+      obj('COP.2.f', 'The organization shall implement a quality assurance programme.', 'Achievement'),
+      obj('COP.2.g', 'The organization has systems in place for the management of patients found dead on arrival and patients who die within a few minutes of arrival.', 'Commitment'),
+      obj('COP.2.h', 'The organization has access to ambulance services commensurate with the scope of services provided by it.', 'Commitment'),
+      obj('COP.2.i', 'The ambulance(s) is fit for purpose, is operated by trained personnel, is appropriately equipped, and ensures that emergency medications are available in the ambulance.', 'Commitment'),
+      obj('COP.2.j', 'The emergency department identifies opportunities to initiate treatment at the earliest, when the patient is in transit to the organization.', 'Excellence'),
+      obj('COP.2.k', 'The organization manages potential community emergencies, epidemics and other disasters as per a documented plan.', 'Commitment'),
 
-      // COP.3 - Emergency care
-      obj('COP.3.a', 'Emergency care is available 24x7.', 'Core'),
-      obj('COP.3.b', 'Emergency patients are triaged based on urgency of need.', 'Core'),
-      obj('COP.3.c', 'Emergency equipment and medications are available.', 'Core'),
-      obj('COP.3.d', 'Staff is trained in emergency care including basic life support.', 'Core'),
-      obj('COP.3.e', 'Documented policies guide the emergency services.', 'Commitment'),
-      obj('COP.3.f', 'Transfer arrangements exist for cases beyond the scope of the facility.', 'Commitment'),
+      // COP.3 - Cardio-pulmonary resuscitation services are provided uniformly
+      obj('COP.3.a', 'Resuscitation services are available to patients at all times.', 'Commitment'),
+      obj('COP.3.b', 'During cardiopulmonary resuscitation, assigned roles and responsibilities are complied with, and the events during cardiopulmonary resuscitation are recorded.', 'Commitment'),
+      obj('COP.3.c', 'The equipment and medications for use during cardiopulmonary resuscitation are available in various areas of the organization.', 'Commitment'),
+      obj('COP.3.d', 'A multidisciplinary committee does a post-event analysis of all cardiopulmonary resuscitations, and corrective and preventive measures are taken based on this.', 'Commitment'),
 
-      // COP.4 - Special needs patients
-      obj('COP.4.a', 'The organization identifies patients with special needs.', 'Commitment'),
-      obj('COP.4.b', 'Special needs of pediatric patients are addressed.', 'Core'),
-      obj('COP.4.c', 'Special needs of geriatric patients are addressed.', 'Commitment'),
-      obj('COP.4.d', 'Special needs of differently-abled patients are addressed.', 'Commitment'),
-      obj('COP.4.e', 'Patients at risk of abuse, neglect or violence are identified and protected.', 'Core'),
-      obj('COP.4.f', 'Vulnerable patients including women and children are protected.', 'Core'),
+      // COP.4 - Nursing care is provided to patients in consonance with clinical protocols
+      obj('COP.4.a', 'Nursing care is aligned and integrated with overall patient care, and is documented in the patient record.', 'Core'),
+      obj('COP.4.b', 'Assignment of patient care is done as per current good clinical / nursing practice guidelines.', 'Commitment'),
+      obj('COP.4.c', 'Nurses are provided with appropriate and adequate equipment for providing safe and efficient nursing services.', 'Commitment'),
+      obj('COP.4.d', 'The organization develops and implements nursing clinical practice guidelines reflecting current standards of practice.', 'Excellence'),
 
-      // COP.5 - Obstetric care
-      obj('COP.5.a', 'Documented procedures guide ante-natal care.', 'Commitment'),
-      obj('COP.5.b', 'Documented procedures guide intra-natal care.', 'Core'),
-      obj('COP.5.c', 'Documented procedures guide post-natal care.', 'Commitment'),
-      obj('COP.5.d', 'High-risk pregnancies are identified and managed appropriately.', 'Core'),
-      obj('COP.5.e', 'Newborn care including resuscitation is provided.', 'Core'),
-      obj('COP.5.f', 'Referral mechanisms for high-risk cases are in place.', 'Core'),
+      // COP.5 - Transfusion services are provided as per the scope of services, safely
+      obj('COP.5.a', 'Transfusion services are commensurate with the services provided by the organization, and are governed by the applicable laws and regulations.', 'Commitment'),
+      obj('COP.5.b', 'Transfusion of blood and blood components is done safely.', 'Core'),
+      obj('COP.5.c', 'Blood and blood components are used rationally.', 'Commitment'),
+      obj('COP.5.d', 'Informed consent is obtained for transfusion of blood and blood products, and for donation.', 'Commitment'),
+      obj('COP.5.e', 'Blood/blood components are available for use in emergency situations within a defined time frame.', 'Commitment'),
+      obj('COP.5.f', 'Post-transfusion form is collected, reactions if any identified and are analysed for corrective and preventive actions.', 'Achievement'),
 
-      // COP.6 - Surgical care
-      obj('COP.6.a', 'Documented procedures guide pre-operative care.', 'Commitment'),
-      obj('COP.6.b', 'Informed consent is obtained prior to surgery.', 'Core'),
-      obj('COP.6.c', 'Surgical safety checklist is used.', 'Core'),
-      obj('COP.6.d', 'Pre-anesthetic assessment is documented.', 'Core'),
-      obj('COP.6.e', 'Intra-operative care is documented.', 'Core'),
-      obj('COP.6.f', 'Post-operative care is documented.', 'Core'),
-      obj('COP.6.g', 'Anesthesia is administered by qualified personnel.', 'Core'),
-      obj('COP.6.h', 'Patients are monitored during and after anesthesia.', 'Core'),
+      // COP.6 - Organization provides care in the intensive care and high dependency units
+      obj('COP.6.a', 'The defined admission and discharge criteria for its intensive care and high dependency units are implemented, and defined procedures for the situation of bed shortages are followed.', 'Commitment'),
+      obj('COP.6.b', 'The care is provided in intensive care and high dependency units based on written guidance by adequately available staff and equipment.', 'Commitment'),
+      obj('COP.6.c', 'Infection control practices are documented and followed.', 'Commitment'),
+      obj('COP.6.d', 'The organization shall implement a quality-assurance programme.', 'Achievement'),
+      obj('COP.6.e', 'The organisation has a mechanism to counsel the patient and / or family periodically.', 'Commitment'),
+      obj('COP.6.f', 'End of life care is provided in a consistent manner in the organization, and is in consonance with legal requirements.', 'Commitment'),
 
-      // COP.7 - Nursing care
-      obj('COP.7.a', 'Nursing care is planned based on initial and ongoing assessment.', 'Commitment'),
-      obj('COP.7.b', 'Nursing care is documented in the patient record.', 'Core'),
-      obj('COP.7.c', 'Nursing procedures are standardized.', 'Commitment'),
-      obj('COP.7.d', 'Vital signs monitoring is done as per patient condition.', 'Core'),
-      obj('COP.7.e', 'Patient safety measures are implemented.', 'Core'),
+      // COP.7 - Organization provides safe obstetric care
+      obj('COP.7.a', 'Obstetric services are organised and provided safely.', 'Commitment'),
+      obj('COP.7.b', 'The organization identifies and provides care to high risk obstetric cases with competent doctors and nurses, and where needed, refers them to another appropriate centre.', 'Commitment'),
+      obj('COP.7.c', 'Antenatal assessment also includes maternal nutrition.', 'Commitment'),
+      obj('COP.7.d', 'Appropriate peri-natal and post-natal monitoring is performed.', 'Commitment'),
+      obj('COP.7.e', 'The organization caring for high risk obstetric cases has the human resources and facilities to take care of neonates of such cases.', 'Commitment'),
 
-      // COP.8 - Family involvement
-      obj('COP.8.a', 'Patient and family are involved in care decisions.', 'Commitment'),
-      obj('COP.8.b', 'Patient preferences are considered in care planning.', 'Commitment'),
-      obj('COP.8.c', 'Communication with patient and family is documented.', 'Commitment'),
+      // COP.8 - Organization provides safe paediatric services
+      obj('COP.8.a', 'Paediatric services are organised and provided safely.', 'Commitment'),
+      obj('COP.8.b', 'Neonatal care is in consonance with the national/ international guidelines.', 'Commitment'),
+      obj('COP.8.c', 'Those who care for children have age-specific competency.', 'Commitment'),
+      obj('COP.8.d', 'Provisions are made for special care of children.', 'Commitment'),
+      obj('COP.8.e', 'Patient assessment includes nutritional, growth, developmental and immunisation assessment.', 'Commitment'),
+      obj('COP.8.f', 'The organization has measures in place to prevent child/neonate abduction and abuse.', 'Commitment'),
 
-      // COP.9 - Pain management
-      obj('COP.9.a', 'Pain is assessed using appropriate scales.', 'Core'),
-      obj('COP.9.b', 'Pain management is provided as per patient needs.', 'Core'),
-      obj('COP.9.c', 'Response to pain management is documented.', 'Commitment'),
+      // COP.9 - Procedural sedation is provided consistently and safely
+      obj('COP.9.a', 'Procedural sedation is administered in a consistent manner.', 'Commitment'),
+      obj('COP.9.b', 'Informed consent for administration of procedural sedation is obtained.', 'Commitment'),
+      obj('COP.9.c', 'Competent and trained persons perform and monitor sedation.', 'Commitment'),
+      obj('COP.9.d', 'Intra-procedure monitoring includes at a minimum the heart rate, cardiac rhythm, respiratory rate, blood pressure, oxygen saturation, and level of sedation.', 'Commitment'),
+      obj('COP.9.e', 'Post procedure monitoring is documented, and patients are discharged from the recovery area based on objective criteria.', 'Commitment'),
 
-      // COP.10 - End of life care
-      obj('COP.10.a', 'End-of-life care respects patient and family wishes.', 'Commitment'),
-      obj('COP.10.b', 'Comfort and dignity are maintained.', 'Commitment'),
-      obj('COP.10.c', 'Emotional support is provided to patient and family.', 'Commitment'),
-      obj('COP.10.d', 'Death is handled with dignity and respect.', 'Core'),
+      // COP.10 - Anaesthesia services are provided consistently and safely
+      obj('COP.10.a', 'Anaesthesia services are administered in a consistent and safe manner.', 'Commitment'),
+      obj('COP.10.b', 'The pre-anaesthesia assessment results in the formulation of an anaesthesia plan which is documented.', 'Core'),
+      obj('COP.10.c', 'A pre-induction assessment is performed and documented.', 'Commitment'),
+      obj('COP.10.d', 'Informed consent for administration of anaesthesia, is obtained.', 'Commitment'),
+      obj('COP.10.e', 'Patients are monitored while under anaesthesia.', 'Core'),
+      obj('COP.10.f', 'Post anaesthesia monitoring is documented, and patients are discharged from the recovery area based on objective criteria.', 'Commitment'),
+      obj('COP.10.g', 'The type of anaesthesia and anaesthetic medications used are documented in the patient record.', 'Commitment'),
+      obj('COP.10.h', 'Intra-operative adverse anaesthesia events are recorded and monitored.', 'Achievement'),
+
+      // COP.11 - Clinical procedures, as well as procedures in the operation theatre
+      obj('COP.11.a', 'Clinical procedures as well as procedures done in operation theatres are done in a consistent and safe manner.', 'Commitment'),
+      obj('COP.11.b', 'Surgical patients have a preoperative assessment, a documented pre-operative diagnosis, and pre-operative instructions provided before surgery and documented.', 'Commitment'),
+      obj('COP.11.c', 'Informed consent is obtained by the doctor prior to the procedure.', 'Commitment'),
+      obj('COP.11.d', 'Care is taken to prevent adverse events like wrong site, wrong patient and wrong surgery.', 'Core'),
+      obj('COP.11.e', 'The procedure is done adhering to standard precautions.', 'Commitment'),
+      obj('COP.11.f', 'Procedures / operation notes, post procedure monitoring and post-operative care plan are documented accurately in the patient record.', 'Commitment'),
+      obj('COP.11.g', 'Appropriate facilities, equipment, instruments and supplies are available in the operating theatre.', 'Commitment'),
+      obj('COP.11.h', 'The organization shall implement a quality assurance programme.', 'Achievement'),
+      obj('COP.11.i', 'The organ transplant program shall be in consonance with the legal requirements and shall be conducted ethically.', 'Core'),
+      obj('COP.11.j', 'The organization shall take measures to create awareness regarding organ donation.', 'Core'),
+
+      // COP.12 - The organization identifies and manages patients who are at higher risk of morbidity and mortality
+      obj('COP.12.a', 'The organization identifies and manages vulnerable patients.', 'Commitment'),
+      obj('COP.12.b', 'The organization provides for a safe and secure environment for the vulnerable patient.', 'Commitment'),
+      obj('COP.12.c', 'The organization identifies and manages patients who are at risk of fall.', 'Core'),
+      obj('COP.12.d', 'The organization identifies and manages patients who are at risk of developing / worsening of pressure ulcers.', 'Core'),
+      obj('COP.12.e', 'The organization identifies and manages patients who are at risk of developing / worsening of developing deep vein thrombosis.', 'Core'),
+      obj('COP.12.f', 'The organization identifies and manages patients who need restraints.', 'Commitment'),
+
+      // COP.13 - Pain management, rehabilitation services and nutritional therapy
+      obj('COP.13.a', 'Patients in pain are effectively managed.', 'Commitment'),
+      obj('COP.13.b', 'Pain alleviation measures or medications are initiated and titrated according to the patient\'s need and response.', 'Commitment'),
+      obj('COP.13.c', 'Scope of rehabilitation services at a minimum is commensurate to the services provided by the organization.', 'Commitment'),
+      obj('COP.13.d', 'Care providers collaboratively plan rehabilitation services.', 'Commitment'),
+      obj('COP.13.e', 'Patients admitted to the organization are screened for nutritional risk, and assessment is done for patients found at risk during nutritional screening.', 'Commitment'),
+      obj('COP.13.f', 'The therapeutic diet is planned and provided collaboratively.', 'Commitment'),
     ],
   },
 
