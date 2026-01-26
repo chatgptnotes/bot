@@ -95,10 +95,17 @@ export const NABH_TEAM: TeamMember[] = [
   },
   {
     name: 'Diksha',
-    role: 'Department Staff',
-    designation: 'Staff Member',
-    department: 'Operations',
-    responsibilities: [],
+    role: 'Patient Safety Officer',
+    designation: 'Patient Safety Officer',
+    department: 'Quality & Patient Safety',
+    responsibilities: [
+      'Implement patient safety protocols and initiatives',
+      'Monitor and report patient safety indicators',
+      'Conduct patient safety rounds and audits',
+      'Investigate adverse events and near misses',
+      'Coordinate patient safety training programs',
+      'Maintain patient safety documentation',
+    ],
   },
   {
     name: 'Javed',
@@ -109,10 +116,17 @@ export const NABH_TEAM: TeamMember[] = [
   },
   {
     name: 'Neesha',
-    role: 'Department Staff',
-    designation: 'Staff Member',
-    department: 'Nursing',
-    responsibilities: [],
+    role: 'Patient Experience Coordinator',
+    designation: 'Patient Experience Coordinator',
+    department: 'Quality & Patient Services',
+    responsibilities: [
+      'Manage patient feedback and grievance redressal system',
+      'Conduct patient satisfaction surveys and analysis',
+      'Coordinate patient rights and education initiatives',
+      'Monitor and improve patient experience indicators',
+      'Facilitate communication between patients and departments',
+      'Report patient experience metrics to quality committee',
+    ],
   },
   {
     name: 'Chandraprakash Bisen',
@@ -162,17 +176,31 @@ export const NABH_TEAM: TeamMember[] = [
   },
   {
     name: 'Sonali',
-    role: 'Department Staff',
-    designation: 'Staff Member',
-    department: 'Operations',
-    responsibilities: [],
+    role: 'Clinical Audit Coordinator',
+    designation: 'Clinical Audit Coordinator',
+    department: 'Quality Assurance',
+    responsibilities: [
+      'Plan and conduct clinical audits across departments',
+      'Analyze audit findings and prepare reports',
+      'Track implementation of audit recommendations',
+      'Coordinate with department heads on quality improvements',
+      'Maintain clinical audit documentation and records',
+      'Support accreditation assessment preparations',
+    ],
   },
   {
     name: 'Suraj',
-    role: 'Department Staff',
-    designation: 'Staff Member',
-    department: 'Operations',
-    responsibilities: [],
+    role: 'Documentation Officer',
+    designation: 'NABH Documentation Officer',
+    department: 'Quality Documentation',
+    responsibilities: [
+      'Maintain and update NABH documentation system',
+      'Ensure proper version control of policies and SOPs',
+      'Coordinate document review and approval processes',
+      'Archive and organize quality records and evidences',
+      'Support departments in documentation compliance',
+      'Prepare documentation for NABH assessments',
+    ],
   },
 ];
 
@@ -234,6 +262,27 @@ NABH Accreditation Team - Hope Hospital:
    - Oversees nursing staff and patient care
    - Ensures nursing protocols compliance
    - Quality of nursing care monitoring
+
+7. Patient Safety Officer: Diksha
+   - Implements patient safety protocols
+   - Monitors patient safety indicators
+   - Investigates adverse events and near misses
+   - Coordinates patient safety training
+
+8. Patient Experience Coordinator: Neesha
+   - Manages patient feedback and grievance redressal
+   - Conducts patient satisfaction surveys
+   - Coordinates patient rights and education initiatives
+
+9. Clinical Audit Coordinator: Sonali
+   - Plans and conducts clinical audits
+   - Analyzes audit findings and prepares reports
+   - Tracks implementation of recommendations
+
+10. Documentation Officer: Suraj
+    - Maintains NABH documentation system
+    - Ensures proper version control of policies and SOPs
+    - Prepares documentation for assessments
 `;
 
 // Detailed NABH Assessor Prompt for Evidence Generation
@@ -248,6 +297,10 @@ KEY STAFF MEMBERS:
 - Quality Manager / HR: Jagruti
 - Infection Control Nurse: Chandraprakash Bisen
 - Head Nurse: Farsana
+- Patient Safety Officer: Diksha
+- Patient Experience Coordinator: Neesha
+- Clinical Audit Coordinator: Sonali
+- Documentation Officer: Suraj
 
 Follow these STRICT rules:
 

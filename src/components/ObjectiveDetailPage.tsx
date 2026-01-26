@@ -852,13 +852,12 @@ Generate the complete HTML with all sections filled in appropriately based on th
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Evidence Document - Dr. Murali's Hope Hospital</title>
+  <title>Evidence Document - Hope Hospital</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
     .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
-    .logo { width: 180px; height: auto; margin: 0 auto 10px; display: block; }
-    .tagline { font-size: 11px; color: #666; font-style: italic; margin-bottom: 5px; }
+    .logo { width: 180px; height: auto; margin: 0 auto 2px; display: block; }
     .hospital-address { font-size: 11px; color: #666; }
     .content { padding: 20px 0; white-space: pre-wrap; line-height: 1.8; }
     .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
@@ -866,13 +865,12 @@ Generate the complete HTML with all sections filled in appropriately based on th
 </head>
 <body>
   <div class="header">
-    <img src="${logoUrl}" alt="Dr. Murali's Hope Hospital" class="logo" onerror="this.style.display='none'">
-    <div class="tagline">Assured | Committed | Proficient</div>
+    <img src="${logoUrl}" alt="Hope Hospital" class="logo" onerror="this.style.display='none'">
     <div class="hospital-address">${hospitalConfig.address} | Phone: ${hospitalConfig.phone}</div>
   </div>
   <div class="content">${content}</div>
   <div class="footer">
-    <strong>Dr. Murali's Hope Hospital</strong> | ${hospitalConfig.address}<br>
+    <strong>Hope Hospital</strong> | ${hospitalConfig.address}<br>
     Phone: ${hospitalConfig.phone} | Email: ${hospitalConfig.email}
   </div>
 </body>
@@ -942,6 +940,12 @@ Generate the complete HTML with all sections filled in appropriately based on th
       /Hope\s*ring\s*eran/gi,
       ''
     );
+    // Clean up placeholder text artifacts that AI might generate
+    processed = processed.replace(/-placeholder['"]*>/gi, '');
+    processed = processed.replace(/placeholder['"]*>/gi, '');
+    processed = processed.replace(/>Here</gi, '><');
+    processed = processed.replace(/Logo\s*Here/gi, '');
+    processed = processed.replace(/Image\s*Here/gi, '');
 
     // 4b. Replace placeholder boxes (gray boxes, empty divs for logo)
     // Match any div that looks like a placeholder box with specific dimensions
@@ -1057,6 +1061,25 @@ Generate the complete HTML with all sections filled in appropriately based on th
 
     // 13. Final pass - ensure no "Dr. Murali" text remains anywhere
     processed = processed.replace(/Dr\.?\s*Murali/gi, '');
+
+    // 14. Clean up AI-generated placeholder artifacts
+    // Remove "-placeholder">" and similar broken HTML fragments
+    processed = processed.replace(/-placeholder['"]*>/gi, '');
+    processed = processed.replace(/-placeholder/gi, '');
+    processed = processed.replace(/placeholder['"]*>/gi, '');
+    // Remove standalone "Here" text that appears after logo placeholders
+    processed = processed.replace(/>Here</gi, '><');
+    processed = processed.replace(/>[\s]*Here[\s]*</gi, '><');
+    processed = processed.replace(/>\s*Here\s*$/gm, '>');
+    // Remove "Logo Here", "Insert Here", etc.
+    processed = processed.replace(/Logo\s*Here/gi, '');
+    processed = processed.replace(/Insert\s*Here/gi, '');
+    processed = processed.replace(/Image\s*Here/gi, '');
+    processed = processed.replace(/Placeholder\s*Here/gi, '');
+    // Remove empty divs that might result from cleanup
+    processed = processed.replace(/<div[^>]*>\s*<\/div>/gi, '');
+    // Clean up multiple consecutive spaces
+    processed = processed.replace(/>\s{2,}</g, '> <');
 
     return processed;
   };
