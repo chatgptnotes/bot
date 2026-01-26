@@ -76,85 +76,92 @@ const defaultListPrompt = NABH_ASSESSOR_PROMPT;
 
 const getContentPrompt = (config: HospitalConfig) => `You are an expert in NABH (National Accreditation Board for Hospitals and Healthcare Providers) accreditation documentation for ${config.name}.
 
-Generate detailed, ready-to-use evidence content/template for the selected evidence item in ENGLISH ONLY (these are internal documents).
+Generate a complete HTML document for the selected evidence item in ENGLISH ONLY (internal document).
 
-IMPORTANT: Every document MUST include the following professional table-based structure:
+IMPORTANT: Generate the output as a complete, valid HTML document with embedded CSS styling. The document must be modern, professional, and print-ready.
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                 │
-│                        ╔═══════════════════════════╗                           │
-│                        ║    [HOSPITAL LOGO]        ║                           │
-│                        ║      (Large Size)         ║                           │
-│                        ╚═══════════════════════════╝                           │
-│                                                                                 │
-│                            ${config.name.toUpperCase()}                              │
-│                              ${config.address}                                  │
-│                                                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                              [DOCUMENT TITLE]                                   │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ DOCUMENT CONTROL INFORMATION                                                    │
-├──────────────────────┬──────────────────────┬───────────────────────────────────┤
-│ Document No:         │ Version:             │ Page: 1 of X                      │
-│ [DOC-XXX-001]        │ 1.0                  │                                   │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Department:          │ Category:            │ NABH Chapter:                     │
-│ [Department Name]    │ [Policy/SOP/Record]  │ [Chapter Code]                    │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Effective Date:      │ Review Date:         │ Supersedes:                       │
-│ [DD/MM/YYYY]         │ [DD/MM/YYYY]         │ [Previous Version if any]         │
-├──────────────────────┴──────────────────────┴───────────────────────────────────┤
-│ DOCUMENT AUTHORIZATION                                                          │
-├──────────────────────┬──────────────────────┬───────────────────────────────────┤
-│ PREPARED BY          │ REVIEWED BY          │ APPROVED BY                       │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Name:                │ Name:                │ Name: ${config.qualityCoordinator}        │
-│ Designation:         │ Designation:         │ Designation: ${config.qualityCoordinatorDesignation} │
-│ Date:                │ Date:                │ Date:                             │
-│ Signature:           │ Signature:           │ Signature:                        │
-└──────────────────────┴──────────────────────┴───────────────────────────────────┘
+Use this HTML template structure:
 
-[MAIN CONTENT SECTION]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>[Document Title] - ${config.name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo-area { width: 120px; height: 120px; margin: 0 auto 10px; border: 2px solid #1565C0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; font-size: 14px; font-weight: bold; }
+    .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; margin: 10px 0 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: #1565C0; color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .info-table th, .info-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .info-table th { background: #f5f5f5; font-weight: 600; width: 25%; }
+    .auth-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .auth-table th { background: #1565C0; color: white; padding: 10px; text-align: center; }
+    .auth-table td { border: 1px solid #ddd; padding: 10px; text-align: center; vertical-align: top; min-height: 80px; }
+    .section { margin: 20px 0; }
+    .section-title { background: #e3f2fd; padding: 8px 12px; font-weight: bold; color: #1565C0; border-left: 4px solid #1565C0; margin-bottom: 10px; }
+    .section-content { padding: 10px 15px; }
+    .procedure-step { margin: 10px 0; padding: 10px; background: #fafafa; border-radius: 5px; }
+    .step-number { display: inline-block; width: 25px; height: 25px; background: #1565C0; color: white; border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; }
+    .data-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    .data-table th { background: #1565C0; color: white; padding: 10px; text-align: left; }
+    .data-table td { border: 1px solid #ddd; padding: 8px; }
+    .data-table tr:nth-child(even) { background: #f9f9f9; }
+    .footer { margin-top: 30px; padding-top: 15px; border-top: 2px solid #1565C0; text-align: center; font-size: 10px; color: #666; }
+    .revision-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px; }
+    .revision-table th { background: #455a64; color: white; padding: 8px; }
+    .revision-table td { border: 1px solid #ddd; padding: 8px; }
+    .stamp-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; color: #999; }
+    @media print { body { padding: 0; } .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${config.name}</div>
+    <div class="hospital-address">${config.address}</div>
+  </div>
 
-The content should be:
-1. Professional and compliant with NABH standards
-2. In English only (internal documentation)
-3. Ready to be customized with hospital-specific details
-4. Well-structured with clear headings and numbered sections
+  <div class="doc-title">[DOCUMENT TITLE]</div>
 
-If it's a policy or SOP, include:
-1. PURPOSE
-2. SCOPE
-3. DEFINITIONS
-4. RESPONSIBILITIES (in table format)
-5. PROCEDURE (numbered steps)
-6. DOCUMENTATION REQUIREMENTS
-7. REFERENCES
-8. REVISION HISTORY
+  <table class="info-table">
+    <tr><th>Document No</th><td>[DOC-XXX-001]</td><th>Version</th><td>1.0</td></tr>
+    <tr><th>Department</th><td>[Department]</td><th>Category</th><td>[Policy/SOP/Record]</td></tr>
+    <tr><th>Effective Date</th><td>[DD/MM/YYYY]</td><th>Review Date</th><td>[DD/MM/YYYY]</td></tr>
+  </table>
 
-If it's a register or record format, include:
-- Clear column headers in table format
-- Sample entries
-- Instructions for filling
+  <table class="auth-table">
+    <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
+    <tr>
+      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
+      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
+      <td>Name: ${config.qualityCoordinator}<br>Designation: ${config.qualityCoordinatorDesignation}<br>Date:<br><br>Signature:</td>
+    </tr>
+  </table>
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ REVISION HISTORY                                                                │
-├──────────┬────────────┬─────────────────────────────────┬───────────────────────┤
-│ Version  │ Date       │ Description of Changes          │ Changed By            │
-├──────────┼────────────┼─────────────────────────────────┼───────────────────────┤
-│ 1.0      │ [Date]     │ Initial Release                 │ [Name]                │
-└──────────┴────────────┴─────────────────────────────────┴───────────────────────┘
+  [MAIN CONTENT - Use sections with .section, .section-title, .section-content classes]
+  [Use .data-table for any tables]
+  [Use .procedure-step and .step-number for procedures]
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              DOCUMENT FOOTER                                    │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ ${config.name} | ${config.address}                              │
-│ Phone: ${config.phone} | Email: ${config.email}                                │
-│ Website: ${config.website}                                                      │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ This is a controlled document. Unauthorized copying or distribution prohibited.│
-│                         [HOSPITAL STAMP AREA]                                   │
-└─────────────────────────────────────────────────────────────────────────────────┘`;
+  <table class="revision-table">
+    <tr><th>Version</th><th>Date</th><th>Description</th><th>Changed By</th></tr>
+    <tr><td>1.0</td><td>[Date]</td><td>Initial Release</td><td>[Name]</td></tr>
+  </table>
+
+  <div class="stamp-area">[HOSPITAL STAMP AREA]</div>
+
+  <div class="footer">
+    <strong>${config.name}</strong> | ${config.address}<br>
+    Phone: ${config.phone} | Email: ${config.email} | Website: ${config.website}<br>
+    This is a controlled document. Unauthorized copying or distribution is prohibited.
+  </div>
+</body>
+</html>
+
+Generate the complete HTML with all sections filled in based on the evidence item provided.`;
 
 // Visual evidence types for image generation
 const visualEvidenceTypes = [
@@ -523,6 +530,89 @@ export default function AIEvidenceGenerator() {
       .map(gc => `=== ${gc.evidenceItem} ===\n\n${gc.content}`)
       .join('\n\n---\n\n');
     navigator.clipboard.writeText(allContent);
+  };
+
+  // Check if content is HTML
+  const isHTMLContent = (content: string): boolean => {
+    return content.trim().startsWith('<!DOCTYPE html>') || content.trim().startsWith('<html');
+  };
+
+  // Print content handler
+  const handlePrintContent = (content: string, title: string) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      if (isHTMLContent(content)) {
+        printWindow.document.write(content);
+      } else {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title} - ${hospitalConfig.name}</title>
+              <style>
+                body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; padding: 20px; white-space: pre-wrap; }
+                @media print { body { margin: 0; padding: 15px; } }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  // Download as PDF handler
+  const handleDownloadPDF = (content: string, filename: string) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      if (isHTMLContent(content)) {
+        printWindow.document.write(content);
+      } else {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${filename}</title>
+              <style>
+                body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; padding: 20px; white-space: pre-wrap; }
+                @page { margin: 1cm; }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+  };
+
+  // Preview HTML content in new window
+  const handlePreviewContent = (content: string, title: string) => {
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      if (isHTMLContent(content)) {
+        previewWindow.document.write(content);
+      } else {
+        previewWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title} - ${hospitalConfig.name}</title>
+              <style>
+                body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; padding: 20px; white-space: pre-wrap; background: #f5f5f5; }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
+      previewWindow.document.close();
+    }
   };
 
   const handleReset = () => {
@@ -1003,71 +1093,165 @@ export default function AIEvidenceGenerator() {
                             <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
                               {gc.evidenceItem.substring(0, 100)}...
                             </Typography>
-                            <Tooltip title="Copy">
-                              <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCopyContent(gc.content);
-                                }}
-                              >
-                                <Icon fontSize="small">content_copy</Icon>
-                              </IconButton>
-                            </Tooltip>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <Tooltip title="Preview">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50));
+                                  }}
+                                >
+                                  <Icon fontSize="small">visibility</Icon>
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Print">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50));
+                                  }}
+                                >
+                                  <Icon fontSize="small">print</Icon>
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Download PDF">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`);
+                                  }}
+                                >
+                                  <Icon fontSize="small">picture_as_pdf</Icon>
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Copy">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyContent(gc.content);
+                                  }}
+                                >
+                                  <Icon fontSize="small">content_copy</Icon>
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
                           </Box>
                         </AccordionSummary>
                         <AccordionDetails>
-                          <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
-                            {hospitalConfig.logo ? (
-                              <img
-                                src={hospitalConfig.logo}
-                                alt="Hospital Logo"
-                                style={{ height: 60, objectFit: 'contain', marginBottom: 8 }}
-                              />
-                            ) : (
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
-                                <Icon color="primary">local_hospital</Icon>
-                                <Typography variant="body2" color="text.secondary">[Hospital Logo]</Typography>
+                          {/* Action buttons for content */}
+                          <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'flex-end' }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Icon>visibility</Icon>}
+                              onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                            >
+                              Preview
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Icon>print</Icon>}
+                              onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                            >
+                              Print
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              startIcon={<Icon>picture_as_pdf</Icon>}
+                              onClick={() => handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`)}
+                            >
+                              Download PDF
+                            </Button>
+                          </Box>
+
+                          {/* Content display - render HTML or plain text */}
+                          {isHTMLContent(gc.content) ? (
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                p: 0,
+                                bgcolor: 'white',
+                                maxHeight: 600,
+                                overflow: 'auto',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  '& iframe': {
+                                    width: '100%',
+                                    height: '500px',
+                                    border: 'none',
+                                  },
+                                }}
+                              >
+                                <iframe
+                                  srcDoc={gc.content}
+                                  title={`Evidence ${index + 1}`}
+                                  sandbox="allow-same-origin"
+                                />
                               </Box>
-                            )}
-                            <Typography variant="h6" fontWeight={600}>{hospitalConfig.name}</Typography>
-                          </Box>
-                          <Paper
-                            variant="outlined"
-                            sx={{
-                              p: 2,
-                              bgcolor: 'grey.50',
-                              maxHeight: 500,
-                              overflow: 'auto',
-                              whiteSpace: 'pre-wrap',
-                              fontFamily: 'monospace',
-                              fontSize: '0.875rem',
-                              lineHeight: 1.6,
-                            }}
-                          >
-                            {gc.content}
-                          </Paper>
-                          <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              {hospitalConfig.address}
-                            </Typography>
-                            <Divider sx={{ my: 1 }} />
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                              <Chip
-                                size="small"
-                                icon={<Icon fontSize="small">draw</Icon>}
-                                label={`Signed: ${hospitalConfig.qualityCoordinator}`}
+                            </Paper>
+                          ) : (
+                            <>
+                              <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
+                                {hospitalConfig.logo ? (
+                                  <img
+                                    src={hospitalConfig.logo}
+                                    alt="Hospital Logo"
+                                    style={{ height: 60, objectFit: 'contain', marginBottom: 8 }}
+                                  />
+                                ) : (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                                    <Icon color="primary">local_hospital</Icon>
+                                    <Typography variant="body2" color="text.secondary">[Hospital Logo]</Typography>
+                                  </Box>
+                                )}
+                                <Typography variant="h6" fontWeight={600}>{hospitalConfig.name}</Typography>
+                              </Box>
+                              <Paper
                                 variant="outlined"
-                              />
-                              <Chip
-                                size="small"
-                                icon={<Icon fontSize="small">verified</Icon>}
-                                label="Official Hospital Stamp"
-                                color="primary"
-                                variant="outlined"
-                              />
-                            </Box>
-                          </Box>
+                                sx={{
+                                  p: 2,
+                                  bgcolor: 'grey.50',
+                                  maxHeight: 500,
+                                  overflow: 'auto',
+                                  whiteSpace: 'pre-wrap',
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.875rem',
+                                  lineHeight: 1.6,
+                                }}
+                              >
+                                {gc.content}
+                              </Paper>
+                              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1, textAlign: 'center' }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  {hospitalConfig.address}
+                                </Typography>
+                                <Divider sx={{ my: 1 }} />
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                  <Chip
+                                    size="small"
+                                    icon={<Icon fontSize="small">draw</Icon>}
+                                    label={`Signed: ${hospitalConfig.qualityCoordinator}`}
+                                    variant="outlined"
+                                  />
+                                  <Chip
+                                    size="small"
+                                    icon={<Icon fontSize="small">verified</Icon>}
+                                    label="Official Hospital Stamp"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                </Box>
+                              </Box>
+                            </>
+                          )}
                         </AccordionDetails>
                       </Accordion>
                     ))}

@@ -311,103 +311,149 @@ export default function ObjectiveDetail({
     setGeneratedSOPContent('');
 
     try {
-      const prompt = `You are an expert in NABH (National Accreditation Board for Hospitals and Healthcare Providers) documentation for ${HOSPITAL_INFO.name}.
+      const prompt = `You are an expert in NABH documentation for ${HOSPITAL_INFO.name}.
 
-Generate a complete, professional Standard Operating Procedure (SOP) document in ENGLISH ONLY for the following NABH objective element. This is an internal document.
+Generate a complete HTML document for this Standard Operating Procedure (SOP) in ENGLISH ONLY.
 
-Hospital: ${HOSPITAL_INFO.name}
-Address: ${HOSPITAL_INFO.address}
-
-NABH Objective Element Code: ${objective.code}
+NABH Code: ${objective.code}
 Title: ${objective.title}
 Description: ${objective.description}
 
-Generate a comprehensive SOP with the following professional table-based structure:
+Generate a complete, valid HTML document with embedded CSS:
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                 │
-│                        ╔═══════════════════════════╗                           │
-│                        ║    [HOSPITAL LOGO]        ║                           │
-│                        ║      (Large Size)         ║                           │
-│                        ╚═══════════════════════════╝                           │
-│                                                                                 │
-│                            ${HOSPITAL_INFO.name.toUpperCase()}                            │
-│                              ${HOSPITAL_INFO.address}                                │
-│                                                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                      STANDARD OPERATING PROCEDURE                               │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ SOP TITLE: [Based on objective element - ${objective.title}]                   │
-├──────────────────────┬──────────────────────┬───────────────────────────────────┤
-│ Document No:         │ Version:             │ Page: 1 of X                      │
-│ SOP-${objective.code.replace(/\./g, '-')}-001      │ 1.0                  │                                   │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Department:          │ NABH Chapter:        │ Category:                         │
-│ [Relevant Dept]      │ ${objective.code}              │ Standard Operating Procedure      │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Effective Date:      │ Review Date:         │ Supersedes:                       │
-│ [DD/MM/YYYY]         │ [DD/MM/YYYY]         │ New Document                      │
-├──────────────────────┴──────────────────────┴───────────────────────────────────┤
-│ DOCUMENT AUTHORIZATION                                                          │
-├──────────────────────┬──────────────────────┬───────────────────────────────────┤
-│ PREPARED BY          │ REVIEWED BY          │ APPROVED BY                       │
-├──────────────────────┼──────────────────────┼───────────────────────────────────┤
-│ Name:                │ Name:                │ Name:                             │
-│ Designation:         │ Designation:         │ Designation:                      │
-│ Date:                │ Date:                │ Date:                             │
-│ Signature:           │ Signature:           │ Signature:                        │
-└──────────────────────┴──────────────────────┴───────────────────────────────────┘
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SOP - ${objective.title} - ${HOSPITAL_INFO.name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #2E7D32; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo-area { width: 100px; height: 100px; margin: 0 auto 10px; border: 2px solid #2E7D32; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2E7D32, #1B5E20); color: white; font-size: 12px; font-weight: bold; }
+    .hospital-name { font-size: 22px; font-weight: bold; color: #2E7D32; margin: 10px 0 5px; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: linear-gradient(135deg, #2E7D32, #1B5E20); color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .sop-title { font-size: 14px; color: #2E7D32; text-align: center; margin-bottom: 15px; font-weight: 600; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .info-table th, .info-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .info-table th { background: #E8F5E9; font-weight: 600; color: #2E7D32; width: 25%; }
+    .auth-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .auth-table th { background: #2E7D32; color: white; padding: 10px; text-align: center; }
+    .auth-table td { border: 1px solid #ddd; padding: 15px; text-align: center; vertical-align: top; height: 100px; }
+    .section { margin: 20px 0; }
+    .section-title { background: linear-gradient(90deg, #E8F5E9, white); padding: 10px 15px; font-weight: bold; color: #2E7D32; border-left: 4px solid #2E7D32; margin-bottom: 10px; font-size: 13px; border-radius: 0 5px 5px 0; }
+    .section-content { padding: 10px 15px; }
+    .procedure-step { margin: 12px 0; padding: 12px; background: #FAFAFA; border-radius: 8px; border-left: 3px solid #2E7D32; }
+    .step-number { display: inline-block; width: 28px; height: 28px; background: #2E7D32; color: white; border-radius: 50%; text-align: center; line-height: 28px; margin-right: 12px; font-weight: bold; font-size: 12px; }
+    .data-table { width: 100%; border-collapse: collapse; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .data-table th { background: #2E7D32; color: white; padding: 10px; text-align: left; }
+    .data-table td { border: 1px solid #ddd; padding: 10px; }
+    .data-table tr:nth-child(even) { background: #F5F5F5; }
+    .footer { margin-top: 30px; padding: 15px; background: #F5F5F5; border-radius: 8px; text-align: center; font-size: 10px; color: #666; }
+    .revision-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px; }
+    .revision-table th { background: #455A64; color: white; padding: 8px; }
+    .revision-table td { border: 1px solid #ddd; padding: 8px; }
+    .stamp-area { border: 2px dashed #ccc; padding: 25px; text-align: center; margin: 20px 0; color: #999; border-radius: 8px; }
+    ul, ol { margin-left: 20px; }
+    li { margin: 5px 0; }
+    @media print { body { padding: 10px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
+  </div>
 
-1. PURPOSE
-   [Clearly explain the purpose of this SOP]
+  <div class="doc-title">STANDARD OPERATING PROCEDURE</div>
+  <div class="sop-title">${objective.title}</div>
 
-2. SCOPE
-   [Define who, what, when, where this SOP applies]
+  <table class="info-table">
+    <tr><th>Document No</th><td>SOP-${objective.code.replace(/\./g, '-')}-001</td><th>Version</th><td>1.0</td></tr>
+    <tr><th>NABH Code</th><td>${objective.code}</td><th>Category</th><td>Standard Operating Procedure</td></tr>
+    <tr><th>Effective Date</th><td>[DD/MM/YYYY]</td><th>Review Date</th><td>[DD/MM/YYYY]</td></tr>
+    <tr><th>Department</th><td>[Department Name]</td><th>Page</th><td>1 of X</td></tr>
+  </table>
 
-3. DEFINITIONS
-   [List key terms and their definitions in a table format]
-   ┌────────────────────┬──────────────────────────────────────────────────────────┐
-   │ Term               │ Definition                                               │
-   ├────────────────────┼──────────────────────────────────────────────────────────┤
-   │ [Term 1]           │ [Definition]                                             │
-   └────────────────────┴──────────────────────────────────────────────────────────┘
+  <table class="auth-table">
+    <tr><th width="33%">PREPARED BY</th><th width="33%">REVIEWED BY</th><th width="33%">APPROVED BY</th></tr>
+    <tr>
+      <td>Name: _______________<br><br>Designation: _______________<br><br>Date: _______________<br><br>Signature:</td>
+      <td>Name: _______________<br><br>Designation: _______________<br><br>Date: _______________<br><br>Signature:</td>
+      <td>Name: _______________<br><br>Designation: _______________<br><br>Date: _______________<br><br>Signature:</td>
+    </tr>
+  </table>
 
-4. RESPONSIBILITIES
-   ┌────────────────────┬──────────────────────────────────────────────────────────┐
-   │ Role               │ Responsibility                                           │
-   ├────────────────────┼──────────────────────────────────────────────────────────┤
-   │ [Role 1]           │ [Responsibilities]                                       │
-   │ [Role 2]           │ [Responsibilities]                                       │
-   └────────────────────┴──────────────────────────────────────────────────────────┘
+  <div class="section">
+    <div class="section-title">1. PURPOSE</div>
+    <div class="section-content">[Purpose of this SOP]</div>
+  </div>
 
-5. PROCEDURE
-   5.1 [Step 1 with detailed instructions]
-   5.2 [Step 2 with detailed instructions]
-   5.3 [Continue with all steps]
+  <div class="section">
+    <div class="section-title">2. SCOPE</div>
+    <div class="section-content">[Scope of this SOP]</div>
+  </div>
 
-6. DOCUMENTATION REQUIREMENTS
-   [List all required documents, forms, and records]
+  <div class="section">
+    <div class="section-title">3. DEFINITIONS</div>
+    <div class="section-content">
+      <table class="data-table">
+        <tr><th>Term</th><th>Definition</th></tr>
+        <tr><td>[Term]</td><td>[Definition]</td></tr>
+      </table>
+    </div>
+  </div>
 
-7. REFERENCES
-   - NABH SHCO 3rd Edition Standards
-   - Hospital Policies
-   - Relevant Guidelines
+  <div class="section">
+    <div class="section-title">4. RESPONSIBILITIES</div>
+    <div class="section-content">
+      <table class="data-table">
+        <tr><th>Role</th><th>Responsibility</th></tr>
+        <tr><td>[Role]</td><td>[Responsibility]</td></tr>
+      </table>
+    </div>
+  </div>
 
-8. ATTACHMENTS/ANNEXURES
-   [List any forms, checklists, or annexures]
+  <div class="section">
+    <div class="section-title">5. PROCEDURE</div>
+    <div class="section-content">
+      <div class="procedure-step"><span class="step-number">1</span>[Step description]</div>
+      <div class="procedure-step"><span class="step-number">2</span>[Step description]</div>
+    </div>
+  </div>
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ REVISION HISTORY                                                                │
-├──────────┬────────────┬─────────────────────────────────┬───────────────────────┤
-│ Version  │ Date       │ Description of Changes          │ Changed By            │
-├──────────┼────────────┼─────────────────────────────────┼───────────────────────┤
-│ 1.0      │ [Date]     │ Initial Release                 │ [Name]                │
-└──────────┴────────────┴─────────────────────────────────┴───────────────────────┘
+  <div class="section">
+    <div class="section-title">6. DOCUMENTATION</div>
+    <div class="section-content">[Required documents and records]</div>
+  </div>
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ ${HOSPITAL_INFO.name} | ${HOSPITAL_INFO.address}                                     │
-│ This is a controlled document. Unauthorized copying or distribution prohibited.│
-└─────────────────────────────────────────────────────────────────────────────────┘`;
+  <div class="section">
+    <div class="section-title">7. REFERENCES</div>
+    <div class="section-content">
+      <ul>
+        <li>NABH SHCO 3rd Edition Standards</li>
+        <li>Hospital Policies</li>
+      </ul>
+    </div>
+  </div>
+
+  <table class="revision-table">
+    <tr><th>Version</th><th>Date</th><th>Description</th><th>Changed By</th></tr>
+    <tr><td>1.0</td><td>[Date]</td><td>Initial Release</td><td>[Name]</td></tr>
+  </table>
+
+  <div class="stamp-area">HOSPITAL STAMP</div>
+
+  <div class="footer">
+    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
+    This is a controlled document. Unauthorized copying or distribution is prohibited.
+  </div>
+</body>
+</html>
+
+Fill in all sections with relevant content based on the NABH objective element description provided.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -479,39 +525,93 @@ Training Details:
 - Trainer: ${trainerName}
 - Trainer Designation: ${trainerDesignation || 'Trainer'}
 
-Generate a formal notice on hospital letterhead format with the following structure:
+Generate a complete HTML document for this Training Notice with modern, professional styling.
 
-================================================================================
-                              ${HOSPITAL_INFO.name.toUpperCase()}
-                         ${HOSPITAL_INFO.address}
-================================================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 3px solid #9C27B0; padding-bottom: 15px; margin-bottom: 20px; }
+    .logo-area { width: 100px; height: 100px; margin: 0 auto 10px; border: 2px solid #9C27B0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; font-weight: bold; font-size: 12px; }
+    .hospital-name { font-size: 22px; font-weight: bold; color: #9C27B0; margin: 5px 0; }
+    .hospital-address { font-size: 12px; color: #666; }
+    .doc-title { background: linear-gradient(135deg, #9C27B0, #7B1FA2); color: white; padding: 12px 20px; text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; border-radius: 5px; }
+    .info-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .info-table td { padding: 8px 12px; border: 1px solid #e0e0e0; }
+    .info-table td:first-child { font-weight: 600; background: #F3E5F5; width: 30%; color: #7B1FA2; }
+    .notice-body { background: #FAFAFA; border-left: 4px solid #9C27B0; padding: 15px 20px; margin: 20px 0; }
+    .notice-body p { margin-bottom: 10px; }
+    .training-details { background: #F3E5F5; border-radius: 8px; padding: 15px; margin: 20px 0; }
+    .training-details h3 { color: #7B1FA2; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #CE93D8; padding-bottom: 5px; }
+    .training-details table { width: 100%; }
+    .training-details td { padding: 5px 10px; }
+    .training-details td:first-child { font-weight: 600; width: 35%; }
+    .important-note { background: #FFF3E0; border: 1px solid #FFB74D; border-radius: 5px; padding: 12px; margin: 15px 0; }
+    .important-note strong { color: #E65100; }
+    .signature-area { margin-top: 40px; }
+    .signature-box { display: inline-block; width: 45%; text-align: center; }
+    .signature-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; }
+    .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #9C27B0; font-size: 11px; color: #666; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
+  </div>
 
-                              TRAINING NOTICE
-                              ---------------
+  <div class="doc-title">TRAINING NOTICE</div>
 
-Reference No: TRN/${objective.code.replace(/\./g, '/')}/${new Date().getFullYear()}
-Date: [Current Date]
+  <table class="info-table">
+    <tr><td>Reference No.</td><td>TRN/${objective.code.replace(/\./g, '/')}/${new Date().getFullYear()}</td></tr>
+    <tr><td>Date</td><td>[Current Date]</td></tr>
+    <tr><td>To</td><td>All Concerned Staff</td></tr>
+    <tr><td>Subject</td><td>Training on ${objective.title}</td></tr>
+  </table>
 
-To: All Concerned Staff
+  <div class="notice-body">
+    [Body of notice explaining the training, its importance, who should attend, what to bring, etc.]
+  </div>
 
-Subject: Training on [Topic]
+  <div class="training-details">
+    <h3>TRAINING DETAILS</h3>
+    <table>
+      <tr><td>Training Topic:</td><td>${objective.title}</td></tr>
+      <tr><td>NABH Reference:</td><td>${objective.code}</td></tr>
+      <tr><td>Date:</td><td>${trainingDate}</td></tr>
+      <tr><td>Time:</td><td>${trainingTime || 'To be announced'}</td></tr>
+      <tr><td>Venue:</td><td>${trainingVenue || 'Hospital Conference Room'}</td></tr>
+      <tr><td>Trainer:</td><td>${trainerName}, ${trainerDesignation || 'Trainer'}</td></tr>
+    </table>
+  </div>
 
-[Body of notice explaining the training, its importance, who should attend, what to bring, etc.]
+  <div class="important-note">
+    <strong>Note:</strong> Attendance is mandatory for all designated staff. Please report on time.
+  </div>
 
-TRAINING DETAILS:
-- Date: ${trainingDate}
-- Time: ${trainingTime || 'To be announced'}
-- Venue: ${trainingVenue || 'Hospital Conference Room'}
-- Trainer: ${trainerName}, ${trainerDesignation || 'Trainer'}
+  <div class="signature-area">
+    <div class="signature-box">
+      <div class="signature-line">
+        Issued By<br>
+        Quality Coordinator<br>
+        ${HOSPITAL_INFO.name}
+      </div>
+    </div>
+  </div>
 
-Attendance is mandatory.
+  <div class="footer">
+    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
+    This is an official training notice from the Quality Department.
+  </div>
+</body>
+</html>
 
-================================================================================
-Issued by:
-[Quality Coordinator Name]
-Quality Coordinator
-${HOSPITAL_INFO.name}
-================================================================================`;
+Fill in the notice body with appropriate content explaining why this training is important and who should attend.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -560,39 +660,101 @@ Training Topic: ${objective.title} (${objective.code})
 Training Date: ${trainingDate || '[Date]'}
 Trainer: ${trainerName || '[Trainer Name]'}
 
-Create a professional attendance sheet with:
+Generate a complete HTML document for this Training Attendance Sheet with modern, professional styling.
 
-================================================================================
-                              ${HOSPITAL_INFO.name.toUpperCase()}
-                         TRAINING ATTENDANCE SHEET
-================================================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.5; color: #333; max-width: 850px; margin: 0 auto; padding: 15px; }
+    .header { text-align: center; border-bottom: 3px solid #1976D2; padding-bottom: 12px; margin-bottom: 15px; }
+    .logo-area { width: 80px; height: 80px; margin: 0 auto 8px; border: 2px solid #1976D2; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1976D2, #1565C0); color: white; font-weight: bold; font-size: 10px; }
+    .hospital-name { font-size: 20px; font-weight: bold; color: #1976D2; margin: 3px 0; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: linear-gradient(135deg, #1976D2, #1565C0); color: white; padding: 10px 15px; text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0; border-radius: 5px; }
+    .training-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; background: #E3F2FD; padding: 12px; border-radius: 5px; }
+    .training-info div { display: flex; }
+    .training-info strong { min-width: 130px; color: #1565C0; }
+    .attendance-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .attendance-table th { background: #1976D2; color: white; padding: 8px 6px; text-align: left; font-size: 11px; }
+    .attendance-table td { border: 1px solid #BBDEFB; padding: 10px 6px; }
+    .attendance-table tr:nth-child(even) { background: #F5F5F5; }
+    .attendance-table tr:hover { background: #E3F2FD; }
+    .sno-col { width: 40px; text-align: center; }
+    .name-col { width: 25%; }
+    .designation-col { width: 20%; }
+    .department-col { width: 20%; }
+    .signature-col { width: 20%; }
+    .totals-row { background: #E3F2FD !important; font-weight: bold; }
+    .certification { margin-top: 20px; border: 2px solid #1976D2; border-radius: 8px; padding: 15px; background: #F5F5F5; }
+    .certification h4 { color: #1565C0; margin-bottom: 10px; font-size: 13px; }
+    .certification p { margin-bottom: 8px; }
+    .signature-area { display: flex; justify-content: space-between; margin-top: 15px; }
+    .signature-box { width: 45%; text-align: center; }
+    .signature-line { border-bottom: 1px solid #333; height: 30px; margin-bottom: 5px; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 2px solid #1976D2; font-size: 10px; color: #666; }
+    @media print { body { padding: 10px; font-size: 11px; } .attendance-table td { padding: 8px 4px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
+  </div>
 
-Training Topic: ${objective.title}
-NABH Code: ${objective.code}
-Date: ${trainingDate || '_____________'}
-Time: ${trainingTime || '_____________'}
-Venue: ${trainingVenue || '_____________'}
-Trainer Name: ${trainerName || '_____________'}
-Trainer Designation: ${trainerDesignation || '_____________'}
+  <div class="doc-title">TRAINING ATTENDANCE SHEET</div>
 
---------------------------------------------------------------------------------
-S.No | Name           | Designation      | Department       | Signature
---------------------------------------------------------------------------------
-1    |                |                  |                  |
-2    |                |                  |                  |
-3    |                |                  |                  |
-[Continue for 20 rows]
+  <div class="training-info">
+    <div><strong>Training Topic:</strong> ${objective.title}</div>
+    <div><strong>NABH Reference:</strong> ${objective.code}</div>
+    <div><strong>Date:</strong> ${trainingDate || '_____________'}</div>
+    <div><strong>Time:</strong> ${trainingTime || '_____________'}</div>
+    <div><strong>Venue:</strong> ${trainingVenue || '_____________'}</div>
+    <div><strong>Trainer:</strong> ${trainerName || '_____________'}</div>
+    <div><strong>Trainer Designation:</strong> ${trainerDesignation || '_____________'}</div>
+  </div>
 
---------------------------------------------------------------------------------
-Total Attendees: ___________
+  <table class="attendance-table">
+    <tr>
+      <th class="sno-col">S.No</th>
+      <th class="name-col">Name</th>
+      <th class="designation-col">Designation</th>
+      <th class="department-col">Department</th>
+      <th class="signature-col">Signature</th>
+    </tr>
+    [Generate 20 rows with S.No 1-20, empty cells for name, designation, department, signature]
+    <tr class="totals-row">
+      <td colspan="4" style="text-align: right;">Total Attendees:</td>
+      <td></td>
+    </tr>
+  </table>
 
-TRAINER'S CERTIFICATION:
-I certify that the above training was conducted as per schedule.
+  <div class="certification">
+    <h4>TRAINER'S CERTIFICATION</h4>
+    <p>I certify that the above training was conducted as per the schedule and the participants mentioned above attended the session.</p>
+    <div class="signature-area">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <strong>Trainer Signature</strong>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <strong>Date</strong>
+      </div>
+    </div>
+  </div>
 
-Trainer Signature: _____________________
-Date: _____________________
+  <div class="footer">
+    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
+    Document Reference: ATT/${objective.code.replace(/\./g, '/')}/${new Date().getFullYear()}
+  </div>
+</body>
+</html>
 
-================================================================================`;
+Generate the complete HTML with all 20 attendance rows filled in with empty cells.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -643,55 +805,140 @@ Topic Description: ${objective.description}
 
 Generate ${mcqQuestionCount} MCQ questions to evaluate staff understanding of this topic.
 
-Format:
+Generate a complete HTML document for this MCQ Test with modern, professional styling.
 
-================================================================================
-                              ${HOSPITAL_INFO.name.toUpperCase()}
-                         TRAINING EVALUATION TEST
-================================================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 13px; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 3px solid #D32F2F; padding-bottom: 15px; margin-bottom: 15px; }
+    .logo-area { width: 80px; height: 80px; margin: 0 auto 8px; border: 2px solid #D32F2F; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #D32F2F, #C62828); color: white; font-weight: bold; font-size: 10px; }
+    .hospital-name { font-size: 20px; font-weight: bold; color: #D32F2F; margin: 3px 0; }
+    .hospital-address { font-size: 11px; color: #666; }
+    .doc-title { background: linear-gradient(135deg, #D32F2F, #C62828); color: white; padding: 10px 15px; text-align: center; font-size: 16px; font-weight: bold; margin: 15px 0; border-radius: 5px; }
+    .test-info { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 15px 0; background: #FFEBEE; padding: 12px; border-radius: 5px; border: 1px solid #FFCDD2; }
+    .test-info div { display: flex; font-size: 12px; }
+    .test-info strong { min-width: 120px; color: #C62828; }
+    .participant-info { margin: 15px 0; padding: 12px; border: 1px solid #ddd; border-radius: 5px; }
+    .participant-info h4 { color: #C62828; margin-bottom: 10px; font-size: 12px; }
+    .participant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .participant-field { display: flex; align-items: center; gap: 8px; }
+    .participant-field label { font-weight: 600; min-width: 100px; font-size: 11px; }
+    .participant-field .blank { flex: 1; border-bottom: 1px solid #999; min-height: 20px; }
+    .instructions { background: #FFF3E0; border: 1px solid #FFB74D; border-radius: 5px; padding: 12px; margin: 15px 0; }
+    .instructions h4 { color: #E65100; margin-bottom: 8px; font-size: 12px; }
+    .instructions ul { margin-left: 20px; font-size: 11px; }
+    .questions { margin: 20px 0; }
+    .question { margin-bottom: 18px; padding: 12px; border: 1px solid #E0E0E0; border-radius: 5px; background: #FAFAFA; }
+    .question-number { display: inline-block; background: #D32F2F; color: white; width: 24px; height: 24px; text-align: center; line-height: 24px; border-radius: 50%; font-weight: bold; font-size: 12px; margin-right: 8px; }
+    .question-text { font-weight: 600; margin-bottom: 10px; display: inline; }
+    .options { margin-left: 32px; }
+    .option { display: flex; align-items: center; margin: 5px 0; padding: 5px 10px; border-radius: 3px; }
+    .option:hover { background: #FFEBEE; }
+    .option-letter { display: inline-block; width: 22px; height: 22px; border: 2px solid #D32F2F; border-radius: 50%; text-align: center; line-height: 18px; font-weight: bold; margin-right: 10px; font-size: 11px; }
+    .option-text { flex: 1; }
+    .official-use { margin-top: 25px; border: 2px solid #D32F2F; border-radius: 8px; padding: 15px; background: #FFEBEE; }
+    .official-use h4 { color: #C62828; margin-bottom: 10px; text-align: center; font-size: 12px; border-bottom: 1px solid #FFCDD2; padding-bottom: 8px; }
+    .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
+    .score-item label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 11px; }
+    .score-item .value { border-bottom: 1px solid #333; min-height: 25px; }
+    .evaluator-section { margin-top: 15px; display: flex; justify-content: space-between; }
+    .evaluator-box { width: 45%; text-align: center; }
+    .evaluator-box .line { border-bottom: 1px solid #333; height: 30px; margin-bottom: 5px; }
+    .answer-key { margin-top: 30px; page-break-before: always; border: 2px dashed #D32F2F; padding: 15px; background: #FFF; }
+    .answer-key h4 { color: #C62828; text-align: center; margin-bottom: 10px; }
+    .answer-key p { text-align: center; font-size: 11px; color: #666; margin-bottom: 10px; }
+    .answers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .answer-item { background: #FFEBEE; padding: 5px 10px; border-radius: 3px; text-align: center; font-weight: 600; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 2px solid #D32F2F; font-size: 10px; color: #666; }
+    @media print { .answer-key { page-break-before: always; } body { padding: 10px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-area">HOSPITAL<br>LOGO</div>
+    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
+  </div>
 
-Topic: ${objective.title}
-NABH Code: ${objective.code}
-Total Questions: ${mcqQuestionCount}
-Time: 15 minutes
-Total Marks: ${mcqQuestionCount}
+  <div class="doc-title">TRAINING EVALUATION TEST</div>
 
-Name: _____________________
-Designation: _____________________
-Department: _____________________
-Date: _____________________
+  <div class="test-info">
+    <div><strong>Topic:</strong> ${objective.title}</div>
+    <div><strong>NABH Code:</strong> ${objective.code}</div>
+    <div><strong>Total Questions:</strong> ${mcqQuestionCount}</div>
+    <div><strong>Time:</strong> 15 minutes</div>
+    <div><strong>Total Marks:</strong> ${mcqQuestionCount}</div>
+    <div><strong>Passing Score:</strong> 70%</div>
+  </div>
 
-INSTRUCTIONS:
-- Circle the correct answer
-- Each question carries 1 mark
-- All questions are compulsory
+  <div class="participant-info">
+    <h4>PARTICIPANT INFORMATION</h4>
+    <div class="participant-grid">
+      <div class="participant-field"><label>Name:</label><div class="blank"></div></div>
+      <div class="participant-field"><label>Designation:</label><div class="blank"></div></div>
+      <div class="participant-field"><label>Department:</label><div class="blank"></div></div>
+      <div class="participant-field"><label>Date:</label><div class="blank"></div></div>
+    </div>
+  </div>
 
---------------------------------------------------------------------------------
+  <div class="instructions">
+    <h4>INSTRUCTIONS</h4>
+    <ul>
+      <li>Circle or tick the correct answer for each question</li>
+      <li>Each question carries 1 mark</li>
+      <li>All questions are compulsory</li>
+      <li>No negative marking</li>
+    </ul>
+  </div>
 
-[Generate ${mcqQuestionCount} MCQ questions with 4 options each]
+  <div class="questions">
+    [Generate ${mcqQuestionCount} questions in this format:]
+    <div class="question">
+      <span class="question-number">1</span>
+      <span class="question-text">[Question text]</span>
+      <div class="options">
+        <div class="option"><span class="option-letter">a</span><span class="option-text">[Option A]</span></div>
+        <div class="option"><span class="option-letter">b</span><span class="option-text">[Option B]</span></div>
+        <div class="option"><span class="option-letter">c</span><span class="option-text">[Option C]</span></div>
+        <div class="option"><span class="option-letter">d</span><span class="option-text">[Option D]</span></div>
+      </div>
+    </div>
+    [Continue for all ${mcqQuestionCount} questions]
+  </div>
 
-Q1. [Question]
-    a) Option A
-    b) Option B
-    c) Option C
-    d) Option D
+  <div class="official-use">
+    <h4>FOR OFFICIAL USE ONLY</h4>
+    <div class="score-grid">
+      <div class="score-item"><label>Total Score:</label><div class="value"></div><span>/ ${mcqQuestionCount}</span></div>
+      <div class="score-item"><label>Percentage:</label><div class="value"></div><span>%</span></div>
+      <div class="score-item"><label>Result:</label><div class="value"></div><span>PASS / FAIL</span></div>
+    </div>
+    <div class="evaluator-section">
+      <div class="evaluator-box"><div class="line"></div><strong>Evaluator Signature</strong></div>
+      <div class="evaluator-box"><div class="line"></div><strong>Date</strong></div>
+    </div>
+  </div>
 
-[Continue for all questions]
+  <div class="answer-key">
+    <h4>ANSWER KEY</h4>
+    <p>(Keep Separately - For Evaluator Only)</p>
+    <div class="answers-grid">
+      [List all answers: Q1: a, Q2: b, etc.]
+    </div>
+  </div>
 
---------------------------------------------------------------------------------
-FOR OFFICIAL USE ONLY
+  <div class="footer">
+    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
+    Document Reference: MCQ/${objective.code.replace(/\./g, '/')}/${new Date().getFullYear()}
+  </div>
+</body>
+</html>
 
-Total Score: _____ / ${mcqQuestionCount}
-Percentage: _____%
-Result: PASS / FAIL (Passing: 70%)
-
-Evaluator Signature: _____________________
-
-================================================================================
-
-ANSWER KEY (Keep Separately):
-[List all correct answers]
-================================================================================`;
+Generate the complete HTML with all ${mcqQuestionCount} MCQ questions filled in with proper questions and options related to the training topic.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -727,31 +974,66 @@ ANSWER KEY (Keep Separately):
     alert(`${label} copied to clipboard!`);
   };
 
+  // Check if content is HTML
+  const isHTMLContent = (content: string): boolean => {
+    return content.trim().startsWith('<!DOCTYPE html>') || content.trim().startsWith('<html');
+  };
+
+  // Preview content in new window
+  const handlePreviewContent = (content: string, title: string) => {
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      if (isHTMLContent(content)) {
+        previewWindow.document.write(content);
+      } else {
+        previewWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title} - ${HOSPITAL_INFO.name}</title>
+              <style>
+                body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; padding: 20px; white-space: pre-wrap; background: #f5f5f5; }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
+      previewWindow.document.close();
+    }
+  };
+
   // Print content handler
   const handlePrintContent = (content: string, title: string) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${title} - ${HOSPITAL_INFO.name}</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.5;
-                padding: 20px;
-                white-space: pre-wrap;
-              }
-              @media print {
-                body { margin: 0; padding: 15px; }
-              }
-            </style>
-          </head>
-          <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
-        </html>
-      `);
+      if (isHTMLContent(content)) {
+        // If content is already HTML, use it directly
+        printWindow.document.write(content);
+      } else {
+        // Plain text content - wrap in basic HTML
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${title} - ${HOSPITAL_INFO.name}</title>
+              <style>
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  line-height: 1.5;
+                  padding: 20px;
+                  white-space: pre-wrap;
+                }
+                @media print {
+                  body { margin: 0; padding: 15px; }
+                }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
       printWindow.document.close();
       printWindow.print();
     }
@@ -761,25 +1043,31 @@ ANSWER KEY (Keep Separately):
   const handleDownloadPDF = (content: string, filename: string) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${filename}</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.5;
-                padding: 20px;
-                white-space: pre-wrap;
-              }
-              @page { margin: 1cm; }
-            </style>
-          </head>
-          <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
-        </html>
-      `);
+      if (isHTMLContent(content)) {
+        // If content is already HTML, use it directly
+        printWindow.document.write(content);
+      } else {
+        // Plain text content - wrap in basic HTML
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${filename}</title>
+              <style>
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  line-height: 1.5;
+                  padding: 20px;
+                  white-space: pre-wrap;
+                }
+                @page { margin: 1cm; }
+              </style>
+            </head>
+            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+          </html>
+        `);
+      }
       printWindow.document.close();
       // Trigger print dialog - user can save as PDF
       setTimeout(() => {
@@ -1233,6 +1521,9 @@ ANSWER KEY (Keep Separately):
                       Training Notice
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button size="small" variant="outlined" startIcon={<Icon>visibility</Icon>} onClick={() => handlePreviewContent(generatedNotice, 'Training Notice')}>
+                        Preview
+                      </Button>
                       <Button size="small" startIcon={<Icon>print</Icon>} onClick={() => handlePrintContent(generatedNotice, 'Training Notice')}>
                         Print
                       </Button>
@@ -1247,15 +1538,35 @@ ANSWER KEY (Keep Separately):
                       </Button>
                     </Box>
                   </Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={10}
-                    maxRows={20}
-                    value={generatedNotice}
-                    onChange={(e) => setGeneratedNotice(e.target.value)}
-                    sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.8rem' }}
-                  />
+                  {isHTMLContent(generatedNotice) && (
+                    <Box sx={{ mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                      <iframe
+                        srcDoc={generatedNotice}
+                        title="Training Notice Preview"
+                        style={{ width: '100%', height: '400px', border: 'none' }}
+                        sandbox="allow-same-origin"
+                      />
+                    </Box>
+                  )}
+                  <Accordion>
+                    <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                      <Typography variant="caption" color="text.secondary">
+                        <Icon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }}>code</Icon>
+                        Edit HTML Source
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={10}
+                        maxRows={20}
+                        value={generatedNotice}
+                        onChange={(e) => setGeneratedNotice(e.target.value)}
+                        sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.75rem' }}
+                      />
+                    </AccordionDetails>
+                  </Accordion>
                 </Card>
               )}
 
@@ -1268,6 +1579,9 @@ ANSWER KEY (Keep Separately):
                       Attendance Sheet
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button size="small" variant="outlined" startIcon={<Icon>visibility</Icon>} onClick={() => handlePreviewContent(generatedAttendance, 'Attendance Sheet')}>
+                        Preview
+                      </Button>
                       <Button size="small" startIcon={<Icon>print</Icon>} onClick={() => handlePrintContent(generatedAttendance, 'Attendance Sheet')}>
                         Print
                       </Button>
@@ -1282,15 +1596,35 @@ ANSWER KEY (Keep Separately):
                       </Button>
                     </Box>
                   </Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={10}
-                    maxRows={20}
-                    value={generatedAttendance}
-                    onChange={(e) => setGeneratedAttendance(e.target.value)}
-                    sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.8rem' }}
-                  />
+                  {isHTMLContent(generatedAttendance) && (
+                    <Box sx={{ mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                      <iframe
+                        srcDoc={generatedAttendance}
+                        title="Attendance Sheet Preview"
+                        style={{ width: '100%', height: '500px', border: 'none' }}
+                        sandbox="allow-same-origin"
+                      />
+                    </Box>
+                  )}
+                  <Accordion>
+                    <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                      <Typography variant="caption" color="text.secondary">
+                        <Icon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }}>code</Icon>
+                        Edit HTML Source
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={10}
+                        maxRows={20}
+                        value={generatedAttendance}
+                        onChange={(e) => setGeneratedAttendance(e.target.value)}
+                        sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.75rem' }}
+                      />
+                    </AccordionDetails>
+                  </Accordion>
                 </Card>
               )}
 
@@ -1303,6 +1637,9 @@ ANSWER KEY (Keep Separately):
                       MCQ Evaluation Test
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button size="small" variant="outlined" startIcon={<Icon>visibility</Icon>} onClick={() => handlePreviewContent(generatedMCQ, 'MCQ Evaluation Test')}>
+                        Preview
+                      </Button>
                       <Button size="small" startIcon={<Icon>print</Icon>} onClick={() => handlePrintContent(generatedMCQ, 'MCQ Evaluation Test')}>
                         Print
                       </Button>
@@ -1322,15 +1659,35 @@ ANSWER KEY (Keep Separately):
                       The answer key is included at the end. Keep it separate from the test paper.
                     </Typography>
                   </Alert>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={15}
-                    maxRows={25}
-                    value={generatedMCQ}
-                    onChange={(e) => setGeneratedMCQ(e.target.value)}
-                    sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.8rem' }}
-                  />
+                  {isHTMLContent(generatedMCQ) && (
+                    <Box sx={{ mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+                      <iframe
+                        srcDoc={generatedMCQ}
+                        title="MCQ Test Preview"
+                        style={{ width: '100%', height: '600px', border: 'none' }}
+                        sandbox="allow-same-origin"
+                      />
+                    </Box>
+                  )}
+                  <Accordion>
+                    <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                      <Typography variant="caption" color="text.secondary">
+                        <Icon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }}>code</Icon>
+                        Edit HTML Source
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={15}
+                        maxRows={25}
+                        value={generatedMCQ}
+                        onChange={(e) => setGeneratedMCQ(e.target.value)}
+                        sx={{ bgcolor: 'background.paper', fontFamily: 'monospace', fontSize: '0.75rem' }}
+                      />
+                    </AccordionDetails>
+                  </Accordion>
                 </Card>
               )}
             </AccordionDetails>
