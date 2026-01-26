@@ -13,7 +13,7 @@ export interface EvidenceFile {
 }
 
 export interface YouTubeVideo {
-  id: string;
+  id?: string;
   title: string;
   url: string;
   description?: string;

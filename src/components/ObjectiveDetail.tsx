@@ -1320,7 +1320,7 @@ Generate the complete HTML with all ${mcqQuestionCount} MCQ questions filled in 
                             <IconButton
                               size="small"
                               color="error"
-                              onClick={() => handleDeleteVideo(video.id)}
+                              onClick={() => video.id && handleDeleteVideo(video.id)}
                             >
                               <Icon fontSize="small">delete</Icon>
                             </IconButton>
