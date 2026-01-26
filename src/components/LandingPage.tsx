@@ -225,7 +225,7 @@ export default function LandingPage() {
                   <img
                     src={HOSPITAL_INFO.logo}
                     alt={HOSPITAL_INFO.name}
-                    style={{ height: 80, objectFit: 'contain', marginBottom: 16 }}
+                    style={{ height: 120, objectFit: 'contain', marginBottom: 8 }}
                   />
                   <Typography variant="h6" color="text.primary" fontWeight={700}>
                     {HOSPITAL_INFO.name}
