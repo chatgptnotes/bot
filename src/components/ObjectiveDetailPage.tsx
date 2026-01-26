@@ -99,7 +99,7 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingSOP, setIsGeneratingSOP] = useState(false);
   const [generatedSOPContent, setGeneratedSOPContent] = useState('');
 
-  // State for AI Evidence Generator
+  // State for Evidence Generator
   const [isGeneratingEvidence, setIsGeneratingEvidence] = useState(false);
   const [generatedEvidenceList, setGeneratedEvidenceList] = useState<string[]>([]);
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
@@ -490,7 +490,7 @@ export default function ObjectiveDetailPage() {
     saveToSupabase({ ...objective, sopDocuments: updatedSOPs });
   };
 
-  // Generate SOP using AI
+  // Generate SOP
   const handleGenerateSOP = async () => {
     setIsGeneratingSOP(true);
     setGeneratedSOPContent('');
@@ -557,7 +557,7 @@ Format it professionally with clear sections and bullet points.`,
     return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
   };
 
-  // Generate AI Evidence List based on interpretation
+  // Generate Evidence List based on interpretation
   const handleGenerateEvidenceList = async () => {
     setIsGeneratingEvidence(true);
     setGeneratedEvidenceList([]);
@@ -2175,12 +2175,12 @@ DESIGN REQUIREMENTS:
 
           <Divider />
 
-          {/* AI Evidence Generator Section */}
+          {/* Evidence Generator Section */}
           <Accordion defaultExpanded sx={{ bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
             <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Icon color="primary">auto_awesome</Icon>
-                <Typography fontWeight={600}>AI Evidence Generator</Typography>
+                <Typography fontWeight={600}>Evidence Generator</Typography>
               </Box>
             </AccordionSummary>
             <AccordionDetails>
@@ -2197,7 +2197,7 @@ DESIGN REQUIREMENTS:
                 disabled={isGeneratingEvidence || !objective.description}
                 sx={{ mb: 2 }}
               >
-                {isGeneratingEvidence ? 'Generating Evidence List...' : 'Generate Evidence List with AI'}
+                {isGeneratingEvidence ? 'Generating Evidence List...' : 'Generate Evidence List'}
               </Button>
               {generatedEvidenceList.length > 0 && (
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
@@ -2236,7 +2236,7 @@ DESIGN REQUIREMENTS:
             size="small"
             placeholder="List the evidence required for this objective (max 10 items, highest priority first)..."
             sx={expandableTextFieldSx}
-            helperText="List evidences in order of priority. Use AI generator above to auto-generate."
+            helperText="List evidences in order of priority. Use generator above to auto-generate."
           />
 
           {/* Evidence Document Generator */}
@@ -2330,7 +2330,7 @@ DESIGN REQUIREMENTS:
             <AccordionDetails>
               <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  Enter your own requirement to generate a custom evidence document. Describe what document you need and the AI will create it with proper hospital branding and formatting.
+                  Enter your own requirement to generate a custom evidence document. Describe what document you need and the system will create it with proper hospital branding and formatting.
                 </Typography>
               </Alert>
               <TextField
@@ -3272,7 +3272,7 @@ DESIGN REQUIREMENTS:
                           onClick={handleGenerateSOP}
                           disabled={isGeneratingSOP}
                         >
-                          Generate with AI
+                          Generate
                         </Button>
                         <Button
                           variant="outlined"

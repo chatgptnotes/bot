@@ -1895,7 +1895,7 @@ Generate the complete HTML with all ${mcqQuestionCount} MCQ questions filled in 
             <AccordionDetails>
               <Alert severity="info" sx={{ mb: 2 }}>
                 <Typography variant="body2">
-                  Upload hospital SOPs (PDF or Word documents) or generate a new SOP using AI if needed.
+                  Upload hospital SOPs (PDF or Word documents) or generate a new SOP if needed.
                 </Typography>
               </Alert>
 
@@ -2059,7 +2059,7 @@ Generate the complete HTML with all ${mcqQuestionCount} MCQ questions filled in 
                       onClick={handleGenerateSOP}
                       disabled={isGeneratingSOP}
                     >
-                      {isGeneratingSOP ? 'Generating...' : 'Generate SOP with AI'}
+                      {isGeneratingSOP ? 'Generating...' : 'Generate SOP'}
                     </Button>
                   </Box>
                 )}

@@ -20,9 +20,9 @@ const features = [
     color: '#1565C0',
   },
   {
-    icon: 'auto_awesome',
-    title: 'AI Evidence Generator',
-    description: 'Generate comprehensive, audit-ready evidence lists using advanced AI technology.',
+    icon: 'verified',
+    title: 'Accreditation Ready',
+    description: 'Generate comprehensive, audit-ready evidence documents with proper formatting.',
     color: '#D32F2F',
   },
   {
@@ -46,7 +46,7 @@ const features = [
   {
     icon: 'description',
     title: 'Document Templates',
-    description: 'AI-generated SOPs, policies, and registers with hospital branding.',
+    description: 'Professional SOPs, policies, registers, and CAPA documentation with hospital branding.',
     color: '#00838F',
   },
 ];
@@ -68,7 +68,7 @@ export default function LandingPage() {
     }
   };
 
-  const handleAIGenerator = () => {
+  const handleGenerator = () => {
     navigate('/ai-generator');
   };
 
@@ -134,18 +134,29 @@ export default function LandingPage() {
                     lineHeight: 1.2,
                   }}
                 >
-                  NABH Evidence Creator
+                  NABH.online
                 </Typography>
                 <Typography
                   variant="h5"
                   sx={{
+                    mb: 1,
+                    opacity: 0.95,
+                    fontWeight: 500,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Evidence Management System
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
                     mb: 4,
-                    opacity: 0.9,
+                    opacity: 0.85,
                     fontWeight: 400,
                     lineHeight: 1.6,
                   }}
                 >
-                  Comprehensive evidence management system for {HOSPITAL_INFO.name} accreditation journey
+                  Your complete solution for NABH accreditation preparation. Manage evidence, track progress, and generate professional documentation for {HOSPITAL_INFO.name}.
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   <Button
@@ -170,7 +181,7 @@ export default function LandingPage() {
                   <Button
                     variant="outlined"
                     size="large"
-                    onClick={handleAIGenerator}
+                    onClick={handleGenerator}
                     sx={{
                       borderColor: 'white',
                       color: 'white',
@@ -182,9 +193,9 @@ export default function LandingPage() {
                         borderColor: 'white',
                       },
                     }}
-                    startIcon={<Icon>auto_awesome</Icon>}
+                    startIcon={<Icon>description</Icon>}
                   >
-                    AI Generator
+                    Evidence Generator
                   </Button>
                 </Box>
               </Box>
@@ -233,7 +244,7 @@ export default function LandingPage() {
                     <Typography variant="h3" fontWeight={700}>
                       {progressPercentage}%
                     </Typography>
-                    <Typography variant="body2">Overall Progress</Typography>
+                    <Typography variant="body2">Accreditation Progress</Typography>
                   </Box>
                 </Box>
               </Box>
@@ -285,7 +296,7 @@ export default function LandingPage() {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Typography variant="h3" fontWeight={700} gutterBottom>
-              Powerful Features
+              Comprehensive Features
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
               Everything you need to prepare for NABH accreditation, all in one place
@@ -303,7 +314,7 @@ export default function LandingPage() {
                       transform: 'translateY(-8px)',
                     },
                   }}
-                  onClick={feature.title.includes('AI') ? handleAIGenerator : handleGetStarted}
+                  onClick={handleGetStarted}
                 >
                   <CardContent sx={{ p: 3 }}>
                     <Box
@@ -342,7 +353,7 @@ export default function LandingPage() {
               NABH Team
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Meet the dedicated team driving accreditation excellence
+              Dedicated professionals driving accreditation excellence
             </Typography>
           </Box>
           <Grid container spacing={3} justifyContent="center">
@@ -431,7 +442,7 @@ export default function LandingPage() {
             <Button
               variant="outlined"
               size="large"
-              onClick={handleAIGenerator}
+              onClick={handleGenerator}
               sx={{
                 borderColor: 'white',
                 color: 'white',
@@ -442,9 +453,9 @@ export default function LandingPage() {
                   borderColor: 'white',
                 },
               }}
-              startIcon={<Icon>auto_awesome</Icon>}
+              startIcon={<Icon>description</Icon>}
             >
-              Try AI Generator
+              Evidence Generator
             </Button>
           </Box>
         </Container>
@@ -470,7 +481,7 @@ export default function LandingPage() {
               </Box>
             </Box>
             <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              v2.0 | 2026-01-26 | nabh-evidence-creator
+              v2.1 | NABH.online
             </Typography>
           </Box>
         </Container>

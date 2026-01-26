@@ -18,14 +18,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { setSelectedChapter } = useNABHStore();
-  const isAIPage = location.pathname === '/ai-generator';
+  const isGeneratorPage = location.pathname === '/ai-generator';
 
   const handleHomeClick = () => {
     setSelectedChapter(null);
     navigate('/');
   };
 
-  const handleAIClick = () => {
+  const handleGeneratorClick = () => {
     navigate('/ai-generator');
   };
 
@@ -46,7 +46,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         >
           <Icon sx={{ mr: 2 }}>local_hospital</Icon>
           <Typography variant="h6" noWrap component="div">
-            NABH Evidence Creator
+            NABH Evidences
           </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} />
@@ -57,7 +57,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               startIcon={<Icon>dashboard</Icon>}
               onClick={handleHomeClick}
               sx={{
-                bgcolor: !isAIPage ? 'rgba(255,255,255,0.15)' : 'transparent',
+                bgcolor: !isGeneratorPage ? 'rgba(255,255,255,0.15)' : 'transparent',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
               }}
             >
@@ -65,17 +65,17 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </Button>
           </Tooltip>
           <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 1 }} />
-          <Tooltip title="AI Evidence Generator">
+          <Tooltip title="Evidence Generator">
             <Button
               color="inherit"
               startIcon={<Icon>auto_awesome</Icon>}
-              onClick={handleAIClick}
+              onClick={handleGeneratorClick}
               sx={{
-                bgcolor: isAIPage ? 'rgba(255,255,255,0.15)' : 'transparent',
+                bgcolor: isGeneratorPage ? 'rgba(255,255,255,0.15)' : 'transparent',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
               }}
             >
-              AI Generator
+              Generator
             </Button>
           </Tooltip>
           <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 1 }} />

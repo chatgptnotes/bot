@@ -230,7 +230,7 @@ export default function SharedEvidencePage() {
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          NABH Evidence Creator - Hope Hospital
+          NABH.online - Hope Hospital
         </Typography>
       </Box>
     </Box>

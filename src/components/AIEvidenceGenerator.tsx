@@ -844,7 +844,7 @@ export default function AIEvidenceGenerator() {
     try {
       let imageUrl: string;
 
-      // Try Gemini API first for AI-generated visual
+      // Try Gemini API first for generated visual
       if (geminiApiKey) {
         try {
           const fullPrompt = `${typeLabel} for ${hospitalConfig.name}: ${visualTopic}.
@@ -1091,7 +1091,7 @@ ${trimmed}
           {geminiApiKey && (
             <Chip
               icon={<Icon>check_circle</Icon>}
-              label="Gemini AI"
+              label="Gemini"
               color="success"
               variant="outlined"
               size="small"
@@ -1100,7 +1100,7 @@ ${trimmed}
           {claudeApiKey && (
             <Chip
               icon={<Icon>check_circle</Icon>}
-              label="Claude AI"
+              label="Claude"
               color="primary"
               variant="outlined"
               size="small"
@@ -1135,7 +1135,7 @@ ${trimmed}
         {geminiApiKey && !claudeApiKey && (
           <Alert severity="info" sx={{ mb: 2 }}>
             <Typography variant="body2">
-              Using <strong>Gemini AI</strong> for content generation. Claude AI available as backup if configured.
+              Using <strong>Gemini</strong> for content generation. Claude available as backup if configured.
             </Typography>
           </Alert>
         )}
@@ -1363,7 +1363,7 @@ ${trimmed}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Icon color="secondary">psychology</Icon>
                       <Typography variant="subtitle1" fontWeight={600}>
-                        AI Prompt (Advanced)
+                        Advanced Prompt (Advanced)
                       </Typography>
                     </Box>
                   </AccordionSummary>
