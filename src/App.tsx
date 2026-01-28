@@ -18,6 +18,7 @@ import KPIsPage from './components/KPIsPage';
 import KPIDetailPage from './components/KPIDetailPage';
 import SlideDeckPage from './components/SlideDeckPage';
 import DataMigrationPage from './components/DataMigrationPage';
+import NABHMasterPage from './components/NABHMasterPage';
 import Footer from './components/Footer';
 import { useNABHStore } from './store/nabhStore';
 
@@ -242,6 +243,7 @@ function MainContent() {
   const isKPIsPage = location.pathname === '/kpis';
   const isKPIDetailPage = location.pathname.startsWith('/kpi/');
   const isPresentationsPage = location.pathname === '/presentations';
+  const isNABHMasterPage = location.pathname === '/nabh-master';
   const isMigrationPage = location.pathname === '/migration';
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
@@ -273,6 +275,10 @@ function MainContent() {
     return <SlideDeckPage />;
   }
 
+  if (isNABHMasterPage) {
+    return <NABHMasterPage />;
+  }
+
   if (isMigrationPage) {
     return <DataMigrationPage />;
   }
@@ -296,7 +302,7 @@ function AppContent() {
   const isAIPage = location.pathname === '/ai-generator';
   const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
   const isKPIDetailPage = location.pathname.startsWith('/kpi/');
-  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations'].includes(location.pathname) || isKPIDetailPage;
+  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations', '/nabh-master', '/migration'].includes(location.pathname) || isKPIDetailPage;
   const isLandingPage = location.pathname === '/' && !selectedChapter;
   const showSidebar = !isAIPage && !isLandingPage && !isObjectiveDetailPage || isManagementPage;
 

@@ -175,7 +175,7 @@ export const useNABHStore = create<NABHStore>()(
                 const objective: ObjectiveElement = {
                   id: objectiveCode.toLowerCase().replace(/\./g, '-'),
                   code: objectiveCode,
-                  title: supabaseData.title.substring(0, 100) + (supabaseData.title.length > 100 ? '...' : ''),
+                  title: supabaseData.title || '',
                   description: supabaseData.description,
                   hindiExplanation: supabaseData.hindiExplanation || '',
                   category: (supabaseData as any).category || 'Commitment',
@@ -246,7 +246,7 @@ export const useNABHStore = create<NABHStore>()(
                 const objective: ObjectiveElement = {
                   id: element.id,
                   code: `${nabhChapter.name}.${standard.standard_number}.${element.element_number}`,
-                  title: element.description.substring(0, 100) + (element.description.length > 100 ? '...' : ''),
+                  title: element.description,
                   description: element.description,
                   hindiExplanation: element.interpretation || '',
                   category: element.is_core ? 'Core' : 'Commitment',
