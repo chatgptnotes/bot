@@ -82,6 +82,11 @@ export default function ObjectiveDetailPage() {
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [newVideoDescription, setNewVideoDescription] = useState('');
+  
+  // State for YouTube search
+  const [isSearchingYouTube, setIsSearchingYouTube] = useState(false);
+  const [youtubeSearchResults, setYoutubeSearchResults] = useState<Array<{title: string; url: string; description: string; thumbnail: string}>>([]);
+  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
   // State for adding training material
   const [showAddTraining, setShowAddTraining] = useState(false);
@@ -408,6 +413,124 @@ export default function ObjectiveDetailPage() {
 
     // Save to Supabase
     saveToSupabase({ ...objective, youtubeVideos: updatedVideos });
+  };
+  
+  // Search YouTube for relevant training videos
+  const handleSearchYouTube = async () => {
+    if (!objective) return;
+    
+    setIsSearchingYouTube(true);
+    setShowYouTubeSearch(true);
+    setYoutubeSearchResults([]);
+    
+    try {
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+      
+      // Get chapter context
+      const chapterCode = objective.code.split('.')[0];
+      const chapterNames: Record<string, string> = {
+        'AAC': 'Access Assessment Continuity of Care',
+        'COP': 'Care of Patients',
+        'MOM': 'Management of Medication',
+        'PRE': 'Patient Rights and Education',
+        'HIC': 'Hospital Infection Control',
+        'PSQ': 'Patient Safety Quality Improvement',
+        'ROM': 'Responsibilities of Management',
+        'FMS': 'Facility Management Safety',
+        'HRM': 'Human Resource Management',
+        'IMS': 'Information Management System',
+      };
+      
+      const prompt = `You are a NABH accreditation expert. Find relevant YouTube training videos for this NABH SHCO 3rd Edition objective element.
+
+Objective Code: ${objective.code}
+Chapter: ${chapterNames[chapterCode] || chapterCode}
+Description: ${objective.description}
+${objective.interpretation ? `Interpretation: ${objective.interpretation}` : ''}
+
+Return EXACTLY 6 YouTube video suggestions in this JSON format (no markdown, just JSON):
+[
+  {
+    "title": "Video title as it would appear on YouTube",
+    "searchQuery": "exact YouTube search query to find this video",
+    "description": "Brief description of what staff will learn",
+    "channel": "Likely channel name (e.g., NABH India, Hospital Training, etc.)"
+  }
+]
+
+Focus on:
+1. NABH training videos from official NABH channel
+2. Hospital accreditation training videos
+3. Healthcare quality management videos
+4. Patient safety training videos
+5. Infection control / hand hygiene videos (if HIC)
+6. Clinical protocol training (if COP/MOM)
+
+Prefer Indian healthcare context videos. Return ONLY valid JSON array.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to get video suggestions');
+      
+      const data = await response.json();
+      const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      // Parse JSON from response
+      const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const suggestions = JSON.parse(jsonMatch[0]);
+        
+        // Convert suggestions to search results with YouTube URLs
+        const results = suggestions.map((s: any) => ({
+          title: s.title,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(s.searchQuery + ' NABH hospital training')}`,
+          description: s.description,
+          thumbnail: `https://via.placeholder.com/320x180/cc0000/ffffff?text=${encodeURIComponent(s.channel || 'YouTube')}`,
+          searchQuery: s.searchQuery,
+        }));
+        
+        setYoutubeSearchResults(results);
+      }
+    } catch (error) {
+      console.error('Error searching YouTube:', error);
+      setSnackbarMessage('Error searching for videos. Try manual search.');
+      setSnackbarOpen(true);
+    } finally {
+      setIsSearchingYouTube(false);
+    }
+  };
+  
+  // Add video from search results
+  const handleAddVideoFromSearch = (video: {title: string; url: string; description: string; searchQuery?: string}) => {
+    // Open YouTube search in new tab for user to find and copy the actual URL
+    if (video.searchQuery) {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(video.searchQuery + ' NABH hospital training')}`, '_blank');
+    } else {
+      window.open(video.url, '_blank');
+    }
+    
+    // Pre-fill the add video form
+    setNewVideoTitle(video.title);
+    setNewVideoDescription(video.description);
+    setNewVideoUrl('');
+    setShowAddVideo(true);
+    setShowYouTubeSearch(false);
+    
+    setSnackbarMessage('Find the video on YouTube, copy its URL, and paste it below');
+    setSnackbarOpen(true);
   };
 
   // Training Material functions
@@ -3532,14 +3655,92 @@ DESIGN REQUIREMENTS:
                     </Box>
                   </Box>
                 ) : (
-                  <Button
-                    variant="outlined"
-                    startIcon={<Icon>add</Icon>}
-                    onClick={() => setShowAddVideo(true)}
-                    size="small"
-                  >
-                    Add YouTube Video
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Icon>add</Icon>}
+                      onClick={() => setShowAddVideo(true)}
+                      size="small"
+                    >
+                      Add YouTube Video
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={isSearchingYouTube ? <CircularProgress size={16} color="inherit" /> : <Icon>search</Icon>}
+                      onClick={handleSearchYouTube}
+                      size="small"
+                      disabled={isSearchingYouTube}
+                    >
+                      {isSearchingYouTube ? 'Searching...' : 'Search NABH Training Videos'}
+                    </Button>
+                  </Box>
+                )}
+                
+                {/* YouTube Search Results */}
+                {showYouTubeSearch && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="subtitle2" color="error.main">
+                        <Icon sx={{ verticalAlign: 'middle', mr: 1 }}>youtube_searched_for</Icon>
+                        Suggested Training Videos for {objective.code}
+                      </Typography>
+                      <IconButton size="small" onClick={() => setShowYouTubeSearch(false)}>
+                        <Icon>close</Icon>
+                      </IconButton>
+                    </Box>
+                    
+                    {isSearchingYouTube ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 3, justifyContent: 'center' }}>
+                        <CircularProgress size={24} color="error" />
+                        <Typography color="text.secondary">Searching for relevant NABH training videos...</Typography>
+                      </Box>
+                    ) : youtubeSearchResults.length > 0 ? (
+                      <Grid container spacing={2}>
+                        {youtubeSearchResults.map((video, index) => (
+                          <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
+                            <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                              <Box sx={{ p: 1.5, bgcolor: 'error.100', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Icon color="error">play_circle</Icon>
+                                <Typography variant="caption" fontWeight={600} color="error.dark" noWrap>
+                                  YouTube Search
+                                </Typography>
+                              </Box>
+                              <CardContent sx={{ flexGrow: 1, py: 1 }}>
+                                <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5, lineHeight: 1.3 }}>
+                                  {video.title}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                                  {video.description}
+                                </Typography>
+                              </CardContent>
+                              <CardActions sx={{ pt: 0 }}>
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  startIcon={<Icon>search</Icon>}
+                                  onClick={() => handleAddVideoFromSearch(video)}
+                                  fullWidth
+                                >
+                                  Find & Add
+                                </Button>
+                              </CardActions>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Alert severity="info" icon={<Icon>info</Icon>}>
+                        Click "Search NABH Training Videos" to find relevant videos for this objective element.
+                      </Alert>
+                    )}
+                    
+                    <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mt: 2 }}>
+                      <Typography variant="body2">
+                        <strong>How to add:</strong> Click "Find & Add" to open YouTube search. Find the video, copy its URL, and paste it in the form.
+                      </Typography>
+                    </Alert>
+                  </Box>
                 )}
               </Box>
             </AccordionDetails>
