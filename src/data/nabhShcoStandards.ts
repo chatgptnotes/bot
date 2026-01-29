@@ -1704,36 +1704,36 @@ export const nabhShcoStandards: Chapter[] = [
   // CHAPTER 6: CONTINUOUS QUALITY IMPROVEMENT (CQI)
   // ============================================
   {
-    code: 'CQI',
-    name: 'CQI',
-    fullName: 'Continuous Quality Improvement',
+    code: 'PSQ',
+    name: 'PSQ',
+    fullName: 'Patient Safety and Quality Improvement',
     type: 'Organization Centered',
     standards: [
       {
-        code: 'CQI.1',
+        code: 'PSQ.1',
         title: 'The organization has a quality assurance programme.',
         intent: 'To establish a systematic approach to quality improvement.',
         objectiveElements: [
           {
-            code: 'CQI.1.a',
+            code: 'PSQ.1.a',
             description: 'A quality assurance programme is in place.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.1.b',
+            code: 'PSQ.1.b',
             description: 'Quality objectives are defined.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.1.c',
+            code: 'PSQ.1.c',
             description: 'Quality improvement activities are conducted.',
             category: 'Achievement',
             isCore: false
           },
           {
-            code: 'CQI.1.d',
+            code: 'PSQ.1.d',
             description: 'A quality committee/team exists.',
             category: 'Commitment',
             isCore: false
@@ -1741,36 +1741,36 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.2',
+        code: 'PSQ.2',
         title: 'The organization identifies key quality indicators to monitor clinical and managerial performance.',
         intent: 'To measure and monitor organizational performance.',
         objectiveElements: [
           {
-            code: 'CQI.2.a',
+            code: 'PSQ.2.a',
             description: 'Key indicators are identified for clinical areas.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.2.b',
+            code: 'PSQ.2.b',
             description: 'Key indicators are identified for managerial areas.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.2.c',
+            code: 'PSQ.2.c',
             description: 'Data is collected and analyzed.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.2.d',
+            code: 'PSQ.2.d',
             description: 'Results are used for improvement.',
             category: 'Achievement',
             isCore: false
           },
           {
-            code: 'CQI.2.e',
+            code: 'PSQ.2.e',
             description: 'Benchmarking is done where possible.',
             category: 'Excellence',
             isCore: false
@@ -1778,48 +1778,48 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.3',
+        code: 'PSQ.3',
         title: 'The organization has a patient safety programme.',
         intent: 'To establish a culture of patient safety.',
         objectiveElements: [
           {
-            code: 'CQI.3.a',
+            code: 'PSQ.3.a',
             description: 'A patient safety programme is in place.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.3.b',
+            code: 'PSQ.3.b',
             description: 'Patient identification is ensured before any procedure.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.3.c',
+            code: 'PSQ.3.c',
             description: 'Communication is standardized for handovers.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.3.d',
+            code: 'PSQ.3.d',
             description: 'High-alert medications are managed safely.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.3.e',
+            code: 'PSQ.3.e',
             description: 'Surgical safety is ensured.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.3.f',
+            code: 'PSQ.3.f',
             description: 'Fall prevention measures are in place.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.3.g',
+            code: 'PSQ.3.g',
             description: 'Pressure ulcer prevention measures are in place.',
             category: 'Commitment',
             isCore: false
@@ -1827,30 +1827,30 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.4',
+        code: 'PSQ.4',
         title: 'The organization has an incident reporting and learning system.',
         intent: 'To learn from incidents and near-misses.',
         objectiveElements: [
           {
-            code: 'CQI.4.a',
+            code: 'PSQ.4.a',
             description: 'An incident reporting system exists.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.4.b',
+            code: 'PSQ.4.b',
             description: 'Incidents are reported without fear of punitive action.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.4.c',
+            code: 'PSQ.4.c',
             description: 'Incidents are analyzed and action is taken.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.4.d',
+            code: 'PSQ.4.d',
             description: 'Learning from incidents is shared.',
             category: 'Achievement',
             isCore: false
@@ -1858,24 +1858,24 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.5',
+        code: 'PSQ.5',
         title: 'There is an established system for audit of patient care services.',
         intent: 'To systematically review and improve patient care.',
         objectiveElements: [
           {
-            code: 'CQI.5.a',
+            code: 'PSQ.5.a',
             description: 'Medical audits are conducted.',
             category: 'Achievement',
             isCore: false
           },
           {
-            code: 'CQI.5.b',
+            code: 'PSQ.5.b',
             description: 'Nursing audits are conducted.',
             category: 'Achievement',
             isCore: false
           },
           {
-            code: 'CQI.5.c',
+            code: 'PSQ.5.c',
             description: 'Audit findings are used for improvement.',
             category: 'Achievement',
             isCore: false
@@ -1883,30 +1883,30 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.6',
+        code: 'PSQ.6',
         title: 'Sentinel events are intensively analyzed.',
         intent: 'To conduct root cause analysis of serious events.',
         objectiveElements: [
           {
-            code: 'CQI.6.a',
+            code: 'PSQ.6.a',
             description: 'Sentinel events are defined.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.6.b',
+            code: 'PSQ.6.b',
             description: 'Root cause analysis is conducted for sentinel events.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.6.c',
+            code: 'PSQ.6.c',
             description: 'Corrective actions are implemented.',
             category: 'Core',
             isCore: true
           },
           {
-            code: 'CQI.6.d',
+            code: 'PSQ.6.d',
             description: 'Effectiveness of corrective actions is monitored.',
             category: 'Commitment',
             isCore: false
@@ -1914,24 +1914,24 @@ export const nabhShcoStandards: Chapter[] = [
         ]
       },
       {
-        code: 'CQI.7',
+        code: 'PSQ.7',
         title: 'Patient and employee satisfaction is measured.',
         intent: 'To understand stakeholder satisfaction and improve services.',
         objectiveElements: [
           {
-            code: 'CQI.7.a',
+            code: 'PSQ.7.a',
             description: 'Patient satisfaction is measured.',
             category: 'Commitment',
             isCore: false
           },
           {
-            code: 'CQI.7.b',
+            code: 'PSQ.7.b',
             description: 'Employee satisfaction is measured.',
             category: 'Achievement',
             isCore: false
           },
           {
-            code: 'CQI.7.c',
+            code: 'PSQ.7.c',
             description: 'Results are analyzed and used for improvement.',
             category: 'Achievement',
             isCore: false
