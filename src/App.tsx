@@ -245,6 +245,7 @@ function MainContent() {
   const isPresentationsPage = location.pathname === '/presentations';
   const isNABHMasterPage = location.pathname === '/nabh-master';
   const isMigrationPage = location.pathname === '/migration';
+  const isDashboardPage = location.pathname === '/dashboard';
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
   if (isAIPage) {
@@ -283,6 +284,10 @@ function MainContent() {
     return <DataMigrationPage />;
   }
 
+  if (isDashboardPage) {
+    return <Dashboard />;
+  }
+
   if (isLandingPage) {
     return <LandingPage />;
   }
@@ -302,7 +307,7 @@ function AppContent() {
   const isAIPage = location.pathname === '/ai-generator';
   const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
   const isKPIDetailPage = location.pathname.startsWith('/kpi/');
-  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations', '/nabh-master', '/migration'].includes(location.pathname) || isKPIDetailPage;
+  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations', '/nabh-master', '/migration', '/dashboard'].includes(location.pathname) || isKPIDetailPage;
   const isLandingPage = location.pathname === '/' && !selectedChapter;
   const showSidebar = !isAIPage && !isLandingPage && !isObjectiveDetailPage || isManagementPage;
 
