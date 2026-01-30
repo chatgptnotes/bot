@@ -1,9 +1,9 @@
-import type { ObjectiveElement, NABHChapter, NABHStandard, NABHObjectiveElement } from '../types/nabh';
+import type { ObjectiveElement, NABHChapter, NABHStandard, NABHObjectiveElement, ElementCategory } from '../types/nabh';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Type for row data from Supabase
+// Type for row data from Supabase (nabh_objective_edits table)
 interface ObjectiveEditRow {
   id: string;
   objective_code: string;
@@ -27,6 +27,7 @@ interface ObjectiveEditRow {
   training_materials: unknown[] | null;
   sop_documents: unknown[] | null;
   auditor_priority_items: string[] | null; // Evidence items marked as priority for auditors
+  interpretations2: string | null; // User-editable interpretation field
   created_at: string;
   updated_at: string;
 }
@@ -134,6 +135,7 @@ export async function saveObjectiveToSupabase(
       training_materials: objective.trainingMaterials || [],
       sop_documents: objective.sopDocuments || [],
       auditor_priority_items: objective.auditorPriorityItems || [],
+      interpretations2: objective.interpretations2 || null,
     };
 
     console.log('Saving to Supabase, payload size:', JSON.stringify(editData).length, 'bytes');
@@ -157,6 +159,72 @@ export async function saveObjectiveToSupabase(
       const errorText = await response.text();
       console.error('Error saving to Supabase:', response.status, errorText);
       return { success: false, error: `${response.status}: ${errorText}` };
+    }
+    
+    // Also update the normalized nabh_objective_elements table if we have YouTube videos or training materials
+    // This ensures the data is available when loading from the normalized schema
+    if (objective.youtubeVideos?.length || objective.trainingMaterials?.length || objective.sopDocuments?.length || objective.hindiExplanation || objective.interpretation || objective.interpretations2) {
+      try {
+        // First, find the element ID by code
+        const [chapterCode, stdNum, elemNum] = objective.code.split('.');
+        const findResponse = await fetch(
+          `${SUPABASE_URL}/rest/v1/nabh_objective_elements?select=id,standard_id,nabh_standards(standard_number,chapter_id,nabh_chapters(name))&element_number=eq.${elemNum}`,
+          {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          }
+        );
+        
+        if (findResponse.ok) {
+          const elements = await findResponse.json();
+          // Find the matching element by chapter and standard
+          const matchingElement = elements.find((e: any) => 
+            e.nabh_standards?.nabh_chapters?.name === chapterCode &&
+            e.nabh_standards?.standard_number === stdNum
+          );
+          
+          if (matchingElement) {
+            // Update the normalized table
+            const normalizedUpdate: Record<string, any> = {};
+            if (objective.youtubeVideos?.length) normalizedUpdate.youtube_videos = objective.youtubeVideos;
+            if (objective.trainingMaterials?.length) normalizedUpdate.training_materials = objective.trainingMaterials;
+            if (objective.sopDocuments?.length) normalizedUpdate.sop_documents = objective.sopDocuments;
+            if (objective.hindiExplanation) normalizedUpdate.hindi_explanation = objective.hindiExplanation;
+            if (objective.interpretation) normalizedUpdate.interpretation = objective.interpretation;
+            // Always save interpretations2 (user edits)
+            if (objective.interpretations2 !== undefined) {
+              normalizedUpdate.interpretations2 = objective.interpretations2 || null;
+            }
+            if (objective.notes) normalizedUpdate.notes = objective.notes;
+            if (objective.assignee) normalizedUpdate.assignee = objective.assignee;
+            if (objective.status) normalizedUpdate.status = objective.status;
+
+            console.log('Saving to nabh_objective_elements:', {
+              elementId: matchingElement.id,
+              interpretations2: objective.interpretations2,
+              normalizedUpdate
+            });
+
+            await fetch(
+              `${SUPABASE_URL}/rest/v1/nabh_objective_elements?id=eq.${matchingElement.id}`,
+              {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify(normalizedUpdate),
+              }
+            );
+          }
+        }
+      } catch (normalizedError) {
+        // Don't fail the main save if normalized update fails
+        console.warn('Could not update normalized table:', normalizedError);
+      }
     }
 
     return { success: true };
@@ -225,6 +293,7 @@ export async function loadObjectiveFromSupabase(
       trainingMaterials: (data.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
       sopDocuments: (data.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
       auditorPriorityItems: (data.auditor_priority_items as string[]) ?? [],
+      interpretations2: data.interpretations2 ?? undefined,
     };
 
     return { success: true, data: objectiveData };
@@ -287,6 +356,7 @@ export async function loadAllObjectiveEditsFromSupabase(): Promise<{
           trainingMaterials: (row.training_materials as ObjectiveElement['trainingMaterials']) ?? [],
           sopDocuments: (row.sop_documents as ObjectiveElement['sopDocuments']) ?? [],
           auditorPriorityItems: (row.auditor_priority_items as string[]) ?? [],
+          interpretations2: row.interpretations2 ?? undefined,
         };
       }
     }
@@ -833,6 +903,7 @@ export async function insertObjectiveElement(element: {
   description: string;
   interpretation?: string;
   is_core?: boolean;
+  category?: ElementCategory;
   status?: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
   assignee?: string;
   evidence_links?: string;
@@ -852,6 +923,7 @@ export async function insertObjectiveElement(element: {
         body: JSON.stringify({
           ...element,
           is_core: element.is_core || false,
+          category: element.category || (element.is_core ? 'Core' : 'Commitment'),
           status: element.status || 'Not Started',
         }),
       }
@@ -973,4 +1045,328 @@ export async function migrateDataToNormalizedSchema(data: {
     console.error('Error migrating data:', errorMessage);
     return { success: false, error: errorMessage };
   }
+}
+
+// ============================================
+// CRUD Functions for NABH Master Management
+// ============================================
+
+/**
+ * Update an existing chapter
+ */
+export async function updateChapter(
+  chapterId: string,
+  updates: { chapter_number?: number; name?: string; description?: string }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_chapters?id=eq.${chapterId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error updating chapter:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error updating chapter:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Delete a chapter (cascades to standards and elements)
+ */
+export async function deleteChapter(
+  chapterId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_chapters?id=eq.${chapterId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error deleting chapter:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting chapter:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Update an existing standard
+ */
+export async function updateStandard(
+  standardId: string,
+  updates: { standard_number?: string; name?: string; description?: string }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_standards?id=eq.${standardId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error updating standard:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error updating standard:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Delete a standard (cascades to elements)
+ */
+export async function deleteStandard(
+  standardId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_standards?id=eq.${standardId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error deleting standard:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting standard:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Load all standards (for table view)
+ */
+export async function loadAllStandards(): Promise<{
+  success: boolean;
+  data?: NABHStandard[];
+  error?: string;
+}> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_standards?select=*&order=standard_number.asc`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error loading all standards:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    const standards = await response.json();
+    return { success: true, data: standards as NABHStandard[] };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error loading all standards:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Update an existing objective element
+ */
+export async function updateObjectiveElement(
+  elementId: string,
+  updates: Partial<{
+    element_number: string;
+    description: string;
+    interpretation: string;
+    is_core: boolean;
+    category: ElementCategory;
+    status: 'Not Started' | 'In Progress' | 'Completed' | 'Not Applicable';
+    assignee: string;
+    evidence_links: string;
+    notes: string;
+  }>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_objective_elements?id=eq.${elementId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error updating objective element:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error updating objective element:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Delete an objective element
+ */
+export async function deleteObjectiveElement(
+  elementId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_objective_elements?id=eq.${elementId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error deleting objective element:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting objective element:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Load all objective elements (for table view)
+ */
+export async function loadAllObjectiveElements(): Promise<{
+  success: boolean;
+  data?: NABHObjectiveElement[];
+  error?: string;
+}> {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/nabh_objective_elements?select=*&order=element_number.asc`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error loading all objective elements:', response.status, errorText);
+      return { success: false, error: `${response.status}: ${errorText}` };
+    }
+
+    const elements = await response.json();
+    return { success: true, data: elements as NABHObjectiveElement[] };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error loading all objective elements:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Bulk insert objective elements (for Excel import)
+ */
+export async function bulkInsertObjectiveElements(
+  elements: Array<{
+    standard_id: string;
+    element_number: string;
+    description: string;
+    interpretation?: string;
+    is_core?: boolean;
+  }>
+): Promise<{ success: boolean; inserted: number; errors: string[] }> {
+  const errors: string[] = [];
+  let inserted = 0;
+
+  for (const element of elements) {
+    const result = await insertObjectiveElement({
+      standard_id: element.standard_id,
+      element_number: element.element_number,
+      description: element.description,
+      interpretation: element.interpretation,
+      is_core: element.is_core,
+    });
+
+    if (result.success) {
+      inserted++;
+    } else {
+      errors.push(`Element ${element.element_number}: ${result.error}`);
+    }
+  }
+
+  return { success: errors.length === 0, inserted, errors };
 }

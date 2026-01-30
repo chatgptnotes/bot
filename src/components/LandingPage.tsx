@@ -65,6 +65,10 @@ export default function LandingPage() {
   const handleGetStarted = () => {
     if (chapters.length > 0) {
       setSelectedChapter(chapters[0].id);
+      navigate('/dashboard');
+    } else {
+      // If chapters not loaded yet, navigate to dashboard anyway
+      navigate('/dashboard');
     }
   };
 

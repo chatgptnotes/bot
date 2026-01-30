@@ -72,16 +72,29 @@ const fileToBase64 = (file: File): Promise<string> => {
 export default function ObjectiveDetailPage() {
   const { chapterId, objectiveId } = useParams<{ chapterId: string; objectiveId: string }>();
   const navigate = useNavigate();
-  const { chapters, updateObjective, setSelectedChapter } = useNABHStore();
+  const { chapters, updateObjective, setSelectedChapter, isLoadingFromSupabase, loadDataFromSupabase } = useNABHStore();
+  
+  // Load data if not already loaded
+  useEffect(() => {
+    if (chapters.length === 0 && !isLoadingFromSupabase) {
+      loadDataFromSupabase();
+    }
+  }, [chapters.length, isLoadingFromSupabase, loadDataFromSupabase]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const trainingFileInputRef = useRef<HTMLInputElement>(null);
   const sopFileInputRef = useRef<HTMLInputElement>(null);
+  const debouncedSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // State for adding YouTube video
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [newVideoTitle, setNewVideoTitle] = useState('');
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [newVideoDescription, setNewVideoDescription] = useState('');
+  
+  // State for YouTube search
+  const [isSearchingYouTube, setIsSearchingYouTube] = useState(false);
+  const [youtubeSearchResults, setYoutubeSearchResults] = useState<Array<{title: string; url: string; description: string; thumbnail: string}>>([]);
+  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
   // State for adding training material
   const [showAddTraining, setShowAddTraining] = useState(false);
@@ -103,6 +116,8 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingEvidence, setIsGeneratingEvidence] = useState(false);
   const [generatedEvidenceList, setGeneratedEvidenceList] = useState<string[]>([]);
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
+  const [isSavingInterpretation, setIsSavingInterpretation] = useState(false);
+  const [interpretationSaveSuccess, setInterpretationSaveSuccess] = useState(false);
 
   // State for Infographic Generator
   const [isGeneratingInfographic, setIsGeneratingInfographic] = useState(false);
@@ -168,8 +183,8 @@ export default function ObjectiveDetailPage() {
   };
 
   // Find chapter and objective
-  const chapter = chapters.find((c) => c.id === chapterId);
-  const objective = chapter?.objectives.find((o) => o.id === objectiveId);
+  const chapter = chapters.find((c) => c.id === chapterId || c.code.toLowerCase() === chapterId?.toLowerCase());
+  const objective = chapter?.objectives.find((o) => o.id === objectiveId || o.code === objectiveId || o.code.toLowerCase().replace(/\./g, '-') === objectiveId?.toLowerCase());
 
   // Set selected chapter when page loads
   useEffect(() => {
@@ -272,6 +287,128 @@ export default function ObjectiveDetailPage() {
     loadSavedEvidences();
   }, [objective?.code]);
 
+  // Load suggested registers when objective changes
+  // Note: This must be before early returns to maintain hook order
+  useEffect(() => {
+    if (!objective?.code) return;
+
+    const objectiveCode = objective.code;
+    const prefix = objectiveCode.substring(0, 3).toUpperCase();
+
+    // Register suggestions by chapter prefix
+    const registerSuggestions: Record<string, Array<{id: string; name: string; description: string; htmlContent: string; isGenerated: boolean}>> = {
+      'AAC': [
+        { id: 'reg-aac-1', name: 'Patient Registration Register', description: 'Register of all patients with UHID, demographics, and admission details', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-2', name: 'Admission Register', description: 'Daily admission register with patient details and bed allocation', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-3', name: 'Discharge Register', description: 'Patient discharge details with outcomes and follow-up instructions', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-4', name: 'Transfer Register', description: 'Inter-department and external transfer records', htmlContent: '', isGenerated: false },
+        { id: 'reg-aac-5', name: 'Bed Occupancy Register', description: 'Daily bed census and occupancy tracking', htmlContent: '', isGenerated: false },
+      ],
+      'COP': [
+        { id: 'reg-cop-1', name: 'Patient Assessment Register', description: 'Initial and ongoing patient assessment records', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-2', name: 'Clinical Care Plan Register', description: 'Individualized care plans for patients', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-3', name: 'Nursing Care Register', description: 'Daily nursing care documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-4', name: 'Patient Education Register', description: 'Patient and family education records', htmlContent: '', isGenerated: false },
+        { id: 'reg-cop-5', name: 'Consent Register', description: 'All consent forms obtained from patients', htmlContent: '', isGenerated: false },
+      ],
+      'MOM': [
+        { id: 'reg-mom-1', name: 'Drug Inventory Register', description: 'Stock register for all medications', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-2', name: 'High Alert Medication Register', description: 'Tracking of high-alert and look-alike drugs', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-3', name: 'Narcotic Drug Register', description: 'Controlled substance tracking and accountability', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-4', name: 'Adverse Drug Reaction Register', description: 'ADR reporting and monitoring', htmlContent: '', isGenerated: false },
+        { id: 'reg-mom-5', name: 'Emergency Drug Register', description: 'Emergency medication usage tracking', htmlContent: '', isGenerated: false },
+      ],
+      'PRE': [
+        { id: 'reg-pre-1', name: 'Patient Rights Register', description: 'Documentation of patient rights information provided', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-2', name: 'Complaint Register', description: 'Patient complaints and grievance handling', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-3', name: 'Feedback Register', description: 'Patient feedback and satisfaction records', htmlContent: '', isGenerated: false },
+        { id: 'reg-pre-4', name: 'Informed Consent Register', description: 'All informed consents obtained', htmlContent: '', isGenerated: false },
+      ],
+      'HIC': [
+        { id: 'reg-hic-1', name: 'Hand Hygiene Audit Register', description: 'Hand hygiene compliance monitoring', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-2', name: 'Hospital Acquired Infection Register', description: 'HAI surveillance and tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-3', name: 'Biomedical Waste Register', description: 'BMW generation and disposal tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-4', name: 'Sterilization Register', description: 'CSSD sterilization records', htmlContent: '', isGenerated: false },
+        { id: 'reg-hic-5', name: 'Needle Stick Injury Register', description: 'NSI incidents and post-exposure prophylaxis', htmlContent: '', isGenerated: false },
+      ],
+      'FMS': [
+        { id: 'reg-fms-1', name: 'Equipment Maintenance Register', description: 'Preventive and breakdown maintenance records', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-2', name: 'Fire Safety Drill Register', description: 'Mock drill records and observations', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-3', name: 'Incident Register', description: 'All facility-related incidents', htmlContent: '', isGenerated: false },
+        { id: 'reg-fms-4', name: 'Calibration Register', description: 'Equipment calibration tracking', htmlContent: '', isGenerated: false },
+      ],
+      'HRM': [
+        { id: 'reg-hrm-1', name: 'Staff Attendance Register', description: 'Daily attendance and leave tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-2', name: 'Training Register', description: 'Staff training records and certifications', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-3', name: 'Credential Verification Register', description: 'License and credential verification', htmlContent: '', isGenerated: false },
+        { id: 'reg-hrm-4', name: 'Performance Appraisal Register', description: 'Annual performance reviews', htmlContent: '', isGenerated: false },
+      ],
+      'QI': [
+        { id: 'reg-qi-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions tracking with root cause analysis, corrective action, preventive action, responsible person, target date, completion date, and verification', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-3', name: 'Near Miss Register', description: 'Near miss events reporting', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-4', name: 'Sentinel Event Register', description: 'Sentinel events and RCA documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-qi-5', name: 'Patient Safety Incident Register', description: 'All patient safety incidents', htmlContent: '', isGenerated: false },
+      ],
+      'PSQ': [
+        { id: 'reg-psq-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking with trend analysis', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions with root cause (5-Why/Fishbone), corrective action, preventive action, responsible person, target date, completion date, and verification status', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-3', name: 'Patient Safety Incident Register', description: 'All patient safety incidents with severity classification', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-4', name: 'Near Miss Register', description: 'Near miss events reporting and analysis', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-5', name: 'Sentinel Event Register', description: 'Sentinel events with RCA documentation', htmlContent: '', isGenerated: false },
+        { id: 'reg-psq-6', name: 'Risk Assessment Register', description: 'Proactive risk assessments (FMEA)', htmlContent: '', isGenerated: false },
+      ],
+      'ROM': [
+        { id: 'reg-rom-1', name: 'Management Review Minutes Register', description: 'Management review meeting records', htmlContent: '', isGenerated: false },
+        { id: 'reg-rom-2', name: 'Strategic Plan Review Register', description: 'Annual strategic plan tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-rom-3', name: 'CAPA Register', description: 'Management-level corrective actions from audit findings', htmlContent: '', isGenerated: false },
+      ],
+      'IMS': [
+        { id: 'reg-ims-1', name: 'Medical Records Audit Register', description: 'Medical record completeness audits', htmlContent: '', isGenerated: false },
+        { id: 'reg-ims-2', name: 'Document Control Register', description: 'Controlled document master list', htmlContent: '', isGenerated: false },
+        { id: 'reg-ims-3', name: 'IT Incident Register', description: 'IT downtime and incident tracking', htmlContent: '', isGenerated: false },
+      ],
+    };
+
+    const universalCAPARegister = {
+      id: 'reg-universal-capa',
+      name: 'CAPA Register (Master)',
+      description: 'Master Corrective and Preventive Actions register with: Finding description, Root cause analysis (5-Why/Fishbone), Corrective action taken, Preventive measures, Responsible person, Target date, Completion date, Verification status',
+      htmlContent: '',
+      isGenerated: false,
+    };
+
+    let registers = registerSuggestions[prefix] || [];
+
+    if (registers.length === 0) {
+      registers = [
+        { id: 'reg-gen-1', name: 'Activity Register', description: `Register for ${objective?.title || 'activities'}`, htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-2', name: 'Compliance Checklist Register', description: 'Daily/weekly compliance tracking', htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-3', name: 'Audit Register', description: 'Internal audit findings and actions', htmlContent: '', isGenerated: false },
+        { id: 'reg-gen-4', name: 'Training Record Register', description: 'Related training documentation', htmlContent: '', isGenerated: false },
+      ];
+    }
+
+    const hasCAPA = registers.some(r => r.name.toLowerCase().includes('capa'));
+    if (!hasCAPA) {
+      registers = [universalCAPARegister, ...registers];
+    }
+
+    setSuggestedRegisters(registers);
+  }, [objective?.code, objective?.title]);
+
+  // Show loading state while data is being fetched
+  if (isLoadingFromSupabase || chapters.length === 0) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <CircularProgress size={48} sx={{ mb: 2 }} />
+        <Typography variant="h6" color="text.secondary">
+          Loading objective data...
+        </Typography>
+      </Box>
+    );
+  }
+
   if (!chapter || !objective) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -279,10 +416,13 @@ export default function ObjectiveDetailPage() {
         <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
           Objective not found
         </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Looking for: {chapterId}/{objectiveId}
+        </Typography>
         <Button
           variant="contained"
           startIcon={<Icon>arrow_back</Icon>}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/dashboard')}
           sx={{ mt: 2 }}
         >
           Back to Dashboard
@@ -312,9 +452,6 @@ export default function ObjectiveDetailPage() {
       setSaveStatus('error');
     }
   };
-
-  // Debounced save to Supabase
-  const debouncedSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFieldChange = (field: string, value: string | Status | Priority | ElementCategory) => {
     // Update local store immediately
@@ -408,6 +545,124 @@ export default function ObjectiveDetailPage() {
 
     // Save to Supabase
     saveToSupabase({ ...objective, youtubeVideos: updatedVideos });
+  };
+  
+  // Search YouTube for relevant training videos
+  const handleSearchYouTube = async () => {
+    if (!objective) return;
+    
+    setIsSearchingYouTube(true);
+    setShowYouTubeSearch(true);
+    setYoutubeSearchResults([]);
+    
+    try {
+      const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!geminiApiKey) {
+        throw new Error('Gemini API key not configured');
+      }
+      
+      // Get chapter context
+      const chapterCode = objective.code.split('.')[0];
+      const chapterNames: Record<string, string> = {
+        'AAC': 'Access Assessment Continuity of Care',
+        'COP': 'Care of Patients',
+        'MOM': 'Management of Medication',
+        'PRE': 'Patient Rights and Education',
+        'HIC': 'Hospital Infection Control',
+        'PSQ': 'Patient Safety Quality Improvement',
+        'ROM': 'Responsibilities of Management',
+        'FMS': 'Facility Management Safety',
+        'HRM': 'Human Resource Management',
+        'IMS': 'Information Management System',
+      };
+      
+      const prompt = `You are a NABH accreditation expert. Find relevant YouTube training videos for this NABH SHCO 3rd Edition objective element.
+
+Objective Code: ${objective.code}
+Chapter: ${chapterNames[chapterCode] || chapterCode}
+Description: ${objective.description}
+${objective.interpretation ? `Interpretation: ${objective.interpretation}` : ''}
+
+Return EXACTLY 6 YouTube video suggestions in this JSON format (no markdown, just JSON):
+[
+  {
+    "title": "Video title as it would appear on YouTube",
+    "searchQuery": "exact YouTube search query to find this video",
+    "description": "Brief description of what staff will learn",
+    "channel": "Likely channel name (e.g., NABH India, Hospital Training, etc.)"
+  }
+]
+
+Focus on:
+1. NABH training videos from official NABH channel
+2. Hospital accreditation training videos
+3. Healthcare quality management videos
+4. Patient safety training videos
+5. Infection control / hand hygiene videos (if HIC)
+6. Clinical protocol training (if COP/MOM)
+
+Prefer Indian healthcare context videos. Return ONLY valid JSON array.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to get video suggestions');
+      
+      const data = await response.json();
+      const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      
+      // Parse JSON from response
+      const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const suggestions = JSON.parse(jsonMatch[0]);
+        
+        // Convert suggestions to search results with YouTube URLs
+        const results = suggestions.map((s: any) => ({
+          title: s.title,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(s.searchQuery + ' NABH hospital training')}`,
+          description: s.description,
+          thumbnail: `https://via.placeholder.com/320x180/cc0000/ffffff?text=${encodeURIComponent(s.channel || 'YouTube')}`,
+          searchQuery: s.searchQuery,
+        }));
+        
+        setYoutubeSearchResults(results);
+      }
+    } catch (error) {
+      console.error('Error searching YouTube:', error);
+      setSnackbarMessage('Error searching for videos. Try manual search.');
+      setSnackbarOpen(true);
+    } finally {
+      setIsSearchingYouTube(false);
+    }
+  };
+  
+  // Add video from search results
+  const handleAddVideoFromSearch = (video: {title: string; url: string; description: string; searchQuery?: string}) => {
+    // Open YouTube search in new tab for user to find and copy the actual URL
+    if (video.searchQuery) {
+      window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(video.searchQuery + ' NABH hospital training')}`, '_blank');
+    } else {
+      window.open(video.url, '_blank');
+    }
+    
+    // Pre-fill the add video form
+    setNewVideoTitle(video.title);
+    setNewVideoDescription(video.description);
+    setNewVideoUrl('');
+    setShowAddVideo(true);
+    setShowYouTubeSearch(false);
+    
+    setSnackbarMessage('Find the video on YouTube, copy its URL, and paste it below');
+    setSnackbarOpen(true);
   };
 
   // Training Material functions
@@ -522,7 +777,7 @@ export default function ObjectiveDetailPage() {
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 4096,
           messages: [
             {
@@ -589,7 +844,7 @@ Format it professionally with clear sections and bullet points.`,
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 2048,
           messages: [
             {
@@ -843,7 +1098,7 @@ Use EXACTLY this HTML template structure (fill in the content sections):
   </table>
 
   <div class="stamp-area">
-    <div class="stamp-text">DR. MURALI'S HOPE HOSPITAL</div>
+    <div class="stamp-text">HOPE HOSPITAL</div>
     <div>QUALITY MANAGEMENT SYSTEM</div>
     <div style="margin-top: 5px; font-size: 10px;">Controlled Document</div>
   </div>
@@ -1036,15 +1291,44 @@ Generate the complete HTML with all sections filled in appropriately based on th
     processed = processed.replace(/Review Date<\/th><td>[^<]*<\/td>/gi, `Review Date</th><td>${reviewDate}</td>`);
 
     // 7. Fix signature sections with realistic handwritten signatures
-    const jagrutiSignature = `<svg width="120" height="40" viewBox="0 0 120 40" style="display:inline-block;vertical-align:middle;">
-      <path d="M5,25 Q15,10 25,20 T45,15 Q55,25 65,20 T85,25 Q95,15 105,22"
-            stroke="#1565C0" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <text x="10" y="38" font-family="serif" font-size="8" fill="#666">Jagruti</text>
+    // Jagruti - flowing feminine signature with loops
+    const jagrutiSignature = `<svg width="130" height="50" viewBox="0 0 130 50" style="display:inline-block;vertical-align:middle;">
+      <defs>
+        <filter id="blur1" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.3"/>
+        </filter>
+      </defs>
+      <path d="M8,28 C12,18 18,12 28,16 C38,20 32,32 42,28 C52,24 48,14 58,18 C68,22 72,30 82,26 C88,24 92,18 98,22 L105,20" 
+            stroke="#1a237e" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#blur1)"/>
+      <path d="M85,18 C90,12 95,10 100,14" stroke="#1a237e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <text x="25" y="46" font-family="'Times New Roman', serif" font-size="9" fill="#555" font-style="italic">Jagruti</text>
     </svg>`;
-    const drShirazSignature = `<svg width="140" height="45" viewBox="0 0 140 45" style="display:inline-block;vertical-align:middle;">
-      <path d="M10,20 Q20,5 35,18 T55,12 Q70,22 85,15 T110,20 Q120,10 130,18"
-            stroke="#0D47A1" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <text x="15" y="42" font-family="serif" font-size="9" fill="#444">Dr. Shiraz Sheikh</text>
+    
+    // Gaurav - angular masculine signature
+    const gauravSignature = `<svg width="120" height="50" viewBox="0 0 120 50" style="display:inline-block;vertical-align:middle;">
+      <defs>
+        <filter id="blur2" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.3"/>
+        </filter>
+      </defs>
+      <path d="M10,30 L20,15 L35,28 L45,12 L55,25 L70,18 L85,30 L95,22" 
+            stroke="#0d47a1" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#blur2)"/>
+      <path d="M70,18 C78,8 88,12 95,8" stroke="#0d47a1" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <text x="30" y="46" font-family="'Times New Roman', serif" font-size="9" fill="#555" font-style="italic">Gaurav</text>
+    </svg>`;
+    
+    // Dr. Shiraz Sheikh - professional doctor's signature with flourish
+    const drShirazSignature = `<svg width="160" height="55" viewBox="0 0 160 55" style="display:inline-block;vertical-align:middle;">
+      <defs>
+        <filter id="blur3" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="0.4"/>
+        </filter>
+      </defs>
+      <path d="M12,25 C18,12 28,8 38,15 C48,22 45,32 55,28 C65,24 62,15 75,18 C88,21 95,30 108,25 C118,21 128,15 140,22" 
+            stroke="#1565c0" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#blur3)"/>
+      <path d="M130,22 Q140,12 148,18 L150,16" stroke="#1565c0" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M5,30 L15,30" stroke="#1565c0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <text x="25" y="50" font-family="'Times New Roman', serif" font-size="10" fill="#444" font-style="italic">Dr. Shiraz Sheikh</text>
     </svg>`;
 
     processed = processed.replace(
@@ -1062,6 +1346,16 @@ Generate the complete HTML with all sections filled in appropriately based on th
     processed = processed.replace(
       /Sd\/-/gi,
       jagrutiSignature
+    );
+    
+    // Replace Gaurav signatures in Verified By sections
+    processed = processed.replace(
+      /VERIFIED BY[\s\S]*?Name:\s*Gaurav/gi,
+      `VERIFIED BY</th></tr><tr><td style="text-align: center; padding: 15px;">
+        <div><strong>Gaurav</strong></div>
+        <div>Hospital Administrator</div>
+        <div style="margin-top: 8px;">${gauravSignature}</div>
+      </td></tr><tr><td>Name: Gaurav`
     );
 
     // 8. Ensure Dr. Shiraz Sheikh is in Approved By with realistic signature
@@ -1227,7 +1521,7 @@ Generate complete, ready-to-use content/template for this evidence in ENGLISH ON
               'anthropic-dangerous-direct-browser-access': 'true',
             },
             body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-3-5-sonnet-20241022',
               max_tokens: 4096,
               messages: [{ role: 'user', content: `${contentPrompt}\n\n${userMessage}` }],
             }),
@@ -1420,92 +1714,6 @@ Generate a complete, professional HTML document for the above requirement. Inclu
     setIsGeneratingCustomEvidence(false);
   };
 
-  // Get suggested registers based on objective
-  const getSuggestedRegistersForObjective = (): RegisterItem[] => {
-    const objectiveCode = objective?.code || '';
-
-    // Common registers for different NABH objectives
-    const registerSuggestions: Record<string, RegisterItem[]> = {
-      'AAC': [
-        { id: 'reg-aac-1', name: 'Patient Registration Register', description: 'Register of all patients with UHID, demographics, and admission details', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-2', name: 'Admission Register', description: 'Daily admission register with patient details and bed allocation', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-3', name: 'Discharge Register', description: 'Patient discharge details with outcomes and follow-up instructions', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-4', name: 'Transfer Register', description: 'Inter-department and external transfer records', htmlContent: '', isGenerated: false },
-        { id: 'reg-aac-5', name: 'Bed Occupancy Register', description: 'Daily bed census and occupancy tracking', htmlContent: '', isGenerated: false },
-      ],
-      'COP': [
-        { id: 'reg-cop-1', name: 'Patient Assessment Register', description: 'Initial and ongoing patient assessment records', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-2', name: 'Clinical Care Plan Register', description: 'Individualized care plans for patients', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-3', name: 'Nursing Care Register', description: 'Daily nursing care documentation', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-4', name: 'Patient Education Register', description: 'Patient and family education records', htmlContent: '', isGenerated: false },
-        { id: 'reg-cop-5', name: 'Consent Register', description: 'All consent forms obtained from patients', htmlContent: '', isGenerated: false },
-      ],
-      'MOM': [
-        { id: 'reg-mom-1', name: 'Drug Inventory Register', description: 'Stock register for all medications', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-2', name: 'High Alert Medication Register', description: 'Tracking of high-alert and look-alike drugs', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-3', name: 'Narcotic Drug Register', description: 'Controlled substance tracking and accountability', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-4', name: 'Adverse Drug Reaction Register', description: 'ADR reporting and monitoring', htmlContent: '', isGenerated: false },
-        { id: 'reg-mom-5', name: 'Emergency Drug Register', description: 'Emergency medication usage tracking', htmlContent: '', isGenerated: false },
-      ],
-      'PRE': [
-        { id: 'reg-pre-1', name: 'Patient Rights Register', description: 'Documentation of patient rights information provided', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-2', name: 'Complaint Register', description: 'Patient complaints and grievance handling', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-3', name: 'Feedback Register', description: 'Patient feedback and satisfaction records', htmlContent: '', isGenerated: false },
-        { id: 'reg-pre-4', name: 'Informed Consent Register', description: 'All informed consents obtained', htmlContent: '', isGenerated: false },
-      ],
-      'HIC': [
-        { id: 'reg-hic-1', name: 'Hand Hygiene Audit Register', description: 'Hand hygiene compliance monitoring', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-2', name: 'Hospital Acquired Infection Register', description: 'HAI surveillance and tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-3', name: 'Biomedical Waste Register', description: 'BMW generation and disposal tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-4', name: 'Sterilization Register', description: 'CSSD sterilization records', htmlContent: '', isGenerated: false },
-        { id: 'reg-hic-5', name: 'Needle Stick Injury Register', description: 'NSI incidents and post-exposure prophylaxis', htmlContent: '', isGenerated: false },
-      ],
-      'FMS': [
-        { id: 'reg-fms-1', name: 'Equipment Maintenance Register', description: 'Preventive and breakdown maintenance records', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-2', name: 'Fire Safety Drill Register', description: 'Mock drill records and observations', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-3', name: 'Incident Register', description: 'All facility-related incidents', htmlContent: '', isGenerated: false },
-        { id: 'reg-fms-4', name: 'Calibration Register', description: 'Equipment calibration tracking', htmlContent: '', isGenerated: false },
-      ],
-      'HRM': [
-        { id: 'reg-hrm-1', name: 'Staff Attendance Register', description: 'Daily attendance and leave tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-2', name: 'Training Register', description: 'Staff training records and certifications', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-3', name: 'Credential Verification Register', description: 'License and credential verification', htmlContent: '', isGenerated: false },
-        { id: 'reg-hrm-4', name: 'Performance Appraisal Register', description: 'Annual performance reviews', htmlContent: '', isGenerated: false },
-      ],
-      'QI': [
-        { id: 'reg-qi-1', name: 'Quality Indicator Register', description: 'Monthly quality indicators tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-2', name: 'CAPA Register', description: 'Corrective and Preventive Actions tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-3', name: 'Near Miss Register', description: 'Near miss events reporting', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-4', name: 'Sentinel Event Register', description: 'Sentinel events and RCA documentation', htmlContent: '', isGenerated: false },
-        { id: 'reg-qi-5', name: 'Patient Safety Incident Register', description: 'All patient safety incidents', htmlContent: '', isGenerated: false },
-      ],
-    };
-
-    // Find matching registers based on objective code prefix
-    const prefix = objectiveCode.substring(0, 3).toUpperCase();
-    let registers = registerSuggestions[prefix] || [];
-
-    // If no exact match, provide generic registers
-    if (registers.length === 0) {
-      registers = [
-        { id: 'reg-gen-1', name: 'Activity Register', description: `Register for ${objective?.title || 'activities'}`, htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-2', name: 'Compliance Checklist Register', description: 'Daily/weekly compliance tracking', htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-3', name: 'Audit Register', description: 'Internal audit findings and actions', htmlContent: '', isGenerated: false },
-        { id: 'reg-gen-4', name: 'Training Record Register', description: 'Related training documentation', htmlContent: '', isGenerated: false },
-      ];
-    }
-
-    return registers;
-  };
-
-  // Load suggested registers when objective changes
-  useEffect(() => {
-    if (objective?.code) {
-      const registers = getSuggestedRegistersForObjective();
-      setSuggestedRegisters(registers);
-    }
-  }, [objective?.code]);
-
   // Toggle register selection
   const handleToggleRegister = (registerId: string) => {
     setSelectedRegisters(prev =>
@@ -1541,25 +1749,27 @@ DESCRIPTION: ${register.description}
 NABH OBJECTIVE: ${objective?.code} - ${objective?.title}
 
 Create a professional, print-ready HTML document with:
-1. Hospital header with logo placeholder and address
-2. Register title and purpose
-3. A table with realistic dummy data (at least 15-20 entries spanning the last 9 months)
-4. Columns appropriate for this type of register
-5. Space for signatures/verifications
-6. Footer with controlled document stamp
+1. Hospital header with "HOPE HOSPITAL" branding and address: ${hospitalConfig.address}
+2. Register title, document number, version, and purpose
+3. A table with EXACTLY 18-20 realistic entries spanning the last 9 months (from ${new Date(Date.now() - 270 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN')} to ${new Date().toLocaleDateString('en-IN')})
+4. Columns appropriate for this type of register with proper headers
+5. Signature verification section at bottom
+6. Footer with "HOPE HOSPITAL - QUALITY MANAGEMENT SYSTEM - Controlled Document"
 
-For CAPA entries, include:
-- Finding/Issue description
-- Root cause analysis
-- Corrective action taken
-- Preventive measures implemented
-- Responsible person
-- Target date and completion date
-- Verification status
+MANDATORY - Use these INDIAN NAMES for entries (mix and match):
+Patient names: Rajesh Kumar, Priya Sharma, Amit Patel, Sunita Devi, Mahesh Verma, Kavita Singh, Ramesh Yadav, Anita Gupta, Suresh Reddy, Lakshmi Iyer, Arun Nair, Meena Joshi, Vikram Thakur, Sanjay Desai, Neha Kulkarni, Ravi Pillai, Deepa Menon, Kiran Saxena
+Staff names: Dr. Shiraz Sheikh, Dr. Anjali Mehta, Dr. Vikash Agarwal, Nurse Priyanka, Nurse Rekha, Jagruti (QM), Gaurav (Admin), Sunil (Lab Tech), Kavitha (Pharmacist)
 
-Use realistic Indian names, dates (within last 9 months), and data that would be acceptable to NABH auditors.
+For CAPA Register entries, MUST include these columns:
+- S.No. | Date | Finding/NC Description | Root Cause (use 5-Why or Fishbone) | Corrective Action | Preventive Action | Responsible Person | Target Date | Completion Date | Verification Status | Verified By
 
-Generate complete HTML with embedded CSS. Do NOT use markdown or code blocks.`;
+IMPORTANT:
+- Dates must be distributed across 9 months, not clustered
+- Use realistic medical/hospital scenarios
+- Status should show mix: "Open", "Closed", "In Progress"
+- Include proper serial numbers
+
+Generate complete HTML with embedded CSS styling. Do NOT use markdown code blocks.`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
@@ -1846,7 +2056,7 @@ Generate complete HTML with embedded CSS. Do NOT use markdown or code blocks. St
           'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1024,
           messages: [
             {
@@ -1883,16 +2093,9 @@ Provide only the Hindi explanation, no English text. The explanation should be c
     }
   };
 
-  // Handle interpretation change with debounced Hindi generation
+  // Handle interpretation change - saves to interpretations2 (user-editable field)
   const handleInterpretationChange = (newInterpretation: string) => {
-    handleFieldChange('description', newInterpretation);
-  };
-
-  // Handle interpretation save (blur event) to trigger Hindi generation
-  const handleInterpretationBlur = async () => {
-    if (objective.description && objective.description.trim()) {
-      await handleGenerateHindiExplanation(objective.description);
-    }
+    handleFieldChange('interpretations2', newInterpretation);
   };
 
   // Save infographic to Supabase using the objective_edits table
@@ -2194,6 +2397,28 @@ DESIGN REQUIREMENTS:
         </Typography>
       </Paper>
 
+      {/* AI Interpretation Section */}
+      {objective.interpretation && (
+        <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Icon color="primary">auto_awesome</Icon>
+            <Typography variant="h6" fontWeight={600} color="primary.main">
+              Interpretation & Guidance
+            </Typography>
+            <Chip label="AI Generated" size="small" color="primary" variant="outlined" />
+          </Box>
+          <Typography variant="body1" sx={{ lineHeight: 1.8, color: 'text.primary' }}>
+            {objective.interpretation}
+          </Typography>
+          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'primary.200' }}>
+            <Typography variant="caption" color="text.secondary">
+              This interpretation provides practical guidance for compliance, including documents to maintain, 
+              what NABH assessors look for, and relevant Indian regulatory context.
+            </Typography>
+          </Box>
+        </Paper>
+      )}
+
       {/* Main Content */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -2211,23 +2436,61 @@ DESIGN REQUIREMENTS:
             <TextField
               fullWidth
               label="Interpretation"
-              value={objective.description}
+              value={objective.interpretations2 ?? objective.interpretation ?? ''}
               onChange={(e) => handleInterpretationChange(e.target.value)}
-              onBlur={handleInterpretationBlur}
               multiline
               minRows={3}
               size="small"
               sx={expandableTextFieldSx}
-              helperText="Hindi explanation will be auto-generated when you finish editing"
+              helperText="Edit and click Save to store your interpretation"
             />
-            {isGeneratingHindi && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                <CircularProgress size={16} />
-                <Typography variant="caption" color="text.secondary">
-                  Generating Hindi explanation...
-                </Typography>
-              </Box>
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : <Icon>save</Icon>}
+                disabled={isSavingInterpretation}
+                onClick={async () => {
+                  setIsSavingInterpretation(true);
+                  try {
+                    const result = await saveObjectiveToSupabase(chapter.id, objective);
+                    if (result.success) {
+                      setInterpretationSaveSuccess(true);
+                      setTimeout(() => setInterpretationSaveSuccess(false), 3000);
+                      // Also generate Hindi explanation
+                      const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
+                      if (currentText.trim()) {
+                        await handleGenerateHindiExplanation(currentText);
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error saving interpretation:', error);
+                  } finally {
+                    setIsSavingInterpretation(false);
+                  }
+                }}
+                sx={{ minWidth: 100 }}
+              >
+                {isSavingInterpretation ? 'Saving...' : 'Save'}
+              </Button>
+              {interpretationSaveSuccess && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'success.main' }}>
+                  <Icon color="success">check_circle</Icon>
+                  <Typography variant="caption" color="success.main" fontWeight={600}>
+                    Saved!
+                  </Typography>
+                </Box>
+              )}
+              {isGeneratingHindi && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="caption" color="text.secondary">
+                    Generating Hindi...
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
 
           {/* Hindi Explanation Section */}
@@ -2249,7 +2512,7 @@ DESIGN REQUIREMENTS:
                   variant="outlined"
                   color="warning"
                   startIcon={isGeneratingHindi ? <CircularProgress size={16} color="inherit" /> : <Icon>refresh</Icon>}
-                  onClick={() => handleGenerateHindiExplanation(objective.description)}
+                  onClick={() => handleGenerateHindiExplanation(objective.interpretation || objective.description)}
                   disabled={isGeneratingHindi || !objective.description}
                   size="small"
                 >
@@ -3436,14 +3699,102 @@ DESIGN REQUIREMENTS:
                     </Box>
                   </Box>
                 ) : (
-                  <Button
-                    variant="outlined"
-                    startIcon={<Icon>add</Icon>}
-                    onClick={() => setShowAddVideo(true)}
-                    size="small"
-                  >
-                    Add YouTube Video
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Icon>add</Icon>}
+                      onClick={() => setShowAddVideo(true)}
+                      size="medium"
+                      sx={{ minWidth: 180 }}
+                    >
+                      Add YouTube Video
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={isSearchingYouTube ? <CircularProgress size={20} color="inherit" /> : <Icon>youtube_searched_for</Icon>}
+                      onClick={handleSearchYouTube}
+                      size="medium"
+                      disabled={isSearchingYouTube}
+                      sx={{ 
+                        minWidth: 250,
+                        fontWeight: 600,
+                        boxShadow: 2,
+                        '&:hover': { boxShadow: 4 }
+                      }}
+                    >
+                      {isSearchingYouTube ? 'Searching YouTube...' : 'Search NABH Training Videos'}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                      AI-powered video suggestions
+                    </Typography>
+                  </Box>
+                )}
+                
+                {/* YouTube Search Results */}
+                {showYouTubeSearch && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'error.50', borderRadius: 1, border: '1px solid', borderColor: 'error.200' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="subtitle2" color="error.main">
+                        <Icon sx={{ verticalAlign: 'middle', mr: 1 }}>youtube_searched_for</Icon>
+                        Suggested Training Videos for {objective.code}
+                      </Typography>
+                      <IconButton size="small" onClick={() => setShowYouTubeSearch(false)}>
+                        <Icon>close</Icon>
+                      </IconButton>
+                    </Box>
+                    
+                    {isSearchingYouTube ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 3, justifyContent: 'center' }}>
+                        <CircularProgress size={24} color="error" />
+                        <Typography color="text.secondary">Searching for relevant NABH training videos...</Typography>
+                      </Box>
+                    ) : youtubeSearchResults.length > 0 ? (
+                      <Grid container spacing={2}>
+                        {youtubeSearchResults.map((video, index) => (
+                          <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
+                            <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                              <Box sx={{ p: 1.5, bgcolor: 'error.100', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Icon color="error">play_circle</Icon>
+                                <Typography variant="caption" fontWeight={600} color="error.dark" noWrap>
+                                  YouTube Search
+                                </Typography>
+                              </Box>
+                              <CardContent sx={{ flexGrow: 1, py: 1 }}>
+                                <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5, lineHeight: 1.3 }}>
+                                  {video.title}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                                  {video.description}
+                                </Typography>
+                              </CardContent>
+                              <CardActions sx={{ pt: 0 }}>
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  startIcon={<Icon>search</Icon>}
+                                  onClick={() => handleAddVideoFromSearch(video)}
+                                  fullWidth
+                                >
+                                  Find & Add
+                                </Button>
+                              </CardActions>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Alert severity="info" icon={<Icon>info</Icon>}>
+                        Click "Search NABH Training Videos" to find relevant videos for this objective element.
+                      </Alert>
+                    )}
+                    
+                    <Alert severity="info" icon={<Icon>lightbulb</Icon>} sx={{ mt: 2 }}>
+                      <Typography variant="body2">
+                        <strong>How to add:</strong> Click "Find & Add" to open YouTube search. Find the video, copy its URL, and paste it in the form.
+                      </Typography>
+                    </Alert>
+                  </Box>
                 )}
               </Box>
             </AccordionDetails>
