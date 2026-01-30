@@ -3,6 +3,31 @@ import { persist } from 'zustand/middleware';
 import type { Chapter, ObjectiveElement, Status, ElementCategory, ChapterType } from '../types/nabh';
 import { loadAllObjectiveEditsFromSupabase, loadChaptersFromSupabase, loadAllNormalizedData } from '../services/objectiveStorage';
 
+// Natural sort for objective codes like "COP.1.a", "COP.10.b"
+// Handles numeric parts correctly: COP.1 < COP.2 < COP.10
+function naturalSortObjectiveCode(a: string, b: string): number {
+  const partsA = a.split('.');
+  const partsB = b.split('.');
+
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const partA = partsA[i] || '';
+    const partB = partsB[i] || '';
+
+    const numA = parseInt(partA, 10);
+    const numB = parseInt(partB, 10);
+
+    // Both are numbers - compare numerically
+    if (!isNaN(numA) && !isNaN(numB)) {
+      if (numA !== numB) return numA - numB;
+    } else {
+      // At least one is not a number - compare alphabetically
+      const cmp = partA.localeCompare(partB);
+      if (cmp !== 0) return cmp;
+    }
+  }
+  return 0;
+}
+
 // Helper function for chapter type (can be removed if not needed)
 // Note: Chapter types could also be stored in nabh_chapters table if needed
 
@@ -295,7 +320,7 @@ export const useNABHStore = create<NABHStore>()(
               name: nabhChapter.name,
               fullName: nabhChapter.description,
               type: getChapterType(nabhChapter.name) as ChapterType,
-              objectives: chapterElements.sort((a, b) => a.code.localeCompare(b.code)),
+              objectives: chapterElements.sort((a, b) => naturalSortObjectiveCode(a.code, b.code)),
               standards: chapterStandards.map(s => ({
                 code: s.standard_number,
                 title: s.name,
