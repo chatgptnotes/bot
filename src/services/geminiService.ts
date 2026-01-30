@@ -11,7 +11,8 @@ export const generateGeminiInfographic = async (config: InfographicConfig): Prom
   const genAI = new GoogleGenerativeAI(apiKey);
   
   // Model fallback strategy
-  const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+  // Prioritize 'gemini-pro' (1.0) as it is the most stable/widely available model
+  const modelsToTry = ['gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   let model = null;
   let text = '';
   let lastError = null;
