@@ -139,6 +139,18 @@ export default function ObjectiveDetailPage() {
   const [selectedColorScheme, setSelectedColorScheme] = useState<ColorScheme>('healthcare-blue');
   const [infographicSource, setInfographicSource] = useState<'template' | 'gemini'>('template');
   const [customGeminiKey, setCustomGeminiKey] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<string>('');
+  
+  const handleTestConnection = async () => {
+    setConnectionStatus('Testing...');
+    try {
+      const { testGeminiConnection } = await import('../services/geminiService');
+      const result = await testGeminiConnection(customGeminiKey);
+      setConnectionStatus(result);
+    } catch (e: any) {
+      setConnectionStatus(e.message);
+    }
+  };
 
   // State for Supabase persistence
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -2550,6 +2562,16 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                       </span>
                     }
                   />
+                  <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Button size="small" variant="outlined" onClick={handleTestConnection}>
+                      Test Key
+                    </Button>
+                    {connectionStatus && (
+                      <Typography variant="caption" color={connectionStatus.startsWith('Success') ? 'success.main' : 'error.main'}>
+                        {connectionStatus}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
               )}
 

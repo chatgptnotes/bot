@@ -2,6 +2,23 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getGeminiApiKey } from '../lib/supabase';
 import type { InfographicConfig } from './infographicGenerator';
 
+export const testGeminiConnection = async (customKey?: string): Promise<string> => {
+  const apiKey = customKey || getGeminiApiKey();
+  if (!apiKey) throw new Error('No API Key provided');
+
+  try {
+    // We can't use listModels() directly from the client SDK easily in all versions, 
+    // but we can try a simple generation with the most basic model to "ping" it.
+    // If this works, the key is good.
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent('Hello');
+    return 'Success! gemini-1.5-flash is available.';
+  } catch (error: any) {
+    return `Error: ${error.message}`;
+  }
+};
+
 export const generateGeminiInfographic = async (config: InfographicConfig, customKey?: string): Promise<string> => {
   const apiKey = customKey || getGeminiApiKey();
   if (!apiKey) {
