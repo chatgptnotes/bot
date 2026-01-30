@@ -20,25 +20,28 @@ export const generateGeminiInfographic = async (config: InfographicConfig): Prom
     
     Data:
     - Title: ${config.title}
-    - Hindi Title: ${config.titleHindi || 'N/A'}
     - Objective Code: ${config.code}
     - Description: ${config.description}
-    - Hindi Description: ${config.descriptionHindi || 'N/A'}
     - Hospital Name: ${config.hospitalName || 'Hospital'}
     - Key Points: ${config.keyPoints?.join(', ') || 'N/A'}
 
-    Design Requirements:
-    1. Output ONLY valid SVG code. No markdown code blocks, no text before or after.
-    2. Dimensions: ${config.width || 800}x${config.height || 1100} (Portrait).
-    3. Style: Modern, clean, professional healthcare aesthetic. Use gradients, soft shadows (using SVG filters), and rounded corners.
-    4. Typography: Use sans-serif fonts (Segoe UI, Roboto, Open Sans). Ensure text is legible.
-    5. Bilingual: Display English and Hindi text prominently and harmoniously.
-    6. Icons: Include relevant medical/healthcare SVG icons inline where appropriate to make it visual.
-    7. Color Scheme: Use a professional palette (Blues, Teals, Greens) unless "Core" (Red) or specific urgency is implied.
-    8. Background: Subtle abstract pattern or soft gradient background.
+    CRITICAL REQUIREMENTS:
+    1. **BILINGUAL (English + Hindi)**: You MUST translate the Title, Description, and all Key Points into Hindi. Display English text prominently, with Hindi translation immediately below or beside it for every section.
+    2. **VISUAL FLOW**: Break down the Description/Key Points into a clear Step-by-Step flow or Process Diagram. Use arrows or dotted lines to connect steps.
+    3. **ICONS**: You MUST include embedded SVG path icons for every step (e.g., documents, safety shield, doctor, patient, hygiene, checklist). Do not use external images; draw the icons with <path> tags.
+
+    Design Specifications:
+    - Output ONLY valid SVG code.
+    - Dimensions: ${config.width || 800}x${config.height || 1200} (Portrait).
+    - Style: Modern, clean, flat design with gradients and soft shadows (using SVG defs/filters).
+    - Color Palette: Professional Healthcare (Teals, Blues, Clean Greens). Use 'Red' only for "Core" compliance alerts.
+    - Typography: Use standard sans-serif fonts (Arial, Roboto, Segoe UI). Ensure text is readable.
     
-    The SVG must be self-contained (no external image references). 
-    Ensure all text is properly wrapped and does not overflow.
+    Structure:
+    - **Header**: Hospital Name (Bilingual), Objective Code (Badge style).
+    - **Main Title**: Bilingual Title.
+    - **Visual Body**: 3-5 distinct steps/cards showing the process or requirements. Each card must have an Icon + English Text + Hindi Text.
+    - **Footer**: Compliance tagline in English & Hindi.
   `;
 
   try {
