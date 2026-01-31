@@ -178,6 +178,20 @@ export default function ObjectiveDetailPage() {
   const [customEvidencePrompt, setCustomEvidencePrompt] = useState('');
   const [isGeneratingCustomEvidence, setIsGeneratingCustomEvidence] = useState(false);
 
+  // State for generating detailed evidence document for individual items
+  const [generatingDetailedDocFor, setGeneratingDetailedDocFor] = useState<string | null>(null);
+  // State for inline document preview (shows generated doc on same page)
+  const [inlinePreviewDoc, setInlinePreviewDoc] = useState<{ itemId: string; html: string } | null>(null);
+
+  // State for evidence generation from interpretation
+  interface InterpretationEvidenceItem {
+    id: string;
+    text: string;
+    selected: boolean;
+  }
+  const [interpretationEvidenceItems, setInterpretationEvidenceItems] = useState<InterpretationEvidenceItem[]>([]);
+  const [isGeneratingInterpretationEvidence, setIsGeneratingInterpretationEvidence] = useState(false);
+
   // State for registers section
   interface RegisterItem {
     id: string;
@@ -853,56 +867,79 @@ Format it professionally with clear sections and bullet points.`,
     return videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
   };
 
-  // Generate Evidence List based on interpretation
+  // Generate Evidence List based on interpretation (using Gemini API with model fallback)
   const handleGenerateEvidenceList = async () => {
     setIsGeneratingEvidence(true);
     setGeneratedEvidenceList([]);
 
     try {
-      const apiKey = await getClaudeApiKey();
+      const apiKey = getGeminiApiKey();
       if (!apiKey) {
         throw new Error('API key not configured');
       }
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2048,
-          messages: [
-            {
-              role: 'user',
-              content: `For the following NABH accreditation objective element, generate a prioritized list of exactly 10 evidences that would be required to demonstrate compliance. List them in order of importance (most important first).
+      const prompt = `For the following NABH accreditation objective element, generate a prioritized list of exactly 10 evidences that would be required to demonstrate compliance. List them in order of importance (most important first).
 
 Objective Code: ${objective.code}
 Interpretation: ${objective.description}
 Category: ${objective.category}
 ${objective.isCore ? 'This is a CORE element which is mandatorily assessed.' : ''}
 
-Format your response as a numbered list (1-10) with each evidence item on a new line. Be specific about the type of document, record, or proof needed. Start directly with the list, no introduction.`,
-            },
-          ],
-        }),
-      });
+Format your response as a numbered list (1-10) with each evidence item on a new line. Be specific about the type of document, record, or proof needed. Start directly with the list, no introduction.`;
 
-      if (!response.ok) {
-        throw new Error('Failed to generate evidence list');
+      // Model fallback strategy - try multiple models until one works
+      const modelsToTry = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
+        'gemini-1.0-pro',
+        'gemini-pro',
+      ];
+
+      let data = null;
+      let lastError = '';
+
+      for (const model of modelsToTry) {
+        try {
+          console.log(`[Generate Evidence List] Trying model: ${model}`);
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+              }),
+            }
+          );
+
+          if (response.ok) {
+            data = await response.json();
+            console.log(`[Generate Evidence List] Success with model: ${model}`);
+            break;
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            lastError = errorData.error?.message || `HTTP ${response.status}`;
+            console.warn(`[Generate Evidence List] Model ${model} failed: ${lastError}`);
+          }
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : 'Unknown error';
+          console.warn(`[Generate Evidence List] Model ${model} error: ${lastError}`);
+        }
       }
 
-      const data = await response.json();
-      const content = data.content[0]?.text || '';
+      if (!data) {
+        throw new Error(`All models failed. Last error: ${lastError}`);
+      }
+
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
       // Parse the numbered list
       const evidenceItems = content
         .split('\n')
-        .filter((line: string) => line.trim().match(/^\d+\.\s/))
-        .map((line: string) => line.trim().replace(/^\d+\.\s*/, ''))
+        .filter((line: string) => line.trim().match(/^\d+[.):\s]/))
+        .map((line: string) => line.trim().replace(/^\d+[.):\s]*/, '').trim())
         .slice(0, 10);
 
       setGeneratedEvidenceList(evidenceItems);
@@ -914,10 +951,146 @@ Format your response as a numbered list (1-10) with each evidence item on a new 
       }
     } catch (error) {
       console.error('Error generating evidence list:', error);
-      setGeneratedEvidenceList(['Error generating evidence list. Please check your API key configuration.']);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setGeneratedEvidenceList([`Error generating evidence list: ${errorMessage}`]);
     } finally {
       setIsGeneratingEvidence(false);
     }
+  };
+
+  // Generate 8 evidence items from interpretation text
+  const handleGenerateEvidenceFromInterpretation = async () => {
+    const interpretationText = objective.interpretations2 ?? objective.interpretation ?? '';
+    if (!interpretationText.trim()) return;
+
+    setIsGeneratingInterpretationEvidence(true);
+    setInterpretationEvidenceItems([]);
+
+    try {
+      const apiKey = getGeminiApiKey();
+      if (!apiKey) {
+        throw new Error('API key not configured');
+      }
+
+      const prompt = `Based on this NABH objective interpretation:
+"${interpretationText}"
+
+Objective Code: ${objective.code}
+${objective.isCore ? 'Note: This is a CORE element which is critical for patient safety.' : ''}
+
+Generate exactly 8 specific evidence items that a hospital should prepare for NABH audit.
+Format: Numbered list (1-8)
+Each item should be:
+- Specific document/record name
+- Actionable and verifiable
+- Relevant to hospital quality compliance
+
+Start directly with the numbered list, no introduction or explanation.`;
+
+      // Model fallback strategy - try multiple models until one works
+      const modelsToTry = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
+        'gemini-1.0-pro',
+        'gemini-pro',
+      ];
+
+      let data = null;
+      let lastError = '';
+
+      for (const model of modelsToTry) {
+        try {
+          console.log(`Trying model: ${model}`);
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+              }),
+            }
+          );
+
+          if (response.ok) {
+            data = await response.json();
+            console.log(`Success with model: ${model}`);
+            break;
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            lastError = errorData.error?.message || `HTTP ${response.status}`;
+            console.warn(`Model ${model} failed: ${lastError}`);
+          }
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : 'Unknown error';
+          console.warn(`Model ${model} error: ${lastError}`);
+        }
+      }
+
+      if (!data) {
+        throw new Error(`All models failed. Last error: ${lastError}`);
+      }
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      // Parse the numbered list
+      const evidenceItems = content
+        .split('\n')
+        .filter((line: string) => line.trim().match(/^\d+[.):\s]/))
+        .map((line: string, idx: number) => ({
+          id: `interp-evidence-${idx}`,
+          text: line.trim()
+            .replace(/^\d+[.):\s]*/, '')  // Remove numbering
+            .replace(/\*\*/g, '')          // Remove ** markdown bold
+            .trim(),
+          selected: true, // All selected by default
+        }))
+        .slice(0, 8);
+
+      setInterpretationEvidenceItems(evidenceItems);
+    } catch (error) {
+      console.error('Error generating evidence from interpretation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setInterpretationEvidenceItems([{
+        id: 'error',
+        text: `Error: ${errorMessage}`,
+        selected: false,
+      }]);
+    } finally {
+      setIsGeneratingInterpretationEvidence(false);
+    }
+  };
+
+  // Toggle interpretation evidence item selection
+  const handleToggleInterpretationEvidence = (id: string) => {
+    setInterpretationEvidenceItems(items =>
+      items.map(item =>
+        item.id === id ? { ...item, selected: !item.selected } : item
+      )
+    );
+  };
+
+  // Add selected interpretation evidence items to the evidence list
+  const handleAddSelectedInterpretationEvidence = () => {
+    const selectedItems = interpretationEvidenceItems.filter(item => item.selected && item.id !== 'error');
+    if (selectedItems.length === 0) return;
+
+    const currentList = objective.evidencesList || '';
+    const newItems = selectedItems.map((item, idx) => {
+      const existingCount = currentList.split('\n').filter(line => line.trim().match(/^\d+\./)).length;
+      return `${existingCount + idx + 1}. ${item.text}`;
+    }).join('\n');
+
+    const updatedList = currentList ? `${currentList}\n${newItems}` : newItems;
+    handleFieldChange('evidencesList', updatedList);
+
+    // Clear the generated items after adding
+    setInterpretationEvidenceItems([]);
+
+    // Show success message
+    setSnackbarMessage(`Added ${selectedItems.length} evidence item(s) to the list`);
+    setSnackbarOpen(true);
   };
 
   // Toggle evidence item selection
@@ -975,6 +1148,336 @@ Format your response as a numbered list (1-10) with each evidence item on a new 
 
   // Count auditor priority items
   const auditorPriorityCount = parsedEvidenceItems.filter(item => item.isAuditorPriority).length;
+
+  // Generate detailed evidence document for a single item
+  const handleGenerateDetailedEvidence = async (item: ParsedEvidenceItem) => {
+    console.log('handleGenerateDetailedEvidence called', { item, objective });
+
+    if (!objective) {
+      console.error('Cannot generate document: objective is null');
+      setSnackbarMessage('Error: No objective data available');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    console.log('Starting document generation for:', item.text);
+    setGeneratingDetailedDocFor(item.id);
+    // Clear any previous inline preview
+    setInlinePreviewDoc(null);
+
+    try {
+      const apiKey = getGeminiApiKey();
+      console.log('API key check:', apiKey ? 'Found' : 'MISSING');
+      if (!apiKey) {
+        setSnackbarMessage('Gemini API key is missing');
+        setSnackbarOpen(true);
+        setGeneratingDetailedDocFor(null);
+        return;
+      }
+
+      console.log('Loading Google Generative AI...');
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+      const prompt = `For the NABH objective "${objective.code}: ${objective.title}", generate detailed evidence documentation for:
+
+Evidence Item: "${item.text}"
+
+Provide:
+1. **Detailed Description** (2-3 paragraphs): Explain what this evidence should contain, format requirements, and what information to include. Be specific about hospital documentation needs.
+
+2. **Verification Method** (bullet points): How an NABH assessor would verify this evidence, what they would look for, and auditor checklist items.
+
+Format your response as valid JSON with exactly this structure:
+{
+  "description": "Multi-paragraph detailed description here...",
+  "verification": "• Bullet point 1\\n• Bullet point 2\\n• Bullet point 3..."
+}
+
+Only output the JSON object, nothing else.`;
+
+      console.log('Calling Gemini API...');
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text().trim();
+      console.log('Got AI response, length:', text.length);
+
+      // Remove markdown code blocks if present
+      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+      // Parse the JSON response
+      let parsed: { description: string; verification: string };
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        // Fallback if JSON parsing fails
+        parsed = {
+          description: text,
+          verification: '• Review the document for completeness\n• Check signatures and dates\n• Verify alignment with NABH requirements'
+        };
+      }
+
+      // Get formatted dates for the document
+      const docDate = new Date();
+      const formattedDate = `${docDate.getDate().toString().padStart(2, '0')}/${(docDate.getMonth() + 1).toString().padStart(2, '0')}/${docDate.getFullYear()}`;
+
+      // Generate the HTML document
+      const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Evidence Document - ${objective.code}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #333;
+      padding: 30px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #1565C0;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+    .logo {
+      max-height: 80px;
+      max-width: 200px;
+      margin-bottom: 10px;
+    }
+    .hospital-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1565C0;
+      margin: 8px 0 5px;
+    }
+    .hospital-address {
+      font-size: 11px;
+      color: #666;
+    }
+    .doc-title {
+      background: linear-gradient(135deg, #1565C0, #0D47A1);
+      color: white;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+      border-radius: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .objective-info {
+      background: #e3f2fd;
+      padding: 12px 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border-left: 4px solid #1565C0;
+    }
+    .objective-code {
+      font-weight: bold;
+      color: #1565C0;
+      font-size: 13px;
+    }
+    .objective-title {
+      font-size: 12px;
+      color: #333;
+      margin-top: 3px;
+    }
+    .evidence-item {
+      background: #fff3e0;
+      padding: 12px 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border-left: 4px solid #ff9800;
+    }
+    .evidence-label {
+      font-weight: bold;
+      color: #e65100;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .evidence-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .evidence-table th {
+      background: #1565C0;
+      color: white;
+      padding: 12px 15px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .evidence-table td {
+      border: 1px solid #ddd;
+      padding: 15px;
+      vertical-align: top;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .evidence-table tr:nth-child(even) td {
+      background: #fafafa;
+    }
+    .verification-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+    .verification-list li {
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+    .verification-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .signature-section {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 2px solid #e0e0e0;
+    }
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    .signature-box {
+      width: 45%;
+      text-align: center;
+    }
+    .signature-line {
+      border-bottom: 1px solid #333;
+      height: 60px;
+      margin-bottom: 5px;
+    }
+    .signature-label {
+      font-size: 11px;
+      color: #666;
+    }
+    .stamp-area {
+      border: 2px dashed #bdbdbd;
+      padding: 25px;
+      text-align: center;
+      margin: 25px 0;
+      color: #9e9e9e;
+      font-size: 11px;
+      background: #fafafa;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 2px solid #1565C0;
+      text-align: center;
+      font-size: 10px;
+      color: #666;
+    }
+    .date-generated {
+      text-align: right;
+      font-size: 10px;
+      color: #999;
+      margin-bottom: 15px;
+    }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="date-generated">Generated: ${formattedDate}</div>
+
+  <div class="header">
+    <img src="${window.location.hostname === 'localhost' ? '/hospital-logo.png' : 'https://www.nabh.online/hospital-logo.png'}" class="logo" alt="Hospital Logo" onerror="this.style.display='none'" />
+    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
+    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
+  </div>
+
+  <div class="doc-title">Evidence Documentation Sheet</div>
+
+  <div class="objective-info">
+    <div class="objective-code">${objective.code}</div>
+    <div class="objective-title">${objective.title}</div>
+  </div>
+
+  <div class="evidence-item">
+    <div class="evidence-label">Evidence Item</div>
+    <div>${item.text}</div>
+  </div>
+
+  <table class="evidence-table">
+    <tr>
+      <th>Evidence Description & Requirements</th>
+    </tr>
+    <tr>
+      <td>${parsed.description.replace(/\n/g, '<br>')}</td>
+    </tr>
+    <tr>
+      <th>Verification Method / Auditor Notes</th>
+    </tr>
+    <tr>
+      <td>
+        <ul class="verification-list">
+          ${parsed.verification.split('\n').filter(line => line.trim()).map(line =>
+            `<li>${line.replace(/^[•\-\*]\s*/, '').trim()}</li>`
+          ).join('')}
+        </ul>
+      </td>
+    </tr>
+  </table>
+
+  <div class="signature-section">
+    <div class="signature-row">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <div class="signature-label">
+          <strong>Prepared By</strong><br>
+          ${getNABHCoordinator().name}<br>
+          ${getNABHCoordinator().designation}
+        </div>
+      </div>
+      <div class="signature-box">
+        <div class="stamp-area">
+          HOSPITAL STAMP / SEAL
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
+    NABH Accreditation Documentation | Objective: ${objective.code}
+  </div>
+</body>
+</html>`;
+
+      // Save to inline preview state instead of opening a window
+      console.log('Document generated successfully - showing inline preview');
+      setInlinePreviewDoc({ itemId: item.id, html: htmlContent });
+
+      setSnackbarMessage('✓ Document generated! Scroll down to see preview.');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error generating detailed evidence:', error);
+      setSnackbarMessage(`Failed to generate document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setSnackbarOpen(true);
+    } finally {
+      setGeneratingDetailedDocFor(null);
+    }
+  };
 
   // Get formatted dates
   const getFormattedDate = (date: Date) => {
@@ -1482,14 +1985,25 @@ Generate the complete HTML with all sections filled in appropriately based on th
 
   // Generate evidence documents for selected items
   const handleGenerateEvidenceDocuments = async () => {
+    console.log('handleGenerateEvidenceDocuments called');
     const selectedItems = parsedEvidenceItems.filter(item => item.selected);
-    if (selectedItems.length === 0) return;
+    console.log('Selected items:', selectedItems.length);
+
+    if (selectedItems.length === 0) {
+      console.warn('No items selected for batch generation');
+      setSnackbarMessage('Please select at least one evidence item');
+      setSnackbarOpen(true);
+      return;
+    }
 
     setIsGeneratingDocuments(true);
     setDocumentGenerationProgress({ current: 0, total: selectedItems.length });
+    setSnackbarMessage(`Starting generation of ${selectedItems.length} document(s)...`);
+    setSnackbarOpen(true);
 
     const geminiApiKey = getGeminiApiKey();
     const claudeApiKey = getClaudeApiKey();
+    console.log('API keys:', { gemini: !!geminiApiKey, claude: !!claudeApiKey });
     const contentPrompt = getEvidenceDocumentPrompt();
 
     for (let i = 0; i < selectedItems.length; i++) {
@@ -1603,6 +2117,9 @@ Generate complete, ready-to-use content/template for this evidence in ENGLISH ON
     }
 
     setIsGeneratingDocuments(false);
+    console.log('Batch generation completed');
+    setSnackbarMessage(`✓ Completed generating ${selectedItems.length} document(s). Scroll down to see saved documents.`);
+    setSnackbarOpen(true);
     // Deselect all items after generation
     setParsedEvidenceItems(items => items.map(item => ({ ...item, selected: false })));
   };
@@ -2362,7 +2879,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
           </Typography>
           <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'primary.200' }}>
             <Typography variant="caption" color="text.secondary">
-              This interpretation provides practical guidance for compliance, including documents to maintain, 
+              This interpretation provides practical guidance for compliance, including documents to maintain,
               what NABH assessors look for, and relevant Indian regulatory context.
             </Typography>
           </Box>
@@ -2394,7 +2911,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
               sx={expandableTextFieldSx}
               helperText="Edit and click Save to store your interpretation"
             />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -2424,6 +2941,16 @@ Provide only the Hindi explanation, no English text. The explanation should be c
               >
                 {isSavingInterpretation ? 'Saving...' : 'Save'}
               </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                startIcon={isGeneratingInterpretationEvidence ? <CircularProgress size={16} color="inherit" /> : <Icon>auto_awesome</Icon>}
+                disabled={isGeneratingInterpretationEvidence || !(objective.interpretations2 ?? objective.interpretation)}
+                onClick={handleGenerateEvidenceFromInterpretation}
+              >
+                {isGeneratingInterpretationEvidence ? 'Generating...' : 'Generate 8 Evidence Items'}
+              </Button>
               {interpretationSaveSuccess && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'success.main' }}>
                   <Icon color="success">check_circle</Icon>
@@ -2441,6 +2968,63 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 </Box>
               )}
             </Box>
+
+            {/* Generated Evidence Items Display */}
+            {interpretationEvidenceItems.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'success.50', borderRadius: 1, border: '1px solid', borderColor: 'success.200' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Icon color="success">checklist</Icon>
+                  Generated Evidence Items ({interpretationEvidenceItems.length})
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {interpretationEvidenceItems.map((item, idx) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1,
+                        p: 1,
+                        bgcolor: 'background.paper',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: item.selected ? 'success.main' : 'divider',
+                      }}
+                    >
+                      <Checkbox
+                        checked={item.selected}
+                        onChange={() => handleToggleInterpretationEvidence(item.id)}
+                        size="small"
+                        color="success"
+                      />
+                      <Typography variant="body2" sx={{ flex: 1 }}>
+                        {idx + 1}. {item.text}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    startIcon={<Icon>add</Icon>}
+                    onClick={handleAddSelectedInterpretationEvidence}
+                    disabled={!interpretationEvidenceItems.some(item => item.selected && item.id !== 'error')}
+                  >
+                    Add Selected to Evidence List
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setInterpretationEvidenceItems([])}
+                  >
+                    Clear
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
           </Box>
 
           {/* Hindi Explanation Section */}
@@ -2948,7 +3532,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 <Paper variant="outlined" sx={{ p: 2, maxHeight: 400, overflow: 'auto', bgcolor: 'background.paper' }}>
                   <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                      Click checkbox to select for document generation. Click star to mark as auditor priority.
+                      Click checkbox to select for batch generation. Click <Icon sx={{ fontSize: 14, verticalAlign: 'middle' }}>description</Icon> to generate a detailed evidence document. Click star to mark as auditor priority.
                     </Typography>
                   </Box>
                   <FormGroup>
@@ -2978,6 +3562,25 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                         <Typography variant="body2" sx={{ lineHeight: 1.6, flex: 1 }}>
                           {item.text}
                         </Typography>
+                        <Tooltip title="Generate Detailed Evidence Document">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleGenerateDetailedEvidence(item)}
+                              disabled={generatingDetailedDocFor === item.id}
+                              sx={{
+                                '&:hover': { bgcolor: 'primary.50' },
+                              }}
+                            >
+                              {generatingDetailedDocFor === item.id ? (
+                                <CircularProgress size={18} color="inherit" />
+                              ) : (
+                                <Icon fontSize="small">description</Icon>
+                              )}
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                         <Tooltip title={item.isAuditorPriority ? 'Remove from auditor priority' : 'Mark as auditor priority'}>
                           <IconButton
                             size="small"
@@ -2993,6 +3596,106 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                       </Box>
                     ))}
                   </FormGroup>
+
+                  {/* Sticky Generate Button - always visible when items selected */}
+                  {selectedEvidenceCount > 0 && (
+                    <Box sx={{
+                      position: 'sticky',
+                      bottom: 0,
+                      bgcolor: 'success.100',
+                      p: 1.5,
+                      mt: 2,
+                      borderRadius: 1,
+                      border: '2px solid',
+                      borderColor: 'success.main',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 2
+                    }}>
+                      <Typography fontWeight={600} color="success.dark">
+                        {selectedEvidenceCount} item(s) selected
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="large"
+                        startIcon={isGeneratingDocuments ? <CircularProgress size={20} color="inherit" /> : <Icon>auto_awesome</Icon>}
+                        onClick={handleGenerateEvidenceDocuments}
+                        disabled={isGeneratingDocuments}
+                      >
+                        {isGeneratingDocuments
+                          ? `Generating ${documentGenerationProgress.current}/${documentGenerationProgress.total}...`
+                          : `Generate ${selectedEvidenceCount} Document(s)`}
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* Inline Document Preview */}
+                  {inlinePreviewDoc && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: 'info.50', borderRadius: 2, border: '2px solid', borderColor: 'info.main' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" color="info.dark" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Icon>preview</Icon> Generated Document Preview
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<Icon>open_in_new</Icon>}
+                            onClick={() => {
+                              const newWindow = window.open('', '_blank');
+                              if (newWindow) {
+                                newWindow.document.write(inlinePreviewDoc.html);
+                                newWindow.document.close();
+                              }
+                            }}
+                          >
+                            Open in New Tab
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<Icon>print</Icon>}
+                            onClick={() => {
+                              const printWindow = window.open('', '_blank');
+                              if (printWindow) {
+                                printWindow.document.write(inlinePreviewDoc.html);
+                                printWindow.document.close();
+                                printWindow.print();
+                              }
+                            }}
+                          >
+                            Print / PDF
+                          </Button>
+                          <IconButton
+                            size="small"
+                            onClick={() => setInlinePreviewDoc(null)}
+                            sx={{ color: 'grey.500' }}
+                          >
+                            <Icon>close</Icon>
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <Box
+                        sx={{
+                          bgcolor: 'white',
+                          borderRadius: 1,
+                          overflow: 'auto',
+                          maxHeight: 500,
+                          border: '1px solid',
+                          borderColor: 'grey.300',
+                          '& iframe': { border: 'none', width: '100%', height: 480 }
+                        }}
+                      >
+                        <iframe
+                          srcDoc={inlinePreviewDoc.html}
+                          title="Document Preview"
+                          style={{ width: '100%', height: 480, border: 'none' }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
                 </Paper>
               </AccordionDetails>
             </Accordion>

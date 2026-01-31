@@ -11,9 +11,9 @@ export const testGeminiConnection = async (customKey?: string): Promise<string> 
     // but we can try a simple generation with the most basic model to "ping" it.
     // If this works, the key is good.
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     await model.generateContent('Hello');
-    return 'Success! gemini-1.5-flash is available.';
+    return 'Success! gemini-2.0-flash is available.';
   } catch (error: any) {
     return `Error: ${error.message}`;
   }
@@ -27,11 +27,10 @@ export const generateGeminiInfographic = async (config: InfographicConfig, custo
 
   const genAI = new GoogleGenerativeAI(apiKey);
   
-  // Model fallback strategy - Exhaustive list of aliases
+  // Model fallback strategy - Exhaustive list of aliases (gemini-2.0 first)
   const modelsToTry = [
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-001',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
     'gemini-1.5-pro',
     'gemini-1.5-pro-latest',
     'gemini-1.5-pro-001',
