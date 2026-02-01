@@ -888,50 +888,32 @@ ${objective.isCore ? 'This is a CORE element which is mandatorily assessed.' : '
 
 Format your response as a numbered list (1-10) with each evidence item on a new line. Be specific about the type of document, record, or proof needed. Start directly with the list, no introduction.`;
 
-      // Model fallback strategy - try multiple models until one works
-      const modelsToTry = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-1.0-pro',
-        'gemini-pro',
-      ];
-
-      let data = null;
-      let lastError = '';
-
-      for (const model of modelsToTry) {
-        try {
-          console.log(`[Generate Evidence List] Trying model: ${model}`);
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-              }),
-            }
-          );
-
-          if (response.ok) {
-            data = await response.json();
-            console.log(`[Generate Evidence List] Success with model: ${model}`);
-            break;
-          } else {
-            const errorData = await response.json().catch(() => ({}));
-            lastError = errorData.error?.message || `HTTP ${response.status}`;
-            console.warn(`[Generate Evidence List] Model ${model} failed: ${lastError}`);
-          }
-        } catch (err) {
-          lastError = err instanceof Error ? err.message : 'Unknown error';
-          console.warn(`[Generate Evidence List] Model ${model} error: ${lastError}`);
+      // Use the current working model
+      console.log(`[Generate Evidence List] Using model: gemini-2.0-flash`);
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+          }),
         }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[Generate Evidence List] API Error:', response.status, errorText);
+        throw new Error(`API Error ${response.status}: ${errorText}`);
       }
 
-      if (!data) {
-        throw new Error(`All models failed. Last error: ${lastError}`);
+      const data = await response.json();
+      console.log(`[Generate Evidence List] Success`);
+
+      if (!data || !data.candidates) {
+        console.error('[Generate Evidence List] Invalid response:', data);
+        throw new Error('Invalid response from API');
       }
 
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -988,51 +970,34 @@ Each item should be:
 
 Start directly with the numbered list, no introduction or explanation.`;
 
-      // Model fallback strategy - try multiple models until one works
-      const modelsToTry = [
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro',
-        'gemini-1.0-pro',
-        'gemini-pro',
-      ];
-
-      let data = null;
-      let lastError = '';
-
-      for (const model of modelsToTry) {
-        try {
-          console.log(`Trying model: ${model}`);
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-              }),
-            }
-          );
-
-          if (response.ok) {
-            data = await response.json();
-            console.log(`Success with model: ${model}`);
-            break;
-          } else {
-            const errorData = await response.json().catch(() => ({}));
-            lastError = errorData.error?.message || `HTTP ${response.status}`;
-            console.warn(`Model ${model} failed: ${lastError}`);
-          }
-        } catch (err) {
-          lastError = err instanceof Error ? err.message : 'Unknown error';
-          console.warn(`Model ${model} error: ${lastError}`);
+      // Use the current working model
+      console.log('Using model: gemini-2.0-flash');
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+          }),
         }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`API Error ${response.status}: ${errorText}`);
       }
 
-      if (!data) {
-        throw new Error(`All models failed. Last error: ${lastError}`);
+      const data = await response.json();
+      console.log('Success with gemini-2.0-flash');
+
+      if (!data || !data.candidates) {
+        console.error('Invalid response:', data);
+        throw new Error('Invalid response from API');
       }
+
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
       // Parse the numbered list
