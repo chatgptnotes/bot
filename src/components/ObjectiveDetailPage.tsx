@@ -3458,31 +3458,77 @@ Provide only the Hindi explanation, no English text. The explanation should be c
               </Button>
               {generatedEvidenceList.length > 0 && (
                 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Icon color="success" fontSize="small">check_circle</Icon>
-                    Generated Evidence List (Priority Order):
-                  </Typography>
-                  <Box component="ol" sx={{ m: 0, pl: 3 }}>
-                    {generatedEvidenceList.map((evidence, idx) => (
-                      <Box component="li" key={idx} sx={{ mb: 1.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
-                          <Typography variant="body2" sx={{ flex: 1 }}>
-                            {idx < 3 && <Chip label={idx === 0 ? 'P0' : idx === 1 ? 'P1' : 'P2'} size="small" color={idx === 0 ? 'error' : idx === 1 ? 'warning' : 'info'} sx={{ mr: 1, height: 20, fontSize: '0.7rem' }} />}
-                            {evidence}
-                          </Typography>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            startIcon={generatingDetailedDocFor === `evidence-${idx}` ? <CircularProgress size={16} /> : <Icon fontSize="small">description</Icon>}
-                            onClick={() => handleGenerateDetailedEvidence({ id: `evidence-${idx}`, text: evidence, selected: false, isAuditorPriority: idx < 3 })}
-                            disabled={generatingDetailedDocFor === `evidence-${idx}`}
-                            sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}
-                          >
-                            {generatingDetailedDocFor === `evidence-${idx}` ? 'Generating...' : 'Generate'}
-                          </Button>
-                        </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Icon color="success" fontSize="small">check_circle</Icon>
+                      Generated Evidence List (Priority Order):
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Icon sx={{ fontSize: 16, color: 'success.main' }}>check_circle</Icon>
+                        <Typography variant="caption" color="text.secondary">Stored</Typography>
                       </Box>
-                    ))}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Icon sx={{ fontSize: 16, color: 'error.main' }}>cancel</Icon>
+                        <Typography variant="caption" color="text.secondary">Not Generated</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box component="ol" sx={{ m: 0, pl: 3 }}>
+                    {generatedEvidenceList.map((evidence, idx) => {
+                      // Check if this evidence has been generated and stored in database
+                      const isGenerated = savedEvidences.some(saved =>
+                        saved.prompt?.toLowerCase().includes(evidence.toLowerCase()) ||
+                        saved.evidence_title?.toLowerCase().includes(evidence.toLowerCase()) ||
+                        evidence.toLowerCase().includes(saved.evidence_title?.toLowerCase() || '')
+                      );
+
+                      return (
+                        <Box component="li" key={idx} sx={{ mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
+                              {/* Status Indicator */}
+                              <Tooltip title={isGenerated ? 'Evidence generated and stored in database' : 'Evidence not yet generated'}>
+                                <Icon
+                                  sx={{
+                                    fontSize: 20,
+                                    color: isGenerated ? 'success.main' : 'error.main',
+                                    mt: 0.2
+                                  }}
+                                >
+                                  {isGenerated ? 'check_circle' : 'cancel'}
+                                </Icon>
+                              </Tooltip>
+
+                              <Typography variant="body2" sx={{ flex: 1 }}>
+                                {idx < 3 && <Chip label={idx === 0 ? 'P0' : idx === 1 ? 'P1' : 'P2'} size="small" color={idx === 0 ? 'error' : idx === 1 ? 'warning' : 'info'} sx={{ mr: 1, height: 20, fontSize: '0.7rem' }} />}
+                                {evidence}
+                                {isGenerated && (
+                                  <Chip
+                                    label="Stored"
+                                    size="small"
+                                    color="success"
+                                    sx={{ ml: 1, height: 18, fontSize: '0.65rem' }}
+                                  />
+                                )}
+                              </Typography>
+                            </Box>
+
+                            <Button
+                              size="small"
+                              variant={isGenerated ? 'outlined' : 'contained'}
+                              color={isGenerated ? 'success' : 'primary'}
+                              startIcon={generatingDetailedDocFor === `evidence-${idx}` ? <CircularProgress size={16} /> : <Icon fontSize="small">{isGenerated ? 'refresh' : 'description'}</Icon>}
+                              onClick={() => handleGenerateDetailedEvidence({ id: `evidence-${idx}`, text: evidence, selected: false, isAuditorPriority: idx < 3 })}
+                              disabled={generatingDetailedDocFor === `evidence-${idx}`}
+                              sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}
+                            >
+                              {generatingDetailedDocFor === `evidence-${idx}` ? 'Generating...' : isGenerated ? 'Regenerate' : 'Generate'}
+                            </Button>
+                          </Box>
+                        </Box>
+                      );
+                    })}
                   </Box>
                 </Box>
               )}
