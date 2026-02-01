@@ -2109,26 +2109,35 @@ SPECIFIC INSTRUCTIONS FOR HOPE HOSPITAL EVIDENCE:
     const claudeApiKey = getClaudeApiKey();
     console.log('API keys:', { gemini: !!geminiApiKey, claude: !!claudeApiKey });
 
+    let successCount = 0;
+    let failCount = 0;
+
     for (let i = 0; i < selectedItems.length; i++) {
       const item = selectedItems[i];
+      console.log(`\n=== Generating evidence ${i + 1}/${selectedItems.length} ===`);
+      console.log('Item:', item.text);
+
       setDocumentGenerationProgress({ current: i + 1, total: selectedItems.length });
+      setSnackbarMessage(`Generating ${i + 1} of ${selectedItems.length}: ${item.text.substring(0, 40)}...`);
+      setSnackbarOpen(true);
 
-      // Get evidence-specific prompt with relevant data (async - fetches from database)
-      const contentPrompt = await getEvidenceDocumentPrompt(item.text);
+      try {
+        // Get evidence-specific prompt with relevant data (async - fetches from database)
+        const contentPrompt = await getEvidenceDocumentPrompt(item.text);
 
-      const userMessage = `Objective Element: ${objective?.description}
+        const userMessage = `Objective Element: ${objective?.description}
 
 Evidence Item to Generate:
 ${item.text}
 
 Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospital database (NOT blank templates). Use the patient records, staff records, equipment records provided in the system prompt. Make it look like real hospital documentation with specific entries, dates, names, and numbers.`;
 
-      try {
         let rawContent: string = '';
 
         // Try Gemini first, fallback to Claude
         if (geminiApiKey) {
           try {
+            console.log('Calling Gemini API...');
             const response = await fetch(
               `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
               {
@@ -2140,16 +2149,22 @@ Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospi
                 }),
               }
             );
+
             if (response.ok) {
               const data = await response.json();
               rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              console.log('Gemini response received, content length:', rawContent.length);
+            } else {
+              const errorText = await response.text();
+              console.error('Gemini API error:', response.status, errorText);
             }
           } catch (geminiErr) {
-            console.warn('Gemini failed:', geminiErr);
+            console.error('Gemini exception:', geminiErr);
           }
         }
 
         if (!rawContent && claudeApiKey) {
+          console.log('Trying Claude API...');
           const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -2164,19 +2179,26 @@ Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospi
               messages: [{ role: 'user', content: `${contentPrompt}\n\n${userMessage}` }],
             }),
           });
+
           if (response.ok) {
             const data = await response.json();
             rawContent = data.content?.[0]?.text || '';
+            console.log('Claude response received, content length:', rawContent.length);
+          } else {
+            const errorText = await response.text();
+            console.error('Claude API error:', response.status, errorText);
           }
         }
 
         if (rawContent) {
+          console.log('Processing HTML content...');
           // Extract clean HTML from response and post-process it
           const extractedHtml = extractHTMLFromResponse(rawContent);
           const htmlContent = postProcessHTML(extractedHtml);
 
           // Extract title from the evidence item
           const title = item.text.replace(/^\d+[.):]\s*/, '').substring(0, 100);
+          console.log('Saving to Supabase:', title);
 
           // Save to Supabase
           const result = await saveGeneratedEvidence({
@@ -2190,6 +2212,9 @@ Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospi
           });
 
           if (result.success && result.id) {
+            console.log('✓ Successfully saved evidence:', result.id);
+            successCount++;
+
             // Add to local state
             const newEvidence: GeneratedEvidence = {
               id: result.id,
@@ -2203,29 +2228,38 @@ Generate complete, ready-to-use FILLED EVIDENCE with actual data from Hope Hospi
               created_at: new Date().toISOString(),
             };
             setSavedEvidences(prev => [newEvidence, ...prev]);
-            setSnackbarMessage(`Generated: ${title.substring(0, 50)}...`);
-            setSnackbarOpen(true);
           } else {
-            console.error('Failed to save evidence:', result.error);
-            setSnackbarMessage('Failed to save evidence. Check console for details.');
-            setSnackbarOpen(true);
+            console.error('✗ Failed to save evidence:', result.error);
+            failCount++;
           }
         } else {
-          console.error('No content generated for:', item.text);
-          setSnackbarMessage('Failed to generate content. Check API keys.');
-          setSnackbarOpen(true);
+          console.error('✗ No content generated for:', item.text);
+          failCount++;
         }
       } catch (error) {
-        console.error('Error generating evidence document:', error);
-        setSnackbarMessage('Error generating document. Check console.');
-        setSnackbarOpen(true);
+        console.error('✗ Exception generating evidence:', error);
+        failCount++;
+        // Continue with next item even if this one fails
+      }
+
+      // Small delay between API calls to avoid rate limiting
+      if (i < selectedItems.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
+    console.log(`\n=== Batch generation complete ===`);
+    console.log(`Success: ${successCount}, Failed: ${failCount}, Total: ${selectedItems.length}`);
+
     setIsGeneratingDocuments(false);
-    console.log('Batch generation completed');
-    setSnackbarMessage(`✓ Completed generating ${selectedItems.length} document(s). Scroll down to see saved documents.`);
+
+    if (successCount > 0) {
+      setSnackbarMessage(`✓ Generated ${successCount} of ${selectedItems.length} document(s). ${failCount > 0 ? `${failCount} failed.` : ''} Scroll down to see saved documents.`);
+    } else {
+      setSnackbarMessage(`✗ Failed to generate documents. Check console for errors.`);
+    }
     setSnackbarOpen(true);
+
     // Deselect all items after generation
     setParsedEvidenceItems(items => items.map(item => ({ ...item, selected: false })));
   };
