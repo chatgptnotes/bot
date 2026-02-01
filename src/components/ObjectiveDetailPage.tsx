@@ -41,7 +41,7 @@ import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
 import { ASSIGNEE_OPTIONS, getHospitalInfo, getNABHCoordinator } from '../config/hospitalConfig';
-import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
+import { getClaudeApiKey, callGeminiAPI } from '../lib/supabase';
 import {
   saveObjectiveToSupabase,
   loadObjectiveFromSupabase,
@@ -1201,14 +1201,6 @@ TOTAL DOCUMENTS: ${documentsToGenerate.length}`;
     setInlinePreviewDoc(null);
 
     try {
-      const apiKey = getGeminiApiKey();
-      if (!apiKey) {
-        setSnackbarMessage('Gemini API key is missing');
-        setSnackbarOpen(true);
-        setGeneratingDetailedDocFor(null);
-        return;
-      }
-
       // Generate unique package ID to link all documents
       const packageId = `pkg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const generatedDocs: { title: string; html: string }[] = [];
@@ -1346,23 +1338,8 @@ DETAILED FORMATTING REQUIREMENTS:
 
 Generate complete HTML document with embedded CSS. Output ONLY the HTML, nothing else.`;
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: generationPrompt }] }],
-              generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const data = await response.json();
+        // Call our secure backend proxy
+        const data = await callGeminiAPI(generationPrompt, 0.7, 8192);
         let rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
         if (!rawContent) {

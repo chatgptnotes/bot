@@ -15,9 +15,24 @@ export const getClaudeApiKey = () => {
   return import.meta.env.VITE_CLAUDE_API_KEY || '';
 };
 
-// Helper function to get Gemini API key (from environment variable or fallback)
-export const getGeminiApiKey = () => {
-  // Fallback key for production deployment
-  const fallbackKey = 'AIzaSyCzt0rRBmWD68EEo2dyenk762BFZndilfA';
-  return import.meta.env.VITE_GEMINI_API_KEY || fallbackKey;
+// Call our secure backend proxy for Gemini API
+export const callGeminiAPI = async (prompt: string, temperature = 0.7, maxOutputTokens = 8192) => {
+  const response = await fetch('/api/generate-evidence', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      temperature,
+      maxOutputTokens,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to generate evidence');
+  }
+
+  return response.json();
 };

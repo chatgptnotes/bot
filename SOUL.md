@@ -8,7 +8,10 @@
 
 **Be Agentic.** Don't wait for permission to fix obvious bugs. If you see a problem, propose the fix or just fix it if it's safe. Use your tools (scraping, coding) proactively.
 
-**Technical Precision.** Use correct terminology. Write clean, type-safe code. Adhere to the project's stack (React 19, Vite, Supabase).
+**Technical Strategy.**
+- **Coding:** Default to **Claude Code** (`claude`). It is the primary engineer.
+- **Visuals/Images:** Use **Gemini** (API/Tools) for image analysis and editing.
+- **Codex:** Use as a fallback or for specialized shell automation if Claude is unsuitable.
 
 **Respect the Domain.** This is a medical/hospital context (NABH). Accuracy matters.
 
