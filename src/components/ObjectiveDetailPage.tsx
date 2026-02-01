@@ -36,7 +36,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
-import { ASSIGNEE_OPTIONS, HOSPITAL_INFO, getHospitalInfo, getNABHCoordinator } from '../config/hospitalConfig';
+import { ASSIGNEE_OPTIONS, getHospitalInfo, getNABHCoordinator } from '../config/hospitalConfig';
 import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
 import {
   saveObjectiveToSupabase,
@@ -47,6 +47,7 @@ import {
   deleteGeneratedEvidence,
   type GeneratedEvidence,
 } from '../services/objectiveStorage';
+import { getEvidenceDocuments } from '../services/evidencePackages';
 import {
   generateInfographic,
   svgToPngDataUrl,
@@ -1115,7 +1116,7 @@ Start directly with the numbered list, no introduction or explanation.`;
   // Count auditor priority items
   const auditorPriorityCount = parsedEvidenceItems.filter(item => item.isAuditorPriority).length;
 
-  // Generate detailed evidence document for a single item
+  // Generate comprehensive evidence package (multiple related documents)
   const handleGenerateDetailedEvidence = async (item: ParsedEvidenceItem) => {
     console.log('handleGenerateDetailedEvidence called', { item, objective });
 
@@ -1126,14 +1127,15 @@ Start directly with the numbered list, no introduction or explanation.`;
       return;
     }
 
-    console.log('Starting document generation for:', item.text);
+    // Get evidence package (array of related documents)
+    const documentsToGenerate = getEvidenceDocuments(item.text);
+    console.log(`📦 Evidence Package identified: ${documentsToGenerate.length} document(s) to generate`);
+
     setGeneratingDetailedDocFor(item.id);
-    // Clear any previous inline preview
     setInlinePreviewDoc(null);
 
     try {
       const apiKey = getGeminiApiKey();
-      console.log('API key check:', apiKey ? 'Found' : 'MISSING');
       if (!apiKey) {
         setSnackbarMessage('Gemini API key is missing');
         setSnackbarOpen(true);
@@ -1141,304 +1143,130 @@ Start directly with the numbered list, no introduction or explanation.`;
         return;
       }
 
-      console.log('Loading Google Generative AI...');
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      // Generate unique package ID to link all documents
+      const packageId = `pkg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const generatedDocs: { title: string; html: string }[] = [];
 
-      const prompt = `For the NABH objective "${objective.code}: ${objective.title}", generate detailed evidence documentation for:
+      // Generate each document in the package
+      for (let docIndex = 0; docIndex < documentsToGenerate.length; docIndex++) {
+        const doc = documentsToGenerate[docIndex];
 
-Evidence Item: "${item.text}"
+        setSnackbarMessage(`Generating document ${docIndex + 1}/${documentsToGenerate.length}: ${doc.title}...`);
+        setSnackbarOpen(true);
 
-Provide:
-1. **Detailed Description** (2-3 paragraphs): Explain what this evidence should contain, format requirements, and what information to include. Be specific about hospital documentation needs.
+        console.log(`\n📄 Generating: ${doc.title} (${doc.documentType})`);
 
-2. **Verification Method** (bullet points): How an NABH assessor would verify this evidence, what they would look for, and auditor checklist items.
+        // Get database context for this evidence
+        const contentPrompt = await getEvidenceDocumentPrompt(item.text);
 
-Format your response as valid JSON with exactly this structure:
-{
-  "description": "Multi-paragraph detailed description here...",
-  "verification": "• Bullet point 1\\n• Bullet point 2\\n• Bullet point 3..."
-}
+        const generationPrompt = `${contentPrompt}
 
-Only output the JSON object, nothing else.`;
+OBJECTIVE: ${objective.code} - ${objective.title}
+EVIDENCE REQUIREMENT: ${item.text}
 
-      console.log('Calling Gemini API...');
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text().trim();
-      console.log('Got AI response, length:', text.length);
+DOCUMENT TO GENERATE (Part ${docIndex + 1} of ${documentsToGenerate.length}):
+Title: ${doc.title}
+Type: ${doc.documentType}
+Description: ${doc.description}
 
-      // Remove markdown code blocks if present
-      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+CRITICAL INSTRUCTIONS:
+1. Generate a COMPLETE, FILLED evidence document (NOT a blank template)
+2. Use ACTUAL data from ${hospitalConfig.name} database (patient records, staff records, equipment data provided above)
+3. Create REALISTIC entries with specific:
+   - Employee names, IDs, designations, signatures
+   - Patient names, UHIDs, visit IDs
+   - Dates (use dates from 6-9 months ago for realistic compliance)
+   - Locations, departments
+   - Actual procedural details
+4. For training documents, include:
+   - Training circular: date, time, venue, trainer name, participant list
+   - Attendance: employee names with IDs and signatures (use SVG signatures)
+   - Content: detailed training material with topics and key points
+   - Assessment: 10 MCQs with employee answers and scores
+   - Report: attendance stats, assessment results, recommendations
+5. For audit documents, include:
+   - Specific audit findings and observations
+   - Scoring and compliance percentages
+   - Action items with responsible persons and timelines
+6. Make it look like AUTHENTIC hospital documentation
+7. Use professional HTML format with headers, tables, signatures
+8. Include hospital logo, address, document numbers
 
-      // Parse the JSON response
-      let parsed: { description: string; verification: string };
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        // Fallback if JSON parsing fails
-        parsed = {
-          description: text,
-          verification: '• Review the document for completeness\n• Check signatures and dates\n• Verify alignment with NABH requirements'
-        };
+Generate complete HTML document with embedded CSS. Output ONLY the HTML, nothing else.`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: generationPrompt }] }],
+              generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        let rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        if (!rawContent) {
+          console.error(`❌ No content generated for: ${doc.title}`);
+          continue;
+        }
+
+        // Extract and post-process HTML
+        const extractedHtml = extractHTMLFromResponse(rawContent);
+        const htmlContent = postProcessHTML(extractedHtml);
+
+        // Save to database
+        const result = await saveGeneratedEvidence({
+          objective_code: objective.code || '',
+          evidence_title: `${doc.title}`,
+          prompt: `${item.text} - ${doc.description}`,
+          generated_content: extractTextFromHTML(htmlContent),
+          html_content: htmlContent,
+          evidence_type: 'package',
+          hospital_config: hospitalConfig,
+          package_id: packageId,
+          package_sequence: docIndex + 1,
+          package_total: documentsToGenerate.length,
+        });
+
+        if (result.success && result.id) {
+          console.log(`✅ Saved: ${doc.title} (ID: ${result.id})`);
+
+          generatedDocs.push({ title: doc.title, html: htmlContent });
+
+          // Add to local state
+          const newEvidence: GeneratedEvidence = {
+            id: result.id,
+            objective_code: objective.code || '',
+            evidence_title: `${doc.title}`,
+            prompt: `${item.text} - ${doc.description}`,
+            generated_content: extractTextFromHTML(htmlContent),
+            html_content: htmlContent,
+            evidence_type: 'package',
+            hospital_config: hospitalConfig,
+            created_at: new Date().toISOString(),
+          };
+          setSavedEvidences(prev => [newEvidence, ...prev]);
+        } else {
+          console.error(`❌ Failed to save: ${doc.title}`, result.error);
+        }
       }
 
-      // Get formatted dates for the document
-      const docDate = new Date();
-      const formattedDate = `${docDate.getDate().toString().padStart(2, '0')}/${(docDate.getMonth() + 1).toString().padStart(2, '0')}/${docDate.getFullYear()}`;
-
-      // Generate the HTML document
-      const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Evidence Document - ${objective.code}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 12px;
-      line-height: 1.6;
-      color: #333;
-      padding: 30px;
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-    }
-    .header {
-      text-align: center;
-      border-bottom: 3px solid #1565C0;
-      padding-bottom: 15px;
-      margin-bottom: 25px;
-    }
-    .logo {
-      max-height: 80px;
-      max-width: 200px;
-      margin-bottom: 10px;
-    }
-    .hospital-name {
-      font-size: 22px;
-      font-weight: bold;
-      color: #1565C0;
-      margin: 8px 0 5px;
-    }
-    .hospital-address {
-      font-size: 11px;
-      color: #666;
-    }
-    .doc-title {
-      background: linear-gradient(135deg, #1565C0, #0D47A1);
-      color: white;
-      padding: 12px 20px;
-      font-size: 14px;
-      font-weight: bold;
-      text-align: center;
-      margin: 20px 0;
-      border-radius: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .objective-info {
-      background: #e3f2fd;
-      padding: 12px 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      border-left: 4px solid #1565C0;
-    }
-    .objective-code {
-      font-weight: bold;
-      color: #1565C0;
-      font-size: 13px;
-    }
-    .objective-title {
-      font-size: 12px;
-      color: #333;
-      margin-top: 3px;
-    }
-    .evidence-item {
-      background: #fff3e0;
-      padding: 12px 15px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-      border-left: 4px solid #ff9800;
-    }
-    .evidence-label {
-      font-weight: bold;
-      color: #e65100;
-      font-size: 11px;
-      text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-    .evidence-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .evidence-table th {
-      background: #1565C0;
-      color: white;
-      padding: 12px 15px;
-      text-align: left;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    .evidence-table td {
-      border: 1px solid #ddd;
-      padding: 15px;
-      vertical-align: top;
-      font-size: 12px;
-      line-height: 1.8;
-    }
-    .evidence-table tr:nth-child(even) td {
-      background: #fafafa;
-    }
-    .verification-list {
-      margin: 0;
-      padding-left: 0;
-      list-style: none;
-    }
-    .verification-list li {
-      padding: 5px 0;
-      padding-left: 20px;
-      position: relative;
-    }
-    .verification-list li::before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: #4caf50;
-      font-weight: bold;
-    }
-    .signature-section {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 2px solid #e0e0e0;
-    }
-    .signature-row {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 30px;
-    }
-    .signature-box {
-      width: 45%;
-      text-align: center;
-    }
-    .signature-line {
-      border-bottom: 1px solid #333;
-      height: 60px;
-      margin-bottom: 5px;
-    }
-    .signature-label {
-      font-size: 11px;
-      color: #666;
-    }
-    .stamp-area {
-      border: 2px dashed #bdbdbd;
-      padding: 25px;
-      text-align: center;
-      margin: 25px 0;
-      color: #9e9e9e;
-      font-size: 11px;
-      background: #fafafa;
-    }
-    .footer {
-      margin-top: 30px;
-      padding-top: 15px;
-      border-top: 2px solid #1565C0;
-      text-align: center;
-      font-size: 10px;
-      color: #666;
-    }
-    .date-generated {
-      text-align: right;
-      font-size: 10px;
-      color: #999;
-      margin-bottom: 15px;
-    }
-    @media print {
-      body { padding: 20px; }
-      .no-print { display: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="date-generated">Generated: ${formattedDate}</div>
-
-  <div class="header">
-    <img src="${window.location.hostname === 'localhost' ? '/hospital-logo.png' : 'https://www.nabh.online/hospital-logo.png'}" class="logo" alt="Hospital Logo" onerror="this.style.display='none'" />
-    <div class="hospital-name">${HOSPITAL_INFO.name}</div>
-    <div class="hospital-address">${HOSPITAL_INFO.address}</div>
-  </div>
-
-  <div class="doc-title">Evidence Documentation Sheet</div>
-
-  <div class="objective-info">
-    <div class="objective-code">${objective.code}</div>
-    <div class="objective-title">${objective.title}</div>
-  </div>
-
-  <div class="evidence-item">
-    <div class="evidence-label">Evidence Item</div>
-    <div>${item.text}</div>
-  </div>
-
-  <table class="evidence-table">
-    <tr>
-      <th>Evidence Description & Requirements</th>
-    </tr>
-    <tr>
-      <td>${parsed.description.replace(/\n/g, '<br>')}</td>
-    </tr>
-    <tr>
-      <th>Verification Method / Auditor Notes</th>
-    </tr>
-    <tr>
-      <td>
-        <ul class="verification-list">
-          ${parsed.verification.split('\n').filter(line => line.trim()).map(line =>
-            `<li>${line.replace(/^[•\-\*]\s*/, '').trim()}</li>`
-          ).join('')}
-        </ul>
-      </td>
-    </tr>
-  </table>
-
-  <div class="signature-section">
-    <div class="signature-row">
-      <div class="signature-box">
-        <div class="signature-line"></div>
-        <div class="signature-label">
-          <strong>Prepared By</strong><br>
-          ${getNABHCoordinator().name}<br>
-          ${getNABHCoordinator().designation}
-        </div>
-      </div>
-      <div class="signature-box">
-        <div class="stamp-area">
-          HOSPITAL STAMP / SEAL
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">
-    <strong>${HOSPITAL_INFO.name}</strong> | ${HOSPITAL_INFO.address}<br>
-    NABH Accreditation Documentation | Objective: ${objective.code}
-  </div>
-</body>
-</html>`;
-
-      // Save to inline preview state instead of opening a window
-      console.log('Document generated successfully - showing inline preview');
-      setInlinePreviewDoc({ itemId: item.id, html: htmlContent });
-
-      setSnackbarMessage('✓ Document generated! Scroll down to see preview.');
+      setSnackbarMessage(`✅ Evidence package complete! Generated ${generatedDocs.length} document(s). Check "Generated Evidences" section below.`);
       setSnackbarOpen(true);
+
+      console.log(`\n🎉 Package generation complete! ${generatedDocs.length} documents saved.`);
+
     } catch (error) {
-      console.error('Error generating detailed evidence:', error);
-      setSnackbarMessage(`Failed to generate document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Error generating evidence package:', error);
+      setSnackbarMessage(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSnackbarOpen(true);
     } finally {
       setGeneratingDetailedDocFor(null);

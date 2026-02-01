@@ -414,7 +414,7 @@ export interface GeneratedEvidence {
   prompt: string;
   generated_content: string;
   html_content: string;
-  evidence_type: 'document' | 'visual' | 'custom' | 'register';
+  evidence_type: 'document' | 'visual' | 'custom' | 'register' | 'package';
   hospital_config: {
     name: string;
     address: string;
@@ -426,6 +426,9 @@ export interface GeneratedEvidence {
   };
   created_at: string;
   is_auditor_ready?: boolean;
+  package_id?: string; // Links multiple documents together as a package
+  package_sequence?: number; // Order within the package (1, 2, 3...)
+  package_total?: number; // Total documents in the package
 }
 
 /**
