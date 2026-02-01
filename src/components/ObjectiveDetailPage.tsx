@@ -34,6 +34,10 @@ import Tab from '@mui/material/Tab';
 import Snackbar from '@mui/material/Snackbar';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import type { Status, Priority, ElementCategory, EvidenceFile, YouTubeVideo, TrainingMaterial, SOPDocument } from '../types/nabh';
 import { ASSIGNEE_OPTIONS, getHospitalInfo, getNABHCoordinator } from '../config/hospitalConfig';
@@ -132,6 +136,15 @@ export default function ObjectiveDetailPage() {
   const [isGeneratingHindi, setIsGeneratingHindi] = useState(false);
   const [isSavingInterpretation, setIsSavingInterpretation] = useState(false);
   const [interpretationSaveSuccess, setInterpretationSaveSuccess] = useState(false);
+
+  // State for Evidence Generation Modal
+  const [showEvidenceGenerationModal, setShowEvidenceGenerationModal] = useState(false);
+  const [currentEvidenceToGenerate, setCurrentEvidenceToGenerate] = useState<{ id: string; text: string; selected: boolean; isAuditorPriority: boolean } | null>(null);
+  const [evidenceGenerationPrompt, setEvidenceGenerationPrompt] = useState('');
+  const [evidenceGenerationData, setEvidenceGenerationData] = useState('');
+  const [editablePromptAndData, setEditablePromptAndData] = useState('');
+  const [isLoadingPromptData, setIsLoadingPromptData] = useState(false);
+  const [isExecutingGeneration, setIsExecutingGeneration] = useState(false);
 
   // State for Infographic Generator
   const [isGeneratingInfographic, setIsGeneratingInfographic] = useState(false);
@@ -1116,7 +1129,7 @@ Start directly with the numbered list, no introduction or explanation.`;
   // Count auditor priority items
   const auditorPriorityCount = parsedEvidenceItems.filter(item => item.isAuditorPriority).length;
 
-  // Generate comprehensive evidence package (multiple related documents)
+  // Open evidence generation modal to show prompt and data
   const handleGenerateDetailedEvidence = async (item: ParsedEvidenceItem) => {
     console.log('handleGenerateDetailedEvidence called', { item, objective });
 
@@ -1127,9 +1140,62 @@ Start directly with the numbered list, no introduction or explanation.`;
       return;
     }
 
+    // Store current evidence item
+    setCurrentEvidenceToGenerate(item);
+
+    // Open modal and start loading prompt and data
+    setShowEvidenceGenerationModal(true);
+    setIsLoadingPromptData(true);
+
+    try {
+      // Get evidence package (array of related documents)
+      const documentsToGenerate = getEvidenceDocuments(item.text);
+      console.log(`📦 Evidence Package identified: ${documentsToGenerate.length} document(s) to generate`);
+
+      // Get database context for this evidence
+      const contentPrompt = await getEvidenceDocumentPrompt(item.text);
+
+      // Build the generation prompt
+      const generationPrompt = `${contentPrompt}
+
+OBJECTIVE: ${objective.code} - ${objective.title}
+EVIDENCE REQUIREMENT: ${item.text}
+
+DOCUMENT PACKAGE TO GENERATE:
+${documentsToGenerate.map((doc, idx) => `${idx + 1}. ${doc.title} (${doc.documentType})\n   ${doc.description}`).join('\n\n')}
+
+TOTAL DOCUMENTS: ${documentsToGenerate.length}`;
+
+      // Set the prompt and data
+      setEvidenceGenerationPrompt(generationPrompt);
+      setEvidenceGenerationData(contentPrompt);
+
+      // Combine both into editable text
+      setEditablePromptAndData(generationPrompt);
+
+      setIsLoadingPromptData(false);
+    } catch (error) {
+      console.error('Error loading prompt and data:', error);
+      setSnackbarMessage('Error loading evidence data');
+      setSnackbarOpen(true);
+      setIsLoadingPromptData(false);
+      setShowEvidenceGenerationModal(false);
+    }
+  };
+
+  // Execute evidence generation with custom prompt
+  const handleExecuteEvidenceGeneration = async () => {
+    if (!objective || !currentEvidenceToGenerate) {
+      return;
+    }
+
+    const item = currentEvidenceToGenerate;
+
     // Get evidence package (array of related documents)
     const documentsToGenerate = getEvidenceDocuments(item.text);
-    console.log(`📦 Evidence Package identified: ${documentsToGenerate.length} document(s) to generate`);
+    console.log(`📦 Executing generation for ${documentsToGenerate.length} document(s)`);
+
+    setIsExecutingGeneration(true);
 
     setGeneratingDetailedDocFor(item.id);
     setInlinePreviewDoc(null);
@@ -1156,10 +1222,8 @@ Start directly with the numbered list, no introduction or explanation.`;
 
         console.log(`\n📄 Generating: ${doc.title} (${doc.documentType})`);
 
-        // Get database context for this evidence
-        const contentPrompt = await getEvidenceDocumentPrompt(item.text);
-
-        const generationPrompt = `${contentPrompt}
+        // Use the custom edited prompt from modal
+        const generationPrompt = `${editablePromptAndData}
 
 OBJECTIVE: ${objective.code} - ${objective.title}
 EVIDENCE REQUIREMENT: ${item.text}
@@ -1352,12 +1416,17 @@ Generate complete HTML document with embedded CSS. Output ONLY the HTML, nothing
 
       console.log(`\n🎉 Package generation complete! ${generatedDocs.length} documents saved.`);
 
+      // Close modal on success
+      setShowEvidenceGenerationModal(false);
+      setCurrentEvidenceToGenerate(null);
+
     } catch (error) {
       console.error('❌ Error generating evidence package:', error);
       setSnackbarMessage(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSnackbarOpen(true);
     } finally {
       setGeneratingDetailedDocFor(null);
+      setIsExecutingGeneration(false);
     }
   };
 
@@ -5036,6 +5105,168 @@ Provide only the Hindi explanation, no English text. The explanation should be c
         message={snackbarMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+
+      {/* Evidence Generation Modal */}
+      <Dialog
+        open={showEvidenceGenerationModal}
+        onClose={() => !isExecutingGeneration && setShowEvidenceGenerationModal(false)}
+        maxWidth="lg"
+        fullWidth
+        scroll="paper"
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Icon color="primary">description</Icon>
+            <Typography variant="h6" fontWeight={600}>
+              Review Evidence Generation
+            </Typography>
+          </Box>
+          {!isExecutingGeneration && (
+            <IconButton onClick={() => setShowEvidenceGenerationModal(false)} size="small">
+              <Icon>close</Icon>
+            </IconButton>
+          )}
+        </DialogTitle>
+
+        <DialogContent dividers>
+          {isLoadingPromptData ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={40} sx={{ mb: 2 }} />
+              <Typography variant="body2" color="text.secondary">
+                Loading evidence data and preparing prompt...
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Evidence Item Info */}
+              <Alert severity="info" icon={<Icon>info</Icon>}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Evidence to Generate:
+                </Typography>
+                <Typography variant="body2">
+                  {currentEvidenceToGenerate?.text}
+                </Typography>
+              </Alert>
+
+              {/* Prompt Display Section */}
+              <Accordion defaultExpanded>
+                <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon color="primary">visibility</Icon>
+                    <Typography fontWeight={600}>View Original Prompt & Data</Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Readonly Prompt Display */}
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                        GENERATION PROMPT:
+                      </Typography>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          bgcolor: 'grey.50',
+                          maxHeight: 300,
+                          overflow: 'auto',
+                          fontFamily: 'monospace',
+                          fontSize: '0.75rem',
+                          whiteSpace: 'pre-wrap'
+                        }}
+                      >
+                        {evidenceGenerationPrompt}
+                      </Paper>
+                    </Box>
+
+                    {/* Readonly Data Display */}
+                    {evidenceGenerationData && (
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', fontWeight: 600 }}>
+                          DATABASE DATA (Patient Records, Staff, Equipment):
+                        </Typography>
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            bgcolor: 'grey.50',
+                            maxHeight: 200,
+                            overflow: 'auto',
+                            fontFamily: 'monospace',
+                            fontSize: '0.75rem',
+                            whiteSpace: 'pre-wrap'
+                          }}
+                        >
+                          {evidenceGenerationData}
+                        </Paper>
+                      </Box>
+                    )}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+
+              {/* Editable Prompt Section */}
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon color="warning">edit</Icon>
+                    Edit Prompt Before Generation
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<Icon>refresh</Icon>}
+                    onClick={() => setEditablePromptAndData(evidenceGenerationPrompt)}
+                  >
+                    Reset to Original
+                  </Button>
+                </Box>
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                  <Typography variant="caption">
+                    You can modify the prompt below to customize how the evidence will be generated. This is useful for adding specific requirements or changing the focus.
+                  </Typography>
+                </Alert>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={15}
+                  value={editablePromptAndData}
+                  onChange={(e) => setEditablePromptAndData(e.target.value)}
+                  placeholder="Edit the generation prompt here..."
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.8rem',
+                    }
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  Characters: {editablePromptAndData.length}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2, justifyContent: 'space-between' }}>
+          <Button
+            onClick={() => setShowEvidenceGenerationModal(false)}
+            disabled={isExecutingGeneration}
+            startIcon={<Icon>cancel</Icon>}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="large"
+            onClick={handleExecuteEvidenceGeneration}
+            disabled={isLoadingPromptData || isExecutingGeneration || !editablePromptAndData.trim()}
+            startIcon={isExecutingGeneration ? <CircularProgress size={20} color="inherit" /> : <Icon>play_arrow</Icon>}
+          >
+            {isExecutingGeneration ? 'Generating Documents...' : 'Run This to Generate Evidence'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
