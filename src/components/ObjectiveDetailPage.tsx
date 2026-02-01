@@ -3548,11 +3548,23 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                   </Typography>
                   <Box component="ol" sx={{ m: 0, pl: 3 }}>
                     {generatedEvidenceList.map((evidence, idx) => (
-                      <Box component="li" key={idx} sx={{ mb: 1 }}>
-                        <Typography variant="body2">
-                          {idx < 3 && <Chip label={idx === 0 ? 'P0' : idx === 1 ? 'P1' : 'P2'} size="small" color={idx === 0 ? 'error' : idx === 1 ? 'warning' : 'info'} sx={{ mr: 1, height: 20, fontSize: '0.7rem' }} />}
-                          {evidence}
-                        </Typography>
+                      <Box component="li" key={idx} sx={{ mb: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                          <Typography variant="body2" sx={{ flex: 1 }}>
+                            {idx < 3 && <Chip label={idx === 0 ? 'P0' : idx === 1 ? 'P1' : 'P2'} size="small" color={idx === 0 ? 'error' : idx === 1 ? 'warning' : 'info'} sx={{ mr: 1, height: 20, fontSize: '0.7rem' }} />}
+                            {evidence}
+                          </Typography>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={generatingDetailedDocFor === `evidence-${idx}` ? <CircularProgress size={16} /> : <Icon fontSize="small">description</Icon>}
+                            onClick={() => handleGenerateDetailedEvidence({ id: `evidence-${idx}`, text: evidence, selected: false, isAuditorPriority: idx < 3 })}
+                            disabled={generatingDetailedDocFor === `evidence-${idx}`}
+                            sx={{ whiteSpace: 'nowrap', minWidth: 'auto' }}
+                          >
+                            {generatingDetailedDocFor === `evidence-${idx}` ? 'Generating...' : 'Generate'}
+                          </Button>
+                        </Box>
                       </Box>
                     ))}
                   </Box>
