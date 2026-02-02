@@ -1073,6 +1073,113 @@ Start directly with the numbered list, no introduction or explanation.`;
     setSnackbarOpen(true);
   };
 
+  // Print evidence items
+  const handlePrintEvidenceItems = () => {
+    if (interpretationEvidenceItems.length === 0) return;
+
+    const hospitalInfo = getHospitalInfo();
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Generated Evidence Items - ${objective.code}</title>
+        <style>
+          @page {
+            margin: 1in;
+          }
+          body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #1976d2;
+          }
+          .hospital-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+          }
+          .document-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+          }
+          .objective-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #1976d2;
+          }
+          .objective-code {
+            font-weight: bold;
+            color: #1976d2;
+          }
+          .evidence-list {
+            margin-top: 20px;
+          }
+          .evidence-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-left: 3px solid #4caf50;
+            background-color: #f9f9f9;
+          }
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="hospital-name">${hospitalInfo.name}</div>
+          <div class="document-title">Generated Evidence Items</div>
+        </div>
+
+        <div class="objective-info">
+          <div><span class="objective-code">Objective Code:</span> ${objective.code}</div>
+          <div><strong>Category:</strong> ${objective.category}</div>
+          ${objective.isCore ? '<div><strong>Type:</strong> CORE Element</div>' : ''}
+        </div>
+
+        <div class="evidence-list">
+          <h3>Evidence Items (${interpretationEvidenceItems.length})</h3>
+          ${interpretationEvidenceItems.map((item, idx) => `
+            <div class="evidence-item">
+              <strong>${idx + 1}.</strong> ${item.text}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="footer">
+          Generated on ${new Date().toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })} | ${hospitalInfo.name}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
   // Toggle evidence item selection
   const handleToggleEvidenceItem = (id: string) => {
     setParsedEvidenceItems(items =>
@@ -3018,6 +3125,16 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 onClick={handleGenerateEvidenceFromInterpretation}
               >
                 {isGeneratingInterpretationEvidence ? 'Generating...' : 'Generate 8 Evidence Items'}
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                startIcon={<Icon>print</Icon>}
+                disabled={interpretationEvidenceItems.length === 0}
+                onClick={handlePrintEvidenceItems}
+              >
+                Print
               </Button>
               {interpretationSaveSuccess && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'success.main' }}>
