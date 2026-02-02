@@ -26,6 +26,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionActions from '@mui/material/AccordionActions';
 import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -1516,57 +1517,11 @@ ${trimmed}
                     {generatedContents.map((gc, index) => (
                       <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', pr: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Chip label={index + 1} size="small" color="primary" />
-                            <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                            <Typography variant="subtitle2">
                               {gc.evidenceItem.substring(0, 100)}...
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <Tooltip title="Preview">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50));
-                                  }}
-                                >
-                                  <Icon fontSize="small">visibility</Icon>
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Print">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50));
-                                  }}
-                                >
-                                  <Icon fontSize="small">print</Icon>
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Download PDF">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`);
-                                  }}
-                                >
-                                  <Icon fontSize="small">picture_as_pdf</Icon>
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Copy">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleCopyContent(gc.content);
-                                  }}
-                                >
-                                  <Icon fontSize="small">content_copy</Icon>
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
                           </Box>
                         </AccordionSummary>
                         <AccordionDetails>
@@ -1754,6 +1709,40 @@ ${trimmed}
                             </Box>
                           )}
                         </AccordionDetails>
+                        <AccordionActions sx={{ px: 2, pb: 2 }}>
+                          <Tooltip title="Preview">
+                            <IconButton
+                              size="small"
+                              onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                            >
+                              <Icon fontSize="small">visibility</Icon>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Print">
+                            <IconButton
+                              size="small"
+                              onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
+                            >
+                              <Icon fontSize="small">print</Icon>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Download PDF">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDownloadPDF(gc.content, `Evidence-${index + 1}-${hospitalConfig.name}`)}
+                            >
+                              <Icon fontSize="small">picture_as_pdf</Icon>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Copy">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleCopyContent(gc.content)}
+                            >
+                              <Icon fontSize="small">content_copy</Icon>
+                            </IconButton>
+                          </Tooltip>
+                        </AccordionActions>
                       </Accordion>
                     ))}
 
