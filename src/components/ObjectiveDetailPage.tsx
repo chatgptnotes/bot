@@ -140,7 +140,7 @@ export default function ObjectiveDetailPage() {
   const [isSavingInterpretation, setIsSavingInterpretation] = useState(false);
   const [interpretationSaveSuccess, setInterpretationSaveSuccess] = useState(false);
   const [lastSavedInterpretation, setLastSavedInterpretation] = useState<string>('');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(true); // Start as true to enable button initially
 
   // State for Evidence Generation Modal
   const [showEvidenceGenerationModal, setShowEvidenceGenerationModal] = useState(false);
@@ -307,11 +307,10 @@ export default function ObjectiveDetailPage() {
         console.warn('Could not load from Supabase:', error);
       } finally {
         setIsLoadingFromDb(false);
-        // Initialize lastSavedInterpretation after loading
+        // Initialize lastSavedInterpretation after loading (keep hasUnsavedChanges as true initially)
         if (objective) {
           const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
           setLastSavedInterpretation(currentText);
-          setHasUnsavedChanges(false);
         }
       }
     };
@@ -2853,6 +2852,8 @@ Provide only the Hindi explanation, no English text. The explanation should be c
     handleFieldChange('interpretations2', newInterpretation);
     // Mark as unsaved if different from last saved version
     setHasUnsavedChanges(newInterpretation !== lastSavedInterpretation);
+    // Clear success state when user starts editing
+    setInterpretationSaveSuccess(false);
   };
 
   // Save infographic to Supabase using the objective_edits table
@@ -3136,10 +3137,10 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
-                color={interpretationSaveSuccess && !hasUnsavedChanges ? "success" : "primary"}
+                color={!hasUnsavedChanges && interpretationSaveSuccess ? "success" : "primary"}
                 size="small"
-                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : interpretationSaveSuccess && !hasUnsavedChanges ? <Icon>check</Icon> : <Icon>save</Icon>}
-                disabled={isSavingInterpretation || (!hasUnsavedChanges && interpretationSaveSuccess)}
+                startIcon={isSavingInterpretation ? <CircularProgress size={16} color="inherit" /> : !hasUnsavedChanges && interpretationSaveSuccess ? <Icon>check</Icon> : <Icon>save</Icon>}
+                disabled={isSavingInterpretation || !hasUnsavedChanges}
                 onClick={async () => {
                   setIsSavingInterpretation(true);
                   try {
@@ -3177,7 +3178,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                       setLastSavedInterpretation(currentText);
                       setHasUnsavedChanges(false);
                       setInterpretationSaveSuccess(true);
-                      setTimeout(() => setInterpretationSaveSuccess(false), 3000);
+                      // Don't clear success state - it will clear when user edits
 
                       // Also generate Hindi explanation
                       if (currentText.trim()) {
@@ -3192,7 +3193,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 }}
                 sx={{ minWidth: 100 }}
               >
-                {isSavingInterpretation ? 'Saving...' : interpretationSaveSuccess && !hasUnsavedChanges ? 'Saved' : 'Save'}
+                {isSavingInterpretation ? 'Saving...' : !hasUnsavedChanges && interpretationSaveSuccess ? 'Saved' : 'Save'}
               </Button>
               <Button
                 variant="outlined"
