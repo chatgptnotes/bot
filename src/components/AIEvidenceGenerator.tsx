@@ -288,6 +288,13 @@ function extractTextFromHTML(html: string): string {
   return sections.join('\n');
 }
 
+// Signatory data interface
+interface SignatoryData {
+  preparedBy: { name: string; designation: string; date: string };
+  reviewedBy: { name: string; designation: string; date: string };
+  approvedBy: { name: string; designation: string; date: string };
+}
+
 // Helper function to update HTML content with edited text
 function updateHTMLWithText(
   _originalHTML: string,
@@ -583,8 +590,10 @@ export default function AIEvidenceGenerator() {
         .eq('is_active', true)
         .order('name');
       if (data && !error) {
+        // Type assertion for employee data
         const employeeData = data as unknown as {id: string, name: string, designation: string}[];
         setEmployees(employeeData);
+        // Set default approved by to NABH coordinator if available
         const coordinator = employeeData.find(e => e.designation?.toLowerCase().includes('nabh coordinator'));
         if (coordinator) {
           setApprovedBy({ name: coordinator.name, designation: coordinator.designation, date: new Date().toISOString().split('T')[0] });
