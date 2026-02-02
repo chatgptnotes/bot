@@ -32,6 +32,10 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
 import Autocomplete from '@mui/material/Autocomplete';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import { getHospitalInfo, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
 import { getClaudeApiKey, getGeminiApiKey, supabase } from '../lib/supabase';
@@ -552,6 +556,11 @@ export default function AIEvidenceGenerator() {
   // Document view mode state (for each document: 0 = HTML preview, 1 = Edit text)
   const [documentViewModes, setDocumentViewModes] = useState<Record<number, number>>({});
 
+  // Editable preview dialog state
+  const [editablePreviewOpen, setEditablePreviewOpen] = useState(false);
+  const [editablePreviewIndex, setEditablePreviewIndex] = useState<number | null>(null);
+  const editableIframeRef = useRef<HTMLIFrameElement>(null);
+
   // Employee dropdown state for signatories
   const [employees, setEmployees] = useState<{id: string, name: string, designation: string}[]>([]);
   const [preparedBy, setPreparedBy] = useState({ name: '', designation: '', date: '' });
@@ -958,6 +967,69 @@ export default function AIEvidenceGenerator() {
       .map(gc => `=== ${gc.evidenceItem} ===\n\n${gc.content}`)
       .join('\n\n---\n\n');
     navigator.clipboard.writeText(allContent);
+  };
+
+  // Make HTML content editable by adding contentEditable attribute and styles
+  const makeEditable = (html: string): string => {
+    if (!html) return '';
+    // Inject contentEditable and editing styles into the body tag
+    let editableHtml = html.replace(
+      '<body',
+      `<body contenteditable="true" style="outline: none; cursor: text;"`
+    );
+    // Add editing styles to head
+    editableHtml = editableHtml.replace(
+      '</head>',
+      `<style>
+        body[contenteditable="true"]:focus { outline: 2px solid #1565C0; outline-offset: 2px; }
+        body[contenteditable="true"] *:hover { background: rgba(21, 101, 192, 0.05); }
+        body[contenteditable="true"] *:focus { outline: 1px dashed #1565C0; }
+      </style></head>`
+    );
+    return editableHtml;
+  };
+
+  // Open editable preview dialog
+  const handleEditablePreview = (index: number) => {
+    setEditablePreviewIndex(index);
+    setEditablePreviewOpen(true);
+  };
+
+  // Save changes from editable preview iframe
+  const handleSaveEditablePreview = () => {
+    const iframe = editableIframeRef.current;
+    if (iframe && editablePreviewIndex !== null) {
+      const iframeDoc = iframe.contentDocument;
+      if (iframeDoc) {
+        // Remove contentEditable and editing styles before saving
+        const body = iframeDoc.body;
+        if (body) {
+          body.removeAttribute('contenteditable');
+          body.style.removeProperty('outline');
+          body.style.removeProperty('cursor');
+        }
+        // Remove the injected editing styles
+        const editingStyles = iframeDoc.querySelectorAll('style');
+        editingStyles.forEach(style => {
+          if (style.textContent?.includes('contenteditable')) {
+            style.remove();
+          }
+        });
+
+        const newHTML = iframeDoc.documentElement.outerHTML || '';
+        setGeneratedContents(prev => {
+          const updated = [...prev];
+          updated[editablePreviewIndex] = {
+            ...updated[editablePreviewIndex],
+            content: '<!DOCTYPE html>\n' + newHTML,
+            editableText: extractTextFromHTML(newHTML),
+          };
+          return updated;
+        });
+      }
+      setEditablePreviewOpen(false);
+      setEditablePreviewIndex(null);
+    }
   };
 
   // Check if content is HTML - more robust detection
@@ -1751,6 +1823,16 @@ ${trimmed}
                               <Button
                                 size="small"
                                 variant="outlined"
+                                color="secondary"
+                                startIcon={<Icon>edit_document</Icon>}
+                                onClick={() => handleEditablePreview(index)}
+                                disabled={!isHTMLContent(gc.content)}
+                              >
+                                Edit in Preview
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
                                 startIcon={<Icon>print</Icon>}
                                 onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
                               >
@@ -2198,6 +2280,78 @@ ${trimmed}
           </Typography>
         </Alert>
       </Paper>
+
+      {/* Editable Preview Dialog */}
+      <Dialog
+        open={editablePreviewOpen}
+        onClose={() => setEditablePreviewOpen(false)}
+        fullScreen
+        PaperProps={{
+          sx: { bgcolor: 'grey.100' }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'primary.main', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Icon>edit_document</Icon>
+            <Typography variant="h6">
+              Edit Document in Preview
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={() => setEditablePreviewOpen(false)}
+            sx={{ color: 'white' }}
+          >
+            <Icon>close</Icon>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              Click directly on the document to edit text. Changes are made directly in the formatted preview.
+              Use the <strong>Save Changes</strong> button below to save your edits.
+            </Typography>
+          </Alert>
+          <Paper
+            variant="outlined"
+            sx={{
+              height: 'calc(100vh - 220px)',
+              overflow: 'hidden',
+              bgcolor: 'white',
+            }}
+          >
+            {editablePreviewIndex !== null && generatedContents[editablePreviewIndex] && (
+              <iframe
+                ref={editableIframeRef}
+                srcDoc={makeEditable(extractHTMLContent(generatedContents[editablePreviewIndex].content))}
+                title="Editable Preview"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  backgroundColor: 'white',
+                }}
+              />
+            )}
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: 'grey.50', borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button
+            variant="outlined"
+            startIcon={<Icon>close</Icon>}
+            onClick={() => setEditablePreviewOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Icon>save</Icon>}
+            onClick={handleSaveEditablePreview}
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
