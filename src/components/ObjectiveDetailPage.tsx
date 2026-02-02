@@ -50,6 +50,7 @@ import {
   updateGeneratedEvidence,
   loadGeneratedEvidences,
   deleteGeneratedEvidence,
+  loadEvidenceById,
   type GeneratedEvidence,
 } from '../services/objectiveStorage';
 import { getEvidenceDocuments } from '../services/evidencePackages';
@@ -219,6 +220,8 @@ export default function ObjectiveDetailPage() {
   }
   const [interpretationEvidenceItems, setInterpretationEvidenceItems] = useState<InterpretationEvidenceItem[]>([]);
   const [isGeneratingInterpretationEvidence, setIsGeneratingInterpretationEvidence] = useState(false);
+  // Track saved evidence item documents: item.id -> saved document ID
+  const [savedEvidenceItemDocuments, setSavedEvidenceItemDocuments] = useState<Record<string, string>>({});
 
   // State for registers section
   interface RegisterItem {
@@ -388,6 +391,73 @@ export default function ObjectiveDetailPage() {
                   selected: false
                 }));
                 setInterpretationEvidenceItems(items);
+
+                // Map saved documents to evidence items
+                const documentMap: Record<string, string> = {};
+                console.log('[Evidence Matching] Total saved documents:', result.data?.length);
+                console.log('[Evidence Matching] Current objective code:', objective.code);
+                console.log('[Evidence Matching] Evidence items to match:', items.length);
+
+                // Log all documents to debug matching
+                result.data?.forEach((doc, i) => {
+                  console.log(`  Document ${i + 1}: [${doc.objective_code}] ${doc.evidence_title?.substring(0, 60)} (${doc.evidence_type})`);
+                });
+
+                // Create a set to track which documents have been matched
+                const matchedDocIds = new Set<string>();
+
+                items.forEach((item, idx) => {
+                  console.log(`[Evidence Matching] Item ${idx + 1}:`, item.text.substring(0, 60));
+
+                  // 100% EXACT MATCHING - No fuzzy logic, only exact matches
+                  const matchedDoc = result.data?.find((ev) => {
+                    // FILTER 1: Must be a document type
+                    if (ev.evidence_type !== 'document') {
+                      return false;
+                    }
+
+                    // FILTER 2: Must match THIS exact objective code
+                    if (ev.objective_code !== objective.code) {
+                      return false;
+                    }
+
+                    // FILTER 3: Skip if already matched to another item (one-to-one mapping)
+                    if (matchedDocIds.has(ev.id)) {
+                      return false;
+                    }
+
+                    // FILTER 4: EXACT text match (case-insensitive, trimmed)
+                    // The evidence_title or prompt must EXACTLY match the evidence item text
+                    const itemText = item.text.trim();
+                    const docTitle = (ev.evidence_title || '').trim();
+                    const docPrompt = (ev.prompt || '').trim();
+
+                    // Check for exact match (case-insensitive)
+                    const exactMatch =
+                      itemText.toLowerCase() === docTitle.toLowerCase() ||
+                      itemText.toLowerCase() === docPrompt.toLowerCase();
+
+                    if (exactMatch) {
+                      console.log(`  ✓ EXACT MATCH found:`, docTitle.substring(0, 60));
+                      return true;
+                    }
+
+                    return false;
+                  });
+
+                  if (matchedDoc) {
+                    console.log(`  ✅ Matched document ID: ${matchedDoc.id}`);
+                    console.log(`     Objective: ${matchedDoc.objective_code}`);
+                    console.log(`     Title: ${matchedDoc.evidence_title?.substring(0, 80)}`);
+                    documentMap[item.id] = matchedDoc.id;
+                    matchedDocIds.add(matchedDoc.id); // Mark this document as matched
+                  } else {
+                    console.log(`  ❌ No exact match found for this item`);
+                  }
+                });
+
+                console.log('[Evidence Matching] Final document map:', documentMap);
+                setSavedEvidenceItemDocuments(documentMap);
               }
             } catch (parseError) {
               console.warn('Could not parse saved interpretation evidence items:', parseError);
@@ -1134,6 +1204,37 @@ Start directly with the numbered list, no introduction or explanation.`;
     // Show success message with instruction
     setSnackbarMessage(`Added ${selectedItems.length} evidence item(s) to the Evidence List below. Scroll down to see them, then click Save to store in database.`);
     setSnackbarOpen(true);
+  };
+
+
+  // View saved evidence item document
+  const handleViewSavedEvidenceItem = async (documentId: string) => {
+    try {
+      console.log('[View Evidence] Loading document ID:', documentId);
+      const result = await loadEvidenceById(documentId);
+      console.log('[View Evidence] Load result:', result.success, result.data?.evidence_title);
+
+      if (result.success && result.data && result.data.html_content) {
+        console.log('[View Evidence] Opening document:', result.data.evidence_title);
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(result.data.html_content);
+          newWindow.document.close();
+        } else {
+          console.error('[View Evidence] Failed to open new window (popup blocked?)');
+          setSnackbarMessage('Failed to open document. Please allow popups for this site.');
+          setSnackbarOpen(true);
+        }
+      } else {
+        console.error('[View Evidence] Error loading saved document:', result.error);
+        setSnackbarMessage(`Failed to load document: ${result.error || 'Unknown error'}`);
+        setSnackbarOpen(true);
+      }
+    } catch (error) {
+      console.error('[View Evidence] Exception loading saved document:', error);
+      setSnackbarMessage('Error loading document. Please try again.');
+      setSnackbarOpen(true);
+    }
   };
 
   // Print evidence items
@@ -3310,6 +3411,23 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                       <Typography variant="body2" sx={{ flex: 1 }}>
                         {toRomanNumeral(idx + 1)}. {item.text}
                       </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                        <Tooltip title={savedEvidenceItemDocuments[item.id] ? "View generated document" : "Document not yet generated"}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color={savedEvidenceItemDocuments[item.id] ? "primary" : "default"}
+                              onClick={() => savedEvidenceItemDocuments[item.id] && handleViewSavedEvidenceItem(savedEvidenceItemDocuments[item.id])}
+                              disabled={!savedEvidenceItemDocuments[item.id]}
+                              sx={{
+                                opacity: savedEvidenceItemDocuments[item.id] ? 1 : 0.3,
+                              }}
+                            >
+                              <Icon>visibility</Icon>
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Box>
                     </Box>
                   ))}
                 </Box>
@@ -3328,7 +3446,8 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                     startIcon={<Icon>auto_awesome</Icon>}
                     onClick={() => {
                       const selectedItems = interpretationEvidenceItems.filter(item => item.selected);
-                      setSelectedEvidenceForCreation(selectedItems);
+                      // Pass both the evidence items AND the objective code
+                      setSelectedEvidenceForCreation(selectedItems, objective.code);
                       navigate('/ai-generator');
                     }}
                     disabled={!interpretationEvidenceItems.some(item => item.selected)}

@@ -42,6 +42,7 @@ import {
   type ColorScheme,
 } from '../services/infographicGenerator';
 import { getRelevantData } from '../services/hopeHospitalDatabase';
+import { saveGeneratedEvidence, loadEvidenceById } from '../services/objectiveStorage';
 
 // Expandable TextField styles
 const expandableTextFieldSx = {
@@ -477,7 +478,7 @@ async function callClaudeText(apiKey: string, prompt: string, userMessage: strin
 }
 
 export default function AIEvidenceGenerator() {
-  const { chapters, selectedHospital, selectedEvidenceForCreation, clearSelectedEvidenceForCreation } = useNABHStore();
+  const { chapters, selectedHospital, selectedEvidenceForCreation, selectedEvidenceObjectiveCode, clearSelectedEvidenceForCreation } = useNABHStore();
   const currentHospital = getHospitalInfo(selectedHospital);
   
   const [activeTab, setActiveTab] = useState(0);
@@ -539,6 +540,12 @@ export default function AIEvidenceGenerator() {
   // Document view mode state (for each document: 0 = HTML preview, 1 = Edit text)
   const [documentViewModes, setDocumentViewModes] = useState<Record<number, number>>({});
 
+  // Save document state
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveMessage, setSaveMessage] = useState('');
+  // Track saved documents: index -> saved document ID
+  const [savedDocuments, setSavedDocuments] = useState<Record<number, string>>({});
+
   // Auto-populate from store if navigated from ObjectiveDetailPage
   useEffect(() => {
     if (selectedEvidenceForCreation && selectedEvidenceForCreation.length > 0) {
@@ -549,9 +556,28 @@ export default function AIEvidenceGenerator() {
       }));
       setEvidenceItems(items);
       setActiveStep(1); // Skip to Step 2 (Select Evidences)
+
+      // CRITICAL: Auto-select the objective based on the stored objective code
+      if (selectedEvidenceObjectiveCode) {
+        // Find the objective ID from the code
+        let foundObjectiveId: string | null = null;
+        for (const chapter of chapters) {
+          const matchingObjective = chapter.objectives.find(obj => obj.code === selectedEvidenceObjectiveCode);
+          if (matchingObjective) {
+            foundObjectiveId = matchingObjective.id;
+            setSelectedChapter(chapter.id);
+            break;
+          }
+        }
+        if (foundObjectiveId) {
+          setSelectedObjective(foundObjectiveId);
+          console.log('[AI Generator] Auto-selected objective:', selectedEvidenceObjectiveCode);
+        }
+      }
+
       clearSelectedEvidenceForCreation(); // Clear after use
     }
-  }, [selectedEvidenceForCreation, clearSelectedEvidenceForCreation]);
+  }, [selectedEvidenceForCreation, selectedEvidenceObjectiveCode, clearSelectedEvidenceForCreation, chapters]);
 
   const selectedChapterData = chapters.find(c => c.id === selectedChapter);
   const objectives = selectedChapterData?.objectives || [];
@@ -1032,6 +1058,88 @@ ${trimmed}
         `);
       }
       previewWindow.document.close();
+    }
+  };
+
+  // Save document to database
+  const handleSaveDocument = async (content: string, evidenceTitle: string, evidencePrompt: string, documentIndex: number) => {
+    try {
+      setSaveStatus('saving');
+      setSaveMessage('Saving document...');
+
+      // Get selected objective code
+      const selectedObj = objectives.find(obj => obj.id === selectedObjective);
+      const objectiveCode = selectedObj?.code || 'GENERAL';
+
+      // Extract HTML and text content
+      const htmlContent = isHTMLContent(content) ? extractHTMLContent(content) : content;
+      const textContent = extractTextFromHTML(htmlContent);
+
+      // Save to database
+      const result = await saveGeneratedEvidence({
+        objective_code: objectiveCode,
+        evidence_title: evidenceTitle,
+        prompt: evidencePrompt,
+        generated_content: textContent,
+        html_content: htmlContent,
+        evidence_type: 'document',
+        hospital_config: {
+          name: hospitalConfig.name,
+          address: hospitalConfig.address,
+          phone: hospitalConfig.phone,
+          email: hospitalConfig.email,
+          website: hospitalConfig.website,
+          qualityCoordinator: hospitalConfig.qualityCoordinator,
+          qualityCoordinatorDesignation: hospitalConfig.qualityCoordinatorDesignation,
+        },
+      });
+
+      if (result.success && result.id) {
+        // Store the saved document ID
+        setSavedDocuments(prev => ({ ...prev, [documentIndex]: result.id! }));
+
+        setSaveStatus('success');
+        setSaveMessage('Document saved successfully!');
+
+        // Reset status after 3 seconds
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveMessage('');
+        }, 3000);
+      } else {
+        throw new Error(result.error || 'Failed to save document');
+      }
+    } catch (error) {
+      console.error('Error saving document:', error);
+      setSaveStatus('error');
+      setSaveMessage(error instanceof Error ? error.message : 'Failed to save document');
+
+      // Reset status after 5 seconds
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setSaveMessage('');
+      }, 5000);
+    }
+  };
+
+  // View saved document in new tab
+  const handleViewSavedDocument = async (documentId: string) => {
+    try {
+      // Load the saved document from database by ID
+      const result = await loadEvidenceById(documentId);
+
+      if (result.success && result.data && result.data.html_content) {
+        // Open in new tab
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(result.data.html_content);
+          newWindow.document.close();
+        }
+      } else {
+        console.error('Error loading saved document:', result.error);
+      }
+    } catch (error) {
+      console.error('Error loading saved document:', error);
     }
   };
 
@@ -1522,6 +1630,18 @@ ${trimmed}
                       </Typography>
                     </Alert>
 
+                    {saveStatus === 'success' && (
+                      <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSaveStatus('idle')}>
+                        <Typography variant="body2">{saveMessage}</Typography>
+                      </Alert>
+                    )}
+
+                    {saveStatus === 'error' && (
+                      <Alert severity="error" sx={{ mb: 2 }} onClose={() => setSaveStatus('idle')}>
+                        <Typography variant="body2">{saveMessage}</Typography>
+                      </Alert>
+                    )}
+
                     {generatedContents.map((gc, index) => (
                       <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 2 }}>
                         <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
@@ -1570,6 +1690,40 @@ ${trimmed}
                               >
                                 Print
                               </Button>
+                              {savedDocuments[index] ? (
+                                <>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    startIcon={<Icon>check_circle</Icon>}
+                                    disabled
+                                  >
+                                    Saved
+                                  </Button>
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    onClick={() => handleViewSavedDocument(savedDocuments[index])}
+                                    sx={{ ml: -0.5 }}
+                                  >
+                                    <Tooltip title="View saved document">
+                                      <Icon>visibility</Icon>
+                                    </Tooltip>
+                                  </IconButton>
+                                </>
+                              ) : (
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="success"
+                                  startIcon={saveStatus === 'saving' ? <CircularProgress size={16} color="inherit" /> : <Icon>save</Icon>}
+                                  onClick={() => handleSaveDocument(gc.content, gc.evidenceItem, gc.evidenceItem, index)}
+                                  disabled={saveStatus === 'saving'}
+                                >
+                                  {saveStatus === 'saving' ? 'Saving...' : 'Save Document'}
+                                </Button>
+                              )}
                               <Button
                                 size="small"
                                 variant="contained"

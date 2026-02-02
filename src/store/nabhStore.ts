@@ -59,6 +59,7 @@ interface NABHStore {
   selectedHospital: string; // New state for selected hospital
   isLoadingFromSupabase: boolean;
   selectedEvidenceForCreation: { id: string; text: string; selected: boolean }[];
+  selectedEvidenceObjectiveCode: string | null; // Store the objective code for evidence items
 
   setSelectedChapter: (chapterId: string | null) => void;
   setSelectedObjective: (objectiveId: string | null) => void;
@@ -68,7 +69,7 @@ interface NABHStore {
   setFilterCategory: (category: ElementCategory | 'all') => void;
   setShowCoreOnly: (show: boolean) => void;
   setSelectedHospital: (hospitalId: string) => void; // New action
-  setSelectedEvidenceForCreation: (items: { id: string; text: string; selected: boolean }[]) => void;
+  setSelectedEvidenceForCreation: (items: { id: string; text: string; selected: boolean }[], objectiveCode?: string) => void;
   clearSelectedEvidenceForCreation: () => void;
   updateObjective: (chapterId: string, objectiveId: string, updates: Partial<ObjectiveElement>) => void;
   getFilteredObjectives: (chapterId: string) => ObjectiveElement[];
@@ -91,6 +92,7 @@ export const useNABHStore = create<NABHStore>()(
       selectedHospital: 'hope', // Default hospital
       isLoadingFromSupabase: false,
       selectedEvidenceForCreation: [],
+      selectedEvidenceObjectiveCode: null,
 
       setSelectedChapter: (chapterId) => set({ selectedChapter: chapterId, selectedObjective: null }),
       setSelectedObjective: (objectiveId) => set({ selectedObjective: objectiveId }),
@@ -100,8 +102,14 @@ export const useNABHStore = create<NABHStore>()(
       setFilterCategory: (category) => set({ filterCategory: category }),
       setShowCoreOnly: (show) => set({ showCoreOnly: show }),
       setSelectedHospital: (hospitalId) => set({ selectedHospital: hospitalId }), // New action implementation
-      setSelectedEvidenceForCreation: (items) => set({ selectedEvidenceForCreation: items }),
-      clearSelectedEvidenceForCreation: () => set({ selectedEvidenceForCreation: [] }),
+      setSelectedEvidenceForCreation: (items, objectiveCode) => set({
+        selectedEvidenceForCreation: items,
+        selectedEvidenceObjectiveCode: objectiveCode || null
+      }),
+      clearSelectedEvidenceForCreation: () => set({
+        selectedEvidenceForCreation: [],
+        selectedEvidenceObjectiveCode: null
+      }),
 
       updateObjective: (chapterId, objectiveId, updates) =>
         set((state) => ({
@@ -372,6 +380,7 @@ export const useNABHStore = create<NABHStore>()(
           selectedHospital: 'hope',
           isLoadingFromSupabase: false,
           selectedEvidenceForCreation: [],
+          selectedEvidenceObjectiveCode: null,
         };
       },
     }
