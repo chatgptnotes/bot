@@ -3077,7 +3077,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
           <Box>
             <TextField
               fullWidth
-              label="Interpretation"
+              label="Interpretation by 3rd Edition NABH Book"
               value={objective.interpretations2 ?? objective.interpretation ?? ''}
               onChange={(e) => handleInterpretationChange(e.target.value)}
               multiline
@@ -3121,7 +3121,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 color="secondary"
                 size="small"
                 startIcon={isGeneratingInterpretationEvidence ? <CircularProgress size={16} color="inherit" /> : <Icon>auto_awesome</Icon>}
-                disabled={isGeneratingInterpretationEvidence || !(objective.interpretations2 ?? objective.interpretation)}
+                disabled={isGeneratingInterpretationEvidence || !(objective.interpretations2 ?? objective.interpretation)?.trim()}
                 onClick={handleGenerateEvidenceFromInterpretation}
               >
                 {isGeneratingInterpretationEvidence ? 'Generating...' : 'Generate 8 Evidence Items'}

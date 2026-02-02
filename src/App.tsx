@@ -339,6 +339,7 @@ function AppContent() {
           flexDirection: 'column',
           width: showSidebar ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
           transition: 'all 0.3s ease-in-out',
+          overflow: 'auto',
         }}
       >
         <Toolbar />
