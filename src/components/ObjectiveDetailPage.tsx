@@ -3254,16 +3254,6 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 </Box>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                   <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    startIcon={<Icon>add</Icon>}
-                    onClick={handleAddSelectedInterpretationEvidence}
-                    disabled={!interpretationEvidenceItems.some(item => item.selected && item.id !== 'error')}
-                  >
-                    Add Selected to Evidence List
-                  </Button>
-                  <Button
                     variant="outlined"
                     size="small"
                     onClick={() => setInterpretationEvidenceItems([])}
@@ -3670,19 +3660,6 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             sx={expandableTextFieldSx}
           />
 
-          {/* Evidence List - Where the 8 generated items are added */}
-          <TextField
-            fullWidth
-            label="Evidence List (Generated Items)"
-            value={objective.evidencesList}
-            onChange={(e) => handleFieldChange('evidencesList', e.target.value)}
-            multiline
-            minRows={4}
-            size="small"
-            placeholder="Generated evidence items will appear here. Use the 'Add Selected to Evidence List' button above to add them..."
-            sx={expandableTextFieldSx}
-            helperText="Evidence items added from the 8 generated items above will appear here"
-          />
 
           {/* File Upload */}
           <Box>
