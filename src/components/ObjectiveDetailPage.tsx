@@ -142,13 +142,6 @@ export default function ObjectiveDetailPage() {
   const [lastSavedInterpretation, setLastSavedInterpretation] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Initialize lastSavedInterpretation when objective loads
-  useEffect(() => {
-    const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
-    setLastSavedInterpretation(currentText);
-    setHasUnsavedChanges(false);
-  }, [objective?.code]); // Re-initialize when switching objectives
-
   // State for Evidence Generation Modal
   const [showEvidenceGenerationModal, setShowEvidenceGenerationModal] = useState(false);
   const [currentEvidenceToGenerate, setCurrentEvidenceToGenerate] = useState<{ id: string; text: string; selected: boolean; isAuditorPriority: boolean } | null>(null);
@@ -314,6 +307,12 @@ export default function ObjectiveDetailPage() {
         console.warn('Could not load from Supabase:', error);
       } finally {
         setIsLoadingFromDb(false);
+        // Initialize lastSavedInterpretation after loading
+        if (objective) {
+          const currentText = objective.interpretations2 ?? objective.interpretation ?? '';
+          setLastSavedInterpretation(currentText);
+          setHasUnsavedChanges(false);
+        }
       }
     };
 
