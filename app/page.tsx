@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import DashboardHeader from './components/DashboardHeader';
+import RealTimeStatusBar from './components/RealTimeStatusBar';
+import EnhancedMissionCards from './components/EnhancedMissionCards';
+import SmartNotificationPanel from './components/SmartNotificationPanel';
 import DailySchedule from './components/DailySchedule';
 import TaskList from './components/TaskList';
 import CronJobs from './components/CronJobs';
@@ -58,20 +61,34 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         <DashboardHeader />
 
+        {/* Real-Time Status Bar */}
+        <RealTimeStatusBar />
+
+        {/* Action Bar with Refresh and Notifications */}
         <div className="flex items-center justify-between mb-6">
           <div className="text-sm text-gray-600">
             Last updated: {data ? new Date(data.lastUpdated).toLocaleString() : 'Never'}
           </div>
-          <button
-            onClick={fetchData}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={fetchData}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <SmartNotificationPanel />
+          </div>
         </div>
 
+        {/* Enhanced Mission Cards */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Mission Control Center</h2>
+          <EnhancedMissionCards />
+        </div>
+
+        {/* Original Dashboard Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <DailySchedule schedule={data?.schedule || []} />
           <TaskList tasks={data?.tasks || []} />
@@ -87,12 +104,15 @@ export default function Dashboard() {
         </div>
 
         <footer className="text-center text-sm text-gray-500 py-6 border-t">
-          <p>ClawdBot Dashboard v1.0 | Built for Dr. Murali BK | 2026-02-02</p>
+          <p>ClawdBot Dashboard v1.1 | Enhanced with NABH Mission Tracking | Built for Dr. Murali BK | 2026-02-02</p>
           <p className="mt-1">
             Repository:{' '}
-            <a href="#" className="text-blue-600 hover:underline">
-              github.com/[your-username]/bot
+            <a href="https://github.com/chatgptnotes/bot" className="text-blue-600 hover:underline">
+              github.com/chatgptnotes/bot
             </a>
+          </p>
+          <p className="mt-2 text-xs text-gray-400">
+            🎯 NABH Audit: Feb 13-14, 2026 | 🏥 Occupancy Goal: 75 beds | 💻 Revenue Target: ₹30L/month | 💰 ESIC: ₹1 Crore
           </p>
         </footer>
       </div>
