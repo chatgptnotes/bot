@@ -90,9 +90,10 @@ Use this HTML template structure:
   <style>
     html { height: 100%; overflow-y: auto; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
-    .logo-area { width: 120px; height: 120px; margin: 0 auto 10px; border: 2px solid #1565C0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; font-size: 14px; font-weight: bold; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 2px 20px 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 2px; margin-bottom: 5px; }
+    .logo-area { width: 228px; height: 46px; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .logo-area img { width: 110%; height: auto; object-fit: cover; object-position: center 70%; }
     .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; margin: 10px 0 5px; }
     .hospital-address { font-size: 11px; color: #666; }
     .doc-title { background: #1565C0; color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
@@ -121,9 +122,7 @@ Use this HTML template structure:
 </head>
 <body>
   <div class="header">
-    <div class="logo-area">HOSPITAL<br>LOGO</div>
-    <div class="hospital-name">${config.name}</div>
-    <div class="hospital-address">${config.address}</div>
+    <div class="logo-area"><img src="https://www.nabh.online/assets/hope-hospital-logo.png" alt="${config.name} Logo" /></div>
   </div>
 
   <div class="doc-title">[DOCUMENT TITLE]</div>
@@ -321,9 +320,10 @@ function updateHTMLWithText(_originalHTML: string, editedText: string, hospitalC
   <style>
     html { height: 100%; overflow-y: auto; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 15px; margin-bottom: 20px; }
-    .logo-area { width: 120px; height: 120px; margin: 0 auto 10px; border: 2px solid #1565C0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1565C0, #0D47A1); color: white; font-size: 14px; font-weight: bold; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; line-height: 1.6; color: #333; padding: 2px 20px 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 3px solid #1565C0; padding-bottom: 2px; margin-bottom: 5px; }
+    .logo-area { width: 228px; height: 46px; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .logo-area img { width: 110%; height: auto; object-fit: cover; object-position: center 70%; }
     .hospital-name { font-size: 24px; font-weight: bold; color: #1565C0; margin: 10px 0 5px; }
     .hospital-address { font-size: 11px; color: #666; }
     .doc-title { background: #1565C0; color: white; padding: 12px; font-size: 16px; font-weight: bold; text-align: center; margin: 20px 0; border-radius: 5px; }
