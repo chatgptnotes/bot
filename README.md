@@ -1,6 +1,6 @@
-# ClawdBot Dashboard
+# OpenClaw Dashboard
 
-Task management dashboard for Dr. Murali BK's ClawdBot assistant.
+Task management dashboard for Dr. Murali BK's OpenClaw AI assistant.
 
 ## Features
 

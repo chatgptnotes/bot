@@ -104,7 +104,7 @@ export default function Dashboard() {
         </div>
 
         <footer className="text-center text-sm text-gray-500 py-6 border-t">
-          <p>ClawdBot Dashboard v1.1 | Enhanced with NABH Mission Tracking | Built for Dr. Murali BK | 2026-02-02</p>
+          <p>OpenClaw Dashboard v1.1 | Enhanced with NABH Mission Tracking | Built for Dr. Murali BK | 2026-02-02</p>
           <p className="mt-1">
             Repository:{' '}
             <a href="https://github.com/chatgptnotes/bot" className="text-blue-600 hover:underline">

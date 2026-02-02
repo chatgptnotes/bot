@@ -1,7 +1,7 @@
 {
-  "name": "clawdbot-dashboard",
-  "version": "1.0.0",
-  "description": "ClawdBot Task Management Dashboard for Dr. Murali BK",
+  "name": "openclaw-dashboard",
+  "version": "1.1.0",
+  "description": "OpenClaw Task Management Dashboard for Dr. Murali BK",
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",

@@ -21,9 +21,9 @@ export default function DashboardHeader() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Activity className="w-8 h-8" />
-            <h1 className="text-3xl font-bold">ClawdBot Dashboard</h1>
+            <h1 className="text-3xl font-bold">OpenClaw Dashboard</h1>
           </div>
-          <p className="text-blue-100">Dr. Murali BK - Task Management System</p>
+          <p className="text-blue-100">Dr. Murali BK - AI-Powered Task Management</p>
         </div>
         <div className="text-right">
           <div className="text-4xl font-bold">{currentTime}</div>
