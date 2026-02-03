@@ -108,6 +108,25 @@ export default function LandingPage() {
             bottom: 0,
             background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
             opacity: 0.5,
+            animation: 'backgroundMove 20s linear infinite',
+            '@keyframes backgroundMove': {
+              '0%': { backgroundPosition: '0 0' },
+              '100%': { backgroundPosition: '60px 60px' },
+            },
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: '-50%',
+            right: '-10%',
+            width: '40%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
+            animation: 'rotate 30s linear infinite',
+            '@keyframes rotate': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' },
+            },
           },
         }}
       >
@@ -213,47 +232,160 @@ export default function LandingPage() {
                 sx={{
                   display: 'flex',
                   justifyContent: 'center',
-                  animation: 'slideInRight 0.8s ease-out',
-                  '@keyframes slideInRight': {
-                    from: { opacity: 0, transform: 'translateX(50px)' },
-                    to: { opacity: 1, transform: 'translateX(0)' },
+                  position: 'relative',
+                  animation: 'float 6s ease-in-out infinite',
+                  '@keyframes float': {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-20px)' },
                   },
                 }}
               >
+                {/* Decorative circles */}
                 <Box
                   sx={{
-                    bgcolor: 'white',
-                    borderRadius: 4,
-                    p: 4,
-                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-                    textAlign: 'center',
-                    minWidth: 280,
+                    position: 'absolute',
+                    top: '10%',
+                    right: '10%',
+                    width: 100,
+                    height: 100,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))',
+                    animation: 'pulse 4s ease-in-out infinite',
+                    '@keyframes pulse': {
+                      '0%, 100%': { transform: 'scale(1)', opacity: 0.5 },
+                      '50%': { transform: 'scale(1.1)', opacity: 0.8 },
+                    },
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: '5%',
+                    left: '5%',
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))',
+                    animation: 'pulse 3s ease-in-out infinite 1s',
+                  }}
+                />
+                {/* Main feature showcase */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    zIndex: 1,
                   }}
                 >
-                  <img
-                    src={logoUrl}
-                    alt={hospitalConfig.name}
-                    style={{ height: 120, objectFit: 'contain', marginBottom: 8 }}
-                  />
-                  <Typography variant="h6" color="text.primary" fontWeight={700}>
-                    {hospitalConfig.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {hospitalConfig.address}
-                  </Typography>
-                  <Box
-                    sx={{
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      borderRadius: 2,
-                      p: 2,
-                    }}
-                  >
-                    <Typography variant="h3" fontWeight={700}>
-                      {progressPercentage}%
-                    </Typography>
-                    <Typography variant="body2">Accreditation Progress</Typography>
-                  </Box>
+                  <Grid container spacing={2} sx={{ maxWidth: 400 }}>
+                    {/* Feature cards */}
+                    <Grid size={{ xs: 6 }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(255,255,255,0.95)',
+                          borderRadius: 3,
+                          p: 2.5,
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                          },
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 40, color: '#1565C0', mb: 1 }}>checklist</Icon>
+                        <Typography variant="h6" fontWeight={700} color="text.primary">
+                          408
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Objective Elements
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(255,255,255,0.95)',
+                          borderRadius: 3,
+                          p: 2.5,
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          transition: 'all 0.3s ease',
+                          animation: 'slideInRight 0.8s ease-out 0.2s both',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                          },
+                          '@keyframes slideInRight': {
+                            from: { opacity: 0, transform: 'translateX(50px)' },
+                            to: { opacity: 1, transform: 'translateX(0)' },
+                          },
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 40, color: '#D32F2F', mb: 1 }}>verified</Icon>
+                        <Typography variant="h6" fontWeight={700} color="text.primary">
+                          AI-Powered
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Evidence Generation
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(255,255,255,0.95)',
+                          borderRadius: 3,
+                          p: 2.5,
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          transition: 'all 0.3s ease',
+                          animation: 'slideInRight 0.8s ease-out 0.4s both',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                          },
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 40, color: '#2E7D32', mb: 1 }}>analytics</Icon>
+                        <Typography variant="h6" fontWeight={700} color="text.primary">
+                          Real-time
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Progress Tracking
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(255,255,255,0.95)',
+                          borderRadius: 3,
+                          p: 2.5,
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          transition: 'all 0.3s ease',
+                          animation: 'slideInRight 0.8s ease-out 0.6s both',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                          },
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 40, color: '#ED6C02', mb: 1 }}>description</Icon>
+                        <Typography variant="h6" fontWeight={700} color="text.primary">
+                          Professional
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Documentation
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
                 </Box>
               </Box>
             </Grid>
@@ -317,15 +449,37 @@ export default function LandingPage() {
                   sx={{
                     height: '100%',
                     cursor: 'pointer',
+                    position: 'relative',
+                    overflow: 'hidden',
                     animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: `linear-gradient(135deg, ${alpha(feature.color, 0)} 0%, ${alpha(feature.color, 0.05)} 100%)`,
+                      opacity: 0,
+                      transition: 'opacity 0.4s ease',
+                    },
                     '&:hover': {
-                      transform: 'translateY(-8px)',
+                      transform: 'translateY(-12px) scale(1.02)',
+                      boxShadow: `0 20px 40px ${alpha(feature.color, 0.2)}`,
+                      '&::before': {
+                        opacity: 1,
+                      },
+                      '& .feature-icon': {
+                        transform: 'rotate(10deg) scale(1.1)',
+                      },
                     },
                   }}
                   onClick={handleGetStarted}
                 >
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box
+                      className="feature-icon"
                       sx={{
                         width: 56,
                         height: 56,
@@ -335,6 +489,7 @@ export default function LandingPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         mb: 2,
+                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       <Icon sx={{ fontSize: 28, color: feature.color }}>{feature.icon}</Icon>
@@ -420,51 +575,96 @@ export default function LandingPage() {
           background: 'linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%)',
           color: 'white',
           textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: '-50%',
+            left: '-50%',
+            width: '200%',
+            height: '200%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px',
+            animation: 'backgroundSlide 20s linear infinite',
+            '@keyframes backgroundSlide': {
+              '0%': { transform: 'translate(0, 0)' },
+              '100%': { transform: 'translate(50px, 50px)' },
+            },
+          },
         }}
       >
-        <Container maxWidth="md">
-          <Typography variant="h3" fontWeight={700} gutterBottom>
-            Ready to Start?
-          </Typography>
-          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-            Begin your NABH accreditation journey with our comprehensive evidence management system
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleGetStarted}
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box
+            sx={{
+              animation: 'fadeInScale 0.8s ease-out',
+              '@keyframes fadeInScale': {
+                from: { opacity: 0, transform: 'scale(0.95)' },
+                to: { opacity: 1, transform: 'scale(1)' },
+              },
+            }}
+          >
+            <Typography
+              variant="h3"
+              fontWeight={700}
+              gutterBottom
               sx={{
-                bgcolor: 'white',
-                color: 'secondary.main',
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                },
+                textShadow: '0 2px 10px rgba(0,0,0,0.2)',
               }}
-              startIcon={<Icon>rocket_launch</Icon>}
             >
-              Start Now
-            </Button>
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={handleGenerator}
-              sx={{
-                borderColor: 'white',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.1)',
+              Ready to Start?
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 4, opacity: 0.95 }}>
+              Begin your NABH accreditation journey with our comprehensive evidence management system
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleGetStarted}
+                sx={{
+                  bgcolor: 'white',
+                  color: 'secondary.main',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.95)',
+                    transform: 'translateY(-3px) scale(1.05)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+                  },
+                }}
+                startIcon={<Icon>rocket_launch</Icon>}
+              >
+                Start Now
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={handleGenerator}
+                sx={{
                   borderColor: 'white',
-                },
-              }}
-              startIcon={<Icon>description</Icon>}
-            >
-              Quality Documentation Assistant
-            </Button>
+                  borderWidth: 2,
+                  color: 'white',
+                  px: 4,
+                  py: 1.5,
+                  fontWeight: 600,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.15)',
+                    borderColor: 'white',
+                    borderWidth: 2,
+                    transform: 'translateY(-3px) scale(1.05)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+                  },
+                }}
+                startIcon={<Icon>description</Icon>}
+              >
+                Quality Documentation Assistant
+              </Button>
+            </Box>
           </Box>
         </Container>
       </Box>
