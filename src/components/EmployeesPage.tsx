@@ -23,6 +23,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Chip from '@mui/material/Chip';
 import { supabase } from '../lib/supabase';
+import { staffMaster, syncStaffToDatabase } from '../data/staffMaster';
 
 interface Employee {
   id: string;
@@ -95,7 +96,20 @@ export default function EmployeesPage() {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      setEmployees(data || []);
+      
+      const dbEmployees = (data || []) as Employee[];
+      const dbNames = new Set(dbEmployees.map(e => e.name));
+      
+      // Merge with master staff list if not in DB
+      const localStaff = staffMaster
+        .filter(s => !dbNames.has(s.name))
+        .map((s, i) => ({
+          ...s,
+          id: `local_${i}`,
+          created_at: new Date().toISOString()
+        }));
+
+      setEmployees([...dbEmployees, ...localStaff]);
     } catch (error) {
       console.error('Error loading employees:', error);
       setSnackbar({
@@ -235,6 +249,17 @@ export default function EmployeesPage() {
             Manage hospital staff for NABH documentation
           </Typography>
         </Box>
+        <Button
+          variant="outlined"
+          startIcon={<Icon>sync</Icon>}
+          sx={{ mr: 1 }}
+          onClick={async () => {
+            await syncStaffToDatabase();
+            loadEmployees();
+          }}
+        >
+          Sync All Staff
+        </Button>
         <Button
           variant="contained"
           startIcon={<Icon>add</Icon>}

@@ -22,21 +22,25 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { visitingConsultantsMaster, syncConsultantsToDatabase } from '../data/visitingConsultantsMaster';
-import type { VisitingConsultant } from '../data/visitingConsultantsMaster';
+import { doctorsMaster, syncDoctorsToDatabase } from '../data/doctorsMaster';
+import type { Doctor } from '../data/doctorsMaster';
 
-export default function VisitingConsultantsPage() {
-  const [consultants, setConsultants] = useState<VisitingConsultant[]>([]);
-  const [filteredConsultants, setFilteredConsultants] = useState<VisitingConsultant[]>([]);
+export default function DoctorsPage() {
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingConsultant, setEditingConsultant] = useState<VisitingConsultant | null>(null);
-  const [formData, setFormData] = useState<VisitingConsultant>({
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [formData, setFormData] = useState<Doctor>({
     name: '',
-    specialization: '',
-    registrationNumber: ''
+    qualification: '',
+    specialization: 'Resident Medical Officer',
+    registrationNumber: '',
+    department: 'Ward',
+    role: 'RMO',
+    is_active: true
   });
   
   const [snackbar, setSnackbar] = useState({
@@ -48,89 +52,98 @@ export default function VisitingConsultantsPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
-    loadConsultants();
+    loadDoctors();
   }, []);
 
   useEffect(() => {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      setFilteredConsultants(
-        consultants.filter(
-          (c) =>
-            c.name.toLowerCase().includes(query) ||
-            c.specialization.toLowerCase().includes(query) ||
-            c.registrationNumber.toLowerCase().includes(query)
+      setFilteredDoctors(
+        doctors.filter(
+          (d) =>
+            d.name.toLowerCase().includes(query) ||
+            d.qualification.toLowerCase().includes(query) ||
+            d.registrationNumber.toLowerCase().includes(query) ||
+            d.department.toLowerCase().includes(query)
         )
       );
     } else {
-      setFilteredConsultants(consultants);
+      setFilteredDoctors(doctors);
     }
     setPage(0);
-  }, [consultants, searchQuery]);
+  }, [doctors, searchQuery]);
 
-  const loadConsultants = async () => {
+  const loadDoctors = async () => {
     setIsLoading(true);
     try {
-      setConsultants(visitingConsultantsMaster);
+      setDoctors(doctorsMaster);
     } catch (error) {
-      console.error('Error loading consultants:', error);
+      console.error('Error loading doctors:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOpenDialog = (consultant?: VisitingConsultant) => {
-    if (consultant) {
-      setEditingConsultant(consultant);
-      setFormData({ ...consultant });
+  const handleOpenDialog = (doctor?: Doctor) => {
+    if (doctor) {
+      setEditingDoctor(doctor);
+      setFormData({ ...doctor });
     } else {
-      setEditingConsultant(null);
-      setFormData({ name: '', specialization: '', registrationNumber: '' });
+      setEditingDoctor(null);
+      setFormData({
+        name: '',
+        qualification: '',
+        specialization: 'Resident Medical Officer',
+        registrationNumber: '',
+        department: 'Ward',
+        role: 'RMO',
+        is_active: true
+      });
     }
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
-    setEditingConsultant(null);
+    setEditingDoctor(null);
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.specialization) {
-      setSnackbar({ open: true, message: 'Name and Specialization are required', severity: 'error' });
+    if (!formData.name || !formData.qualification) {
+      setSnackbar({ open: true, message: 'Name and Qualification are required', severity: 'error' });
       return;
     }
 
-    if (editingConsultant) {
-      setConsultants(consultants.map(c => c.name === editingConsultant.name ? formData : c));
-      setSnackbar({ open: true, message: 'Consultant updated locally', severity: 'success' });
+    if (editingDoctor) {
+      setDoctors(doctors.map(d => d.name === editingDoctor.name ? formData : d));
+      setSnackbar({ open: true, message: 'Doctor updated locally', severity: 'success' });
     } else {
-      setConsultants([formData, ...consultants]);
-      setSnackbar({ open: true, message: 'Consultant added locally', severity: 'success' });
+      setDoctors([formData, ...doctors]);
+      setSnackbar({ open: true, message: 'Doctor added locally', severity: 'success' });
     }
     handleCloseDialog();
   };
 
   const handleDelete = (name: string) => {
-    if (confirm(`Are you sure you want to delete ${name}?`)) {
-      setConsultants(consultants.filter(c => c.name !== name));
-      setSnackbar({ open: true, message: 'Consultant removed locally', severity: 'success' });
+    if (confirm(`Are you sure you want to delete Dr. ${name}?`)) {
+      setDoctors(doctors.filter(d => d.name !== name));
+      setSnackbar({ open: true, message: 'Doctor removed locally', severity: 'success' });
     }
   };
 
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await syncConsultantsToDatabase();
+      await syncDoctorsToDatabase();
       setSnackbar({
         open: true,
-        message: 'Consultants synced to database successfully',
+        message: 'Doctors synced to database successfully',
         severity: 'success',
       });
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to sync consultants',
+        message: 'Failed to sync doctors',
         severity: 'error',
       });
     } finally {
@@ -144,11 +157,11 @@ export default function VisitingConsultantsPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Icon color="primary">medical_information</Icon>
-            Visiting Consultants
+            <Icon color="primary">medication_liquid</Icon>
+            Resident Doctors (RMO)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Master list of visiting doctors and their registrations
+            Master list of full-time hospital doctors and RMOs
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -165,7 +178,7 @@ export default function VisitingConsultantsPage() {
             startIcon={<Icon>add</Icon>}
             onClick={() => handleOpenDialog()}
           >
-            Add Consultant
+            Add Doctor
           </Button>
         </Box>
       </Box>
@@ -174,7 +187,7 @@ export default function VisitingConsultantsPage() {
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search by name, specialization, or registration number..."
+          placeholder="Search by name, qualification, or registration..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -195,45 +208,51 @@ export default function VisitingConsultantsPage() {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>Doctor Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Specialization</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Registration Number</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Qualification</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Reg. Number</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : filteredConsultants.length === 0 ? (
+              ) : filteredDoctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">No consultants found</Typography>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <Typography color="text.secondary">No doctors found</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredConsultants
+                filteredDoctors
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((consultant, index) => (
+                  .map((doc, index) => (
                   <TableRow key={index} hover>
                     <TableCell>
-                      <Typography fontWeight={500}>{consultant.name}</Typography>
+                      <Typography fontWeight={500}>{doc.name}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={consultant.specialization} size="small" variant="outlined" color="primary" />
+                      <Chip label={doc.qualification} size="small" variant="outlined" />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {consultant.registrationNumber}
+                        {doc.registrationNumber}
                       </Typography>
                     </TableCell>
+                    <TableCell>{doc.department}</TableCell>
+                    <TableCell>
+                      <Chip label={doc.role} size="small" color="primary" />
+                    </TableCell>
                     <TableCell align="center">
-                      <IconButton size="small" color="primary" onClick={() => handleOpenDialog(consultant)}>
+                      <IconButton size="small" color="primary" onClick={() => handleOpenDialog(doc)}>
                         <Icon>edit</Icon>
                       </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(consultant.name)}>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(doc.name)}>
                         <Icon>delete</Icon>
                       </IconButton>
                     </TableCell>
@@ -246,7 +265,7 @@ export default function VisitingConsultantsPage() {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50]}
           component="div"
-          count={filteredConsultants.length}
+          count={filteredDoctors.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={(_, newPage) => setPage(newPage)}
@@ -259,7 +278,7 @@ export default function VisitingConsultantsPage() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingConsultant ? 'Edit Consultant' : 'Add New Consultant'}</DialogTitle>
+        <DialogTitle>{editingDoctor ? 'Edit Resident Doctor' : 'Add New Resident Doctor'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
@@ -269,10 +288,10 @@ export default function VisitingConsultantsPage() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
             <TextField
-              label="Specialization"
+              label="Qualification"
               fullWidth
-              value={formData.specialization}
-              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+              value={formData.qualification}
+              onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
             />
             <TextField
               label="Registration Number"
@@ -280,6 +299,24 @@ export default function VisitingConsultantsPage() {
               value={formData.registrationNumber}
               onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
             />
+            <TextField
+              label="Department"
+              fullWidth
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            />
+            <TextField
+              label="Role"
+              fullWidth
+              select
+              slotProps={{ select: { native: true } }}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'RMO' | 'Full-time' | 'Resident' })}
+            >
+              <option value="RMO">RMO</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Resident">Resident</option>
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
