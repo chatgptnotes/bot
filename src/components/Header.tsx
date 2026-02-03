@@ -34,6 +34,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
     navigate('/ai-generator');
   };
 
+  const handleSearchClick = () => {
+    navigate('/search');
+  };
+
   const handleHospitalMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -113,13 +117,42 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         <Box sx={{ flexGrow: 1 }} />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Prominent Search Button */}
+          <Tooltip title="Global Search - Find anything across the NABH system">
+            <Button
+              color="inherit"
+              startIcon={<Icon sx={{ fontSize: 24 }}>search</Icon>}
+              onClick={handleSearchClick}
+              variant="outlined"
+              sx={{
+                bgcolor: location.pathname === '/search' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
+                border: '2px solid rgba(255,255,255,0.3)',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                '&:hover': { 
+                  bgcolor: 'rgba(255,255,255,0.25)',
+                  border: '2px solid rgba(255,255,255,0.5)',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: location.pathname === '/search' ? '0 0 10px rgba(255,255,255,0.3)' : 'none'
+              }}
+            >
+              SEARCH
+            </Button>
+          </Tooltip>
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.3)', mx: 1 }} />
           <Tooltip title="Dashboard">
             <Button
               color="inherit"
               startIcon={<Icon>dashboard</Icon>}
               onClick={handleHomeClick}
               sx={{
-                bgcolor: !isGeneratorPage ? 'rgba(255,255,255,0.15)' : 'transparent',
+                bgcolor: !isGeneratorPage && location.pathname !== '/search' ? 'rgba(255,255,255,0.15)' : 'transparent',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
               }}
             >
