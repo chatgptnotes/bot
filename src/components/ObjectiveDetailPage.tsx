@@ -3738,6 +3738,39 @@ Provide only the Hindi explanation, no English text. The explanation should be c
             </Grid>
           </Grid>
 
+          {/* Documents Link Section */}
+          <Box sx={{ mt: 2, mb: 3 }}>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+              Documents & References
+            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Google Docs/Sheets Link"
+                placeholder="Paste Google Docs, Sheets, or other document URLs here..."
+                value={objective.documentsLink || ''}
+                onChange={(e) => handleFieldChange('documentsLink', e.target.value)}
+                variant="outlined"
+                InputProps={{
+                  startAdornment: <Icon sx={{ mr: 1, fontSize: 18, color: 'primary.main' }}>link</Icon>,
+                }}
+                helperText="Link to Google Docs, Sheets, or other evidence documents"
+              />
+              {objective.documentsLink && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => window.open(objective.documentsLink, '_blank')}
+                  sx={{ minWidth: 'auto', px: 1.5, height: 40 }}
+                  startIcon={<Icon sx={{ fontSize: 16 }}>open_in_new</Icon>}
+                >
+                  Open
+                </Button>
+              )}
+            </Box>
+          </Box>
+
 
           <TextField
             fullWidth

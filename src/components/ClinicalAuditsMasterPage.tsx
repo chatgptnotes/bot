@@ -56,6 +56,7 @@ interface ClinicalAudit {
   followUpDate?: string;
   createdAt: string;
   lastUpdated: string;
+  documentsLink?: string; // Google Docs/Sheets link
 }
 
 const DEFAULT_AUDITS: ClinicalAudit[] = [
@@ -553,6 +554,45 @@ export default function ClinicalAuditsMasterPage() {
                     )}
                   </Box>
                 )}
+
+                {/* Documents Link Section */}
+                <Box sx={{ mt: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                    <TrendingUpIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                    <Typography variant="caption" fontWeight="medium" color="text.secondary">
+                      Audit Documents:
+                    </Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Google Docs/Sheets link..."
+                      value={audit.documentsLink || ''}
+                      onChange={(e) => {
+                        const updatedAudit = { ...audit, documentsLink: e.target.value };
+                        setAudits(audits.map(a => a.id === audit.id ? updatedAudit : a));
+                      }}
+                      variant="outlined"
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.75rem',
+                          height: '32px',
+                        }
+                      }}
+                    />
+                    {audit.documentsLink && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => window.open(audit.documentsLink, '_blank')}
+                        sx={{ minWidth: 'auto', px: 1, height: 32, fontSize: '0.7rem' }}
+                      >
+                        Open
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Box>

@@ -20,6 +20,7 @@ import {
   MenuItem,
   IconButton,
   Menu,
+  Icon,
   // LinearProgress removed - unused import
 } from '@mui/material';
 import {
@@ -53,6 +54,7 @@ interface HospitalManual {
   nabhStandards: string[];
   tags: string[];
   reviewFrequency: 'Monthly' | 'Quarterly' | 'Half-yearly' | 'Yearly' | 'As needed';
+  documentsLink?: string; // Google Docs/Sheets link
   distributionList: string[];
   implementationDate?: string;
   trainingRequired: boolean;
@@ -248,6 +250,7 @@ export default function HospitalManualsMasterPage() {
     tags: [],
     nabhStandards: [],
     distributionList: [],
+    documentsLink: '',
   });
 
   const [tagsText, setTagsText] = useState('');
@@ -563,6 +566,45 @@ export default function HospitalManualsMasterPage() {
                   {manual.trainingRequired && (
                     <Chip label="Training Required" size="small" color="warning" sx={{ mt: 1 }} />
                   )}
+                </Box>
+
+                {/* Documents Link Section */}
+                <Box sx={{ mt: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                    <Icon sx={{ fontSize: 16, color: 'primary.main' }}>link</Icon>
+                    <Typography variant="caption" fontWeight="medium" color="text.secondary">
+                      Documents Link:
+                    </Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Google Docs/Sheets link..."
+                      value={manual.documentsLink || ''}
+                      onChange={(e) => {
+                        const updatedManual = { ...manual, documentsLink: e.target.value };
+                        setManuals(manuals.map(m => m.id === manual.id ? updatedManual : m));
+                      }}
+                      variant="outlined"
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.75rem',
+                          height: '32px',
+                        }
+                      }}
+                    />
+                    {manual.documentsLink && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => window.open(manual.documentsLink, '_blank')}
+                        sx={{ minWidth: 'auto', px: 1, height: 32, fontSize: '0.7rem' }}
+                      >
+                        Open
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
