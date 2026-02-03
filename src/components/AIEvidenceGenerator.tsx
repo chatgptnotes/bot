@@ -577,41 +577,11 @@ export default function AIEvidenceGenerator() {
   const [editablePreviewIndex, setEditablePreviewIndex] = useState<number | null>(null);
   const editableIframeRef = useRef<HTMLIFrameElement>(null);
 
-<<<<<<< HEAD
   // Fixed static signatories for all documents - Date: 29 December 2025
   const fixedDate = '29/12/2025';
   const preparedBy = { name: 'Sonali Kakde', designation: 'Clinical Audit Coordinator', date: fixedDate };
   const reviewedBy = { name: 'Gaurav Agrawal', designation: 'Hospital Administrator', date: fixedDate };
-  const approvedBy = { name: 'Dr. Shiraz Khan', designation: 'NABH Coordinator / Administrator', date: fixedDate };
-=======
-  // Employee dropdown state for signatories
-  const [employees, setEmployees] = useState<{id: string, name: string, designation: string}[]>([]);
-  const [preparedBy, setPreparedBy] = useState({ name: '', designation: '', date: '' });
-  const [reviewedBy, setReviewedBy] = useState({ name: '', designation: '', date: '' });
-  const [approvedBy, setApprovedBy] = useState({ name: '', designation: '', date: '' });
-
-  // Fetch employees from Supabase on mount
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from('nabh_team_members')
-        .select('id, name, designation')
-        .eq('is_active', true)
-        .order('name');
-      if (data && !error) {
-        // Type assertion for employee data
-        const employeeData = data as unknown as {id: string, name: string, designation: string}[];
-        setEmployees(employeeData);
-        // Set default approved by to Quality Coordinator if available
-        const coordinator = employeeData.find(e => e.designation?.toLowerCase().includes('quality coordinator'));
-        if (coordinator) {
-          setApprovedBy({ name: coordinator.name, designation: coordinator.designation, date: new Date().toISOString().split('T')[0] });
-        }
-      }
-    };
-    fetchEmployees();
-  }, []);
->>>>>>> 7f1ce00 (fix: update Shiraz Khan's designation to Quality Coordinator)
+  const approvedBy = { name: 'Dr. Shiraz Khan', designation: 'Quality Coordinator', date: fixedDate };
 
   // Auto-populate from store if navigated from ObjectiveDetailPage
   useEffect(() => {

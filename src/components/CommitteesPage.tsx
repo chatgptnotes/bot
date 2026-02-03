@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   TextField,
   Icon,
-  Grid,
   Chip,
   Dialog,
   DialogTitle,
@@ -14,31 +12,13 @@ import {
   DialogActions,
   Snackbar,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Stepper,
-  Step,
-  StepLabel,
-  CircularProgress,
-  LinearProgress,
-  Tabs,
-  Tab,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  IconButton,
   Card,
   CardContent,
   CardActions,
-  Divider,
   List,
   ListItem,
   ListItemText,
@@ -46,17 +26,12 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Delete as DeleteIcon,
   Person as PersonIcon,
   Groups as GroupsIcon,
   EventNote as EventNoteIcon,
   AutoAwesome as AutoAwesomeIcon,
-  Medical as MedicalIcon,
-  Badge as BadgeIcon,
-  Business as BusinessIcon,
 } from '@mui/icons-material';
-import { NABH_TEAM, getHospitalInfo } from '../config/hospitalConfig';
-import { useNABHStore } from '../store/nabhStore';
+import { NABH_TEAM } from '../config/hospitalConfig';
 
 // Enhanced interfaces
 interface CommitteeMember {
@@ -126,7 +101,7 @@ const MASTER_TYPES = [
   { value: 'doctors', label: 'Doctors Master', icon: 'medical_services', data: MOCK_DOCTORS },
   { value: 'employees', label: 'Employees Master', icon: 'badge', data: MOCK_EMPLOYEES },
   { value: 'consultants', label: 'Consultants Master', icon: 'medical_information', data: MOCK_CONSULTANTS },
-  { value: 'nabh_team', label: 'NABH Team', icon: 'groups', data: NABH_TEAM.map(m => ({ id: m.name, name: m.name, designation: m.role, department: m.department || 'General', phone: m.phone || '' })) },
+  { value: 'nabh_team', label: 'NABH Team', icon: 'groups', data: NABH_TEAM.map(m => ({ id: m.name, name: m.name, designation: m.role, department: m.department || 'General', phone: '' })) },
 ];
 
 const NABH_MANDATORY_COMMITTEES = [
@@ -164,7 +139,6 @@ export default function CommitteesPageEnhanced() {
   const [committees, setCommittees] = useState<Committee[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
-  const [isMeetingDialogOpen, setIsMeetingDialogOpen] = useState(false);
   const [isGenerateMinutesDialogOpen, setIsGenerateMinutesDialogOpen] = useState(false);
   const [selectedCommittee, setSelectedCommittee] = useState<Committee | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -186,15 +160,7 @@ export default function CommitteesPageEnhanced() {
     role: '',
   });
 
-  // Meeting form
-  const [meetingForm, setMeetingForm] = useState({
-    date: '',
-    agenda: '',
-    minutes: '',
-    decisions: '',
-    actionItems: '',
-    attendees: [] as string[],
-  });
+  // Meeting form (unused in current implementation)
 
   // Generate meeting minutes
   const generateMeetingMinutes = (committee: Committee) => {
@@ -377,8 +343,8 @@ export default function CommitteesPageEnhanced() {
       </Box>
 
       {/* Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} md={3}>
+      <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+        <Box flex="1" minWidth="200px">
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary" fontWeight="bold">
@@ -389,8 +355,8 @@ export default function CommitteesPageEnhanced() {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} md={3}>
+        </Box>
+        <Box flex="1" minWidth="200px">
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="error" fontWeight="bold">
@@ -401,8 +367,8 @@ export default function CommitteesPageEnhanced() {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} md={3}>
+        </Box>
+        <Box flex="1" minWidth="200px">
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main" fontWeight="bold">
@@ -413,8 +379,8 @@ export default function CommitteesPageEnhanced() {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={6} md={3}>
+        </Box>
+        <Box flex="1" minWidth="200px">
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main" fontWeight="bold">
@@ -425,13 +391,13 @@ export default function CommitteesPageEnhanced() {
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Committees List */}
-      <Grid container spacing={2}>
+      <Box display="flex" gap={2} flexWrap="wrap">
         {committees.map(committee => (
-          <Grid item xs={12} lg={6} key={committee.id}>
+          <Box flex="1" minWidth="400px" key={committee.id}>
             <Card elevation={2}>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
@@ -515,8 +481,9 @@ export default function CommitteesPageEnhanced() {
                   startIcon={<EventNoteIcon />}
                   onClick={() => {
                     setSelectedCommittee(committee);
-                    setIsMeetingDialogOpen(true);
+                    // setIsMeetingDialogOpen(true); // Temporarily disabled
                   }}
+                  disabled
                 >
                   Add Meeting
                 </Button>
@@ -533,9 +500,9 @@ export default function CommitteesPageEnhanced() {
                 </Button>
               </CardActions>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Add Committee Dialog */}
       <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} maxWidth="sm" fullWidth>

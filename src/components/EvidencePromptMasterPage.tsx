@@ -3,11 +3,9 @@ import {
   Box,
   Container,
   Typography,
-  Paper,
   Button,
   TextField,
   Chip,
-  Grid,
   Card,
   CardContent,
   CardActions,
@@ -22,7 +20,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Copy as CopyIcon,
+  ContentCopy as CopyIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 
@@ -108,7 +106,6 @@ This evidence generation is for NABH AUDIT FEB 13-14, 2026. Every piece of evide
 
 export default function EvidencePromptMasterPage() {
   const [prompts, setPrompts] = useState<EvidencePrompt[]>(defaultPrompts);
-  const [selectedPrompt, setSelectedPrompt] = useState<EvidencePrompt | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<EvidencePrompt>>({});
@@ -186,9 +183,9 @@ export default function EvidencePromptMasterPage() {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box display="flex" gap={3} flexWrap="wrap">
         {prompts.map((prompt) => (
-          <Grid item xs={12} lg={6} key={prompt.id}>
+          <Box flex="1" minWidth="400px" key={prompt.id}>
             <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={2}>
@@ -253,9 +250,9 @@ export default function EvidencePromptMasterPage() {
                 </IconButton>
               </CardActions>
             </Card>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Add/Edit Dialog */}
       <Dialog 
@@ -268,24 +265,20 @@ export default function EvidencePromptMasterPage() {
           {isEditing ? 'Edit Evidence Prompt' : 'Add New Evidence Prompt'}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                label="Title"
-                fullWidth
-                value={editForm.title || ''}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Title"
+              fullWidth
+              value={editForm.title || ''}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+            />
+            <Box display="flex" gap={2}>
               <TextField
                 label="Category"
                 fullWidth
                 value={editForm.category || ''}
                 onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
               <TextField
                 label="Tags (comma separated)"
                 fullWidth
@@ -295,29 +288,25 @@ export default function EvidencePromptMasterPage() {
                   tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) 
                 })}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                fullWidth
-                multiline
-                rows={2}
-                value={editForm.description || ''}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Prompt Content"
-                fullWidth
-                multiline
-                rows={12}
-                value={editForm.prompt || ''}
-                onChange={(e) => setEditForm({ ...editForm, prompt: e.target.value })}
-                sx={{ fontFamily: 'monospace' }}
-              />
-            </Grid>
-          </Grid>
+            </Box>
+            <TextField
+              label="Description"
+              fullWidth
+              multiline
+              rows={2}
+              value={editForm.description || ''}
+              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+            />
+            <TextField
+              label="Prompt Content"
+              fullWidth
+              multiline
+              rows={12}
+              value={editForm.prompt || ''}
+              onChange={(e) => setEditForm({ ...editForm, prompt: e.target.value })}
+              sx={{ fontFamily: 'monospace' }}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
