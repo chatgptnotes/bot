@@ -29,6 +29,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'surveys', label: 'Surveys', icon: 'poll', path: '/surveys', description: 'Manage patient & staff satisfaction surveys and quality assessments' },
   { id: 'evidence-prompt', label: 'Evidence Prompt Master', icon: 'assignment', path: '/evidence-prompt', description: 'NABH evidence generation prompts & templates' },
   { id: 'cheat-sheets', label: 'Chapter Cheat Sheets', icon: 'quiz', path: '/cheat-sheets', description: 'Quick reference sheets for each NABH chapter with Google Docs links' },
+  { id: 'search', label: 'Global Search', icon: 'search', path: '/search', description: 'Search across all evidences, objectives, committees, and masters by keywords' },
   { id: 'kpis', label: 'KPIs', icon: 'analytics', path: '/kpis', description: 'Quality indicators' },
   { id: 'presentations', label: 'Slide Decks', icon: 'slideshow', path: '/presentations', description: 'Auditor presentations' },
   { id: 'patients', label: 'Patients', icon: 'personal_injury', path: '/patients', description: 'Manage patient records' },
