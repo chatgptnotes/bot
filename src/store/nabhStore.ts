@@ -363,25 +363,27 @@ export const useNABHStore = create<NABHStore>()(
       },
     }),
     {
-      name: 'nabh-chapters-controlled',
-      version: 1,
-      migrate: () => {
-        // Fresh start - all data comes from nabh_chapters table + nabh_objective_edits
-        // Reset to empty state and let loadDataFromSupabase populate
-        return {
-          chapters: [],
-          selectedChapter: null,
-          selectedObjective: null,
-          searchQuery: '',
-          filterStatus: 'all',
-          filterPriority: 'all',
-          filterCategory: 'all',
-          showCoreOnly: false,
-          selectedHospital: 'hope',
-          isLoadingFromSupabase: false,
-          selectedEvidenceForCreation: [],
-          selectedEvidenceObjectiveCode: null,
-        };
+      name: 'nabh-user-preferences',
+      version: 2,
+      // Only persist user preferences, NOT the chapters data (too large for localStorage)
+      partializeState: (state) => ({
+        selectedChapter: state.selectedChapter,
+        selectedObjective: state.selectedObjective,
+        searchQuery: state.searchQuery,
+        filterStatus: state.filterStatus,
+        filterPriority: state.filterPriority,
+        filterCategory: state.filterCategory,
+        showCoreOnly: state.showCoreOnly,
+        selectedHospital: state.selectedHospital,
+        // Do NOT persist: chapters, isLoadingFromSupabase, selectedEvidenceForCreation
+      }),
+      migrate: (persistedState: any, version: number) => {
+        // Migration from old storage
+        if (version < 2) {
+          // Clear old large storage
+          localStorage.removeItem('nabh-chapters-controlled');
+        }
+        return persistedState;
       },
     }
   )
