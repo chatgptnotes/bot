@@ -1759,14 +1759,15 @@ Incident ${idx + 1}:
 `).join('\n')}
 ` : ''}
 
-INSTRUCTIONS FOR USING THIS DATA:
+CRITICAL INSTRUCTIONS FOR USING THIS DATA:
 1. Use EXACT names, UHIDs, employee IDs, and other identifiers from above
 2. Fill forms/registers with this actual data - do NOT invent fake data
 3. Create realistic filled formats showing these specific records
-4. If you need more entries than provided, you may add similar realistic entries following the same pattern
+4. IMPORTANT: Do NOT invent or generate ANY names. ONLY use the employee names provided in the REAL STAFF DATA above. If you need more entries than staff provided, repeat the same staff members with different dates, different training topics, or different appraisal periods. Never add names like "Aman Rajak", "Roma Kangwani", or any fabricated names.
 5. Make the evidence look like actual hospital records, not templates
 6. Include specific dates, numbers, and details from the database
 7. Create various types of filled formats: registers, forms, reports, logs, checklists
+8. If a form requires 20 employees but only 15 are provided, show only 15 entries OR repeat some employees with different assessment periods/dates - but NEVER invent new names
 ` : '';
 
     return `You are an expert in NABH (National Accreditation Board for Hospitals and Healthcare Providers) accreditation documentation for ${hospitalConfig.name}.
