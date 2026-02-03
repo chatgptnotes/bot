@@ -58,8 +58,8 @@ export const HOSPITAL_INFO = HOSPITALS[DEFAULT_HOSPITAL_ID];
 export const NABH_TEAM: TeamMember[] = [
   {
     name: 'Dr. Shiraz Sheikh',
-    role: 'NABH Coordinator',
-    designation: 'NABH Coordinator / Administrator',
+    role: 'Quality Coordinator',
+    designation: 'Quality Coordinator / Administrator',
     department: 'Quality & Administration',
     responsibilities: [
       'Coordinate the planning, implementation, and monitoring of NABH accreditation',
@@ -233,9 +233,9 @@ export const getTeamMember = (name: string): TeamMember | undefined => {
   return NABH_TEAM.find(member => member.name.toLowerCase() === name.toLowerCase());
 };
 
-// Get NABH Coordinator
+// Get Quality Coordinator
 export const getNABHCoordinator = (): TeamMember => {
-  return NABH_TEAM.find(member => member.role === 'NABH Coordinator')!;
+  return NABH_TEAM.find(member => member.role === 'Quality Coordinator')!;
 };
 
 // Get Quality Manager
@@ -255,7 +255,7 @@ export const ASSIGNEE_OPTIONS = NABH_TEAM.map(member => ({
 export const TEAM_SUMMARY = `
 NABH Accreditation Team - Hope Hospital:
 
-1. NABH Coordinator: Dr. Shiraz Sheikh
+1. Quality Coordinator: Dr. Shiraz Sheikh
    - Central figure responsible for driving NABH accreditation
    - Coordinates with all departments for compliance
    - Conducts gap analysis, training, and internal audits
@@ -315,7 +315,7 @@ export const NABH_ASSESSOR_PROMPT = `You are acting as a NABH assessor and quali
 Using the objective element description provided, generate COMPREHENSIVE, PRACTICAL, and AUDIT-READY evidences for Hope Hospital.
 
 KEY STAFF MEMBERS:
-- NABH Coordinator: Dr. Shiraz Sheikh
+- Quality Coordinator: Dr. Shiraz Sheikh
 - Documentation Officer: Suraj (Senior Member)
 - Administrator: Gaurav
 - NABH Champion / MRD: Kashish

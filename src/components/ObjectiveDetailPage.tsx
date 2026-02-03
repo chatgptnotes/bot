@@ -220,6 +220,7 @@ export default function ObjectiveDetailPage() {
   }
   const [interpretationEvidenceItems, setInterpretationEvidenceItems] = useState<InterpretationEvidenceItem[]>([]);
   const [isGeneratingInterpretationEvidence, setIsGeneratingInterpretationEvidence] = useState(false);
+  const [evidenceItemsAutoSaved, setEvidenceItemsAutoSaved] = useState(false);
   // Track saved evidence item documents: item.id -> saved document ID
   const [savedEvidenceItemDocuments, setSavedEvidenceItemDocuments] = useState<Record<string, string>>({});
 
@@ -391,6 +392,7 @@ export default function ObjectiveDetailPage() {
                   selected: false
                 }));
                 setInterpretationEvidenceItems(items);
+                setEvidenceItemsAutoSaved(true); // Mark as saved since loaded from DB
 
                 // Map saved documents to evidence items
                 const documentMap: Record<string, string> = {};
@@ -1107,13 +1109,48 @@ Start directly with the numbered list, no introduction or explanation.`;
             .replace(/^\d+[.):\s]*/, '')  // Remove numbering
             .replace(/\*\*/g, '')          // Remove ** markdown bold
             .trim(),
-          selected: true, // All selected by default
+          selected: false, // None selected by default - user chooses which to generate
         }))
         .slice(0, 8);
 
       setInterpretationEvidenceItems(evidenceItems);
-      setHasUnsavedChanges(true); // Enable Save button for newly generated items
-      setInterpretationSaveSuccess(false); // Clear any previous save success state
+
+      // Auto-save the generated evidence items
+      try {
+        const evidenceTexts = evidenceItems
+          .filter(item => item.id !== 'error')
+          .map(item => item.text);
+
+        const hospitalInfo = getHospitalInfo();
+        const coordinator = getNABHCoordinator();
+        await saveGeneratedEvidence({
+          objective_code: objective.code,
+          evidence_title: `Generated Evidence Items - ${objective.code}`,
+          prompt: 'Auto-generated evidence items from interpretation',
+          generated_content: evidenceTexts.join('\n'),
+          html_content: JSON.stringify(evidenceTexts),
+          evidence_type: 'custom' as const,
+          hospital_config: {
+            name: hospitalInfo.name,
+            address: hospitalInfo.address,
+            phone: hospitalInfo.phone,
+            email: hospitalInfo.email,
+            website: hospitalInfo.website,
+            qualityCoordinator: coordinator.name,
+            qualityCoordinatorDesignation: coordinator.designation,
+          }
+        });
+        setEvidenceItemsAutoSaved(true);
+        setSnackbarMessage('8 evidence items generated and auto-saved!');
+        setSnackbarOpen(true);
+      } catch (saveError) {
+        console.error('Error auto-saving evidence items:', saveError);
+        setSnackbarMessage('Evidence items generated but auto-save failed. Please click Save manually.');
+        setSnackbarOpen(true);
+      }
+
+      setHasUnsavedChanges(false); // Mark as saved since auto-saved
+      setInterpretationSaveSuccess(true); // Show success state
     } catch (error) {
       console.error('Error generating evidence from interpretation:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -3183,7 +3220,7 @@ Provide only the Hindi explanation, no English text. The explanation should be c
                 disabled={isGeneratingInterpretationEvidence || !(objective.interpretations2 ?? objective.interpretation)?.trim()}
                 onClick={handleGenerateEvidenceFromInterpretation}
               >
-                {isGeneratingInterpretationEvidence ? 'Generating...' : 'Generate 8 Evidence Items'}
+                {isGeneratingInterpretationEvidence ? 'Generating...' : evidenceItemsAutoSaved ? 'Regenerate' : 'Generate 8 Evidence Items'}
               </Button>
               <Button
                 variant="outlined"
