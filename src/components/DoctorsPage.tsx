@@ -6,6 +6,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Icon from '@mui/material/Icon';
+import IconButton from '@mui/material/IconButton';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -17,6 +18,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { doctorsMaster, syncDoctorsToDatabase } from '../data/doctorsMaster';
 import type { Doctor } from '../data/doctorsMaster';
 
@@ -26,6 +31,18 @@ export default function DoctorsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [formData, setFormData] = useState<Doctor>({
+    name: '',
+    qualification: '',
+    specialization: 'Resident Medical Officer',
+    registrationNumber: '',
+    department: 'Ward',
+    role: 'RMO',
+    is_active: true
+  });
+  
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -46,7 +63,8 @@ export default function DoctorsPage() {
           (d) =>
             d.name.toLowerCase().includes(query) ||
             d.qualification.toLowerCase().includes(query) ||
-            d.registrationNumber.toLowerCase().includes(query)
+            d.registrationNumber.toLowerCase().includes(query) ||
+            d.department.toLowerCase().includes(query)
         )
       );
     } else {
@@ -63,6 +81,53 @@ export default function DoctorsPage() {
       console.error('Error loading doctors:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOpenDialog = (doctor?: Doctor) => {
+    if (doctor) {
+      setEditingDoctor(doctor);
+      setFormData({ ...doctor });
+    } else {
+      setEditingDoctor(null);
+      setFormData({
+        name: '',
+        qualification: '',
+        specialization: 'Resident Medical Officer',
+        registrationNumber: '',
+        department: 'Ward',
+        role: 'RMO',
+        is_active: true
+      });
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingDoctor(null);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.qualification) {
+      setSnackbar({ open: true, message: 'Name and Qualification are required', severity: 'error' });
+      return;
+    }
+
+    if (editingDoctor) {
+      setDoctors(doctors.map(d => d.name === editingDoctor.name ? formData : d));
+      setSnackbar({ open: true, message: 'Doctor updated locally', severity: 'success' });
+    } else {
+      setDoctors([formData, ...doctors]);
+      setSnackbar({ open: true, message: 'Doctor added locally', severity: 'success' });
+    }
+    handleCloseDialog();
+  };
+
+  const handleDelete = (name: string) => {
+    if (confirm(`Are you sure you want to delete Dr. ${name}?`)) {
+      setDoctors(doctors.filter(d => d.name !== name));
+      setSnackbar({ open: true, message: 'Doctor removed locally', severity: 'success' });
     }
   };
 
@@ -99,14 +164,23 @@ export default function DoctorsPage() {
             Master list of full-time hospital doctors and RMOs
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={isSyncing ? <CircularProgress size={20} color="inherit" /> : <Icon>sync</Icon>}
-          onClick={handleSync}
-          disabled={isSyncing}
-        >
-          {isSyncing ? 'Syncing...' : 'Sync to Database'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={isSyncing ? <CircularProgress size={20} color="inherit" /> : <Icon>sync</Icon>}
+            onClick={handleSync}
+            disabled={isSyncing}
+          >
+            {isSyncing ? 'Syncing...' : 'Sync to Database'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Icon>add</Icon>}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Doctor
+          </Button>
+        </Box>
       </Box>
 
       {/* Search */}
@@ -138,18 +212,19 @@ export default function DoctorsPage() {
                 <TableCell sx={{ fontWeight: 600 }}>Reg. Number</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredDoctors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">No doctors found</Typography>
                   </TableCell>
                 </TableRow>
@@ -173,6 +248,14 @@ export default function DoctorsPage() {
                     <TableCell>
                       <Chip label={doc.role} size="small" color="primary" />
                     </TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" color="primary" onClick={() => handleOpenDialog(doc)}>
+                        <Icon>edit</Icon>
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(doc.name)}>
+                        <Icon>delete</Icon>
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -192,6 +275,55 @@ export default function DoctorsPage() {
           }}
         />
       </Paper>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingDoctor ? 'Edit Resident Doctor' : 'Add New Resident Doctor'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              label="Doctor Name"
+              fullWidth
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            <TextField
+              label="Qualification"
+              fullWidth
+              value={formData.qualification}
+              onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+            />
+            <TextField
+              label="Registration Number"
+              fullWidth
+              value={formData.registrationNumber}
+              onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+            />
+            <TextField
+              label="Department"
+              fullWidth
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            />
+            <TextField
+              label="Role"
+              fullWidth
+              select
+              slotProps={{ select: { native: true } }}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'RMO' | 'Full-time' | 'Resident' })}
+            >
+              <option value="RMO">RMO</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Resident">Resident</option>
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>Save</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}
