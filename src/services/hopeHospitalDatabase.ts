@@ -212,15 +212,15 @@ export async function fetchRealPatients(limit: number = 20): Promise<PatientReco
 
 /**
  * Fetch real staff data from Supabase nabh_team_members table
+ * Fetches ALL active employees to ensure evidence documents use only real names
  */
-export async function fetchRealStaff(limit: number = 10): Promise<StaffRecord[]> {
+export async function fetchRealStaff(): Promise<StaffRecord[]> {
   try {
     const { data, error } = await supabase
       .from('nabh_team_members')
       .select('*')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching staff from Supabase:', error);
@@ -295,9 +295,9 @@ export async function getRelevantData(evidenceType: string): Promise<{
     data.patients = getRandomPatients(realPatients, 8);
   }
 
-  // ALWAYS fetch staff data - needed for PREPARED BY / REVIEWED BY sections in all documents
-  const realStaff = await fetchRealStaff(10);
-  data.staff = getRandomStaff(realStaff, 5);
+  // ALWAYS fetch ALL staff data - needed for evidence documents to use only real names
+  const realStaff = await fetchRealStaff();
+  data.staff = realStaff.length > 0 ? realStaff : HOPE_HOSPITAL_STAFF;
 
   // Equipment-related evidence (hardcoded for now)
   if (type.includes('equipment') || type.includes('calibration') || type.includes('maintenance') ||
