@@ -154,7 +154,7 @@ Use this HTML template structure:
     <tr>
       <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Sonali's signature.png" alt="Sonali Kakde Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
       <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Gaurav's signature.png" alt="Gaurav Agrawal Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
-      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Dr shiraz's signature.png" alt="Dr. Shiraz Khan Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
     </tr>
   </table>
 
@@ -390,7 +390,7 @@ function updateHTMLWithText(
     <tr>
       <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Sonali's signature.png" alt="Sonali Kakde Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
       <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Gaurav's signature.png" alt="Gaurav Agrawal Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
-      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Dr shiraz's signature.png" alt="Dr. Shiraz Khan Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
     </tr>
   </table>
 
@@ -1152,12 +1152,25 @@ ${trimmed}
     }
   };
 
-  // Preview HTML content in new window
+  // Preview HTML content in new window with print button
   const handlePreviewContent = (content: string, title: string) => {
     const previewWindow = window.open('', '_blank');
     if (previewWindow) {
+      const toolbarHTML = `
+        <div id="preview-toolbar" style="position: fixed; top: 0; left: 0; right: 0; background: #1976d2; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+          <span style="color: white; font-family: Arial, sans-serif; font-size: 14px; font-weight: 500;">${title.substring(0, 60)}${title.length > 60 ? '...' : ''}</span>
+          <button onclick="document.getElementById('preview-toolbar').style.display='none'; window.print(); document.getElementById('preview-toolbar').style.display='flex';" style="background: white; color: #1976d2; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#1976d2"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+            Print
+          </button>
+        </div>
+        <div style="margin-top: 60px;"></div>
+      `;
       if (isHTMLContent(content)) {
-        previewWindow.document.write(extractHTMLContent(content));
+        const htmlContent = extractHTMLContent(content);
+        // Insert toolbar after <body> tag
+        const modifiedContent = htmlContent.replace(/<body[^>]*>/i, (match) => match + toolbarHTML);
+        previewWindow.document.write(modifiedContent);
       } else {
         previewWindow.document.write(`
           <!DOCTYPE html>
@@ -1166,9 +1179,10 @@ ${trimmed}
               <title>${title} - ${hospitalConfig.name}</title>
               <style>
                 body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.5; padding: 20px; white-space: pre-wrap; background: #f5f5f5; }
+                @media print { #preview-toolbar { display: none !important; } body { margin-top: 0 !important; } }
               </style>
             </head>
-            <body>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+            <body>${toolbarHTML}${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
           </html>
         `);
       }
@@ -1807,14 +1821,6 @@ ${trimmed}
                               >
                                 Edit in Preview
                               </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<Icon>print</Icon>}
-                                onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
-                              >
-                                Print
-                              </Button>
                               {savedDocuments[index] ? (
                                 <>
                                   <Button
@@ -2003,14 +2009,6 @@ ${trimmed}
                               onClick={() => handlePreviewContent(gc.content, gc.evidenceItem.substring(0, 50))}
                             >
                               <Icon fontSize="small">visibility</Icon>
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Print">
-                            <IconButton
-                              size="small"
-                              onClick={() => handlePrintContent(gc.content, gc.evidenceItem.substring(0, 50))}
-                            >
-                              <Icon fontSize="small">print</Icon>
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Download PDF">
