@@ -39,6 +39,12 @@ import {
   ExpandMore as ExpandMoreIcon,
   Assignment as AssignmentIcon,
   Send as SendIcon,
+  Share as ShareIcon,
+  ContentCopy as ContentCopyIcon,
+  QrCode as QrCodeIcon,
+  WhatsApp as WhatsAppIcon,
+  Email as EmailIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 
 // Survey Interfaces
@@ -345,6 +351,7 @@ export default function SurveysPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
@@ -466,6 +473,64 @@ export default function SurveysPage() {
       case 'feedback': return 'warning';
       default: return 'default';
     }
+  };
+
+  // Survey sharing functions
+  const generateSurveyURL = (surveyId: string) => {
+    const baseURL = window.location.origin;
+    return `${baseURL}/survey/${surveyId}`;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setSnackbar({ 
+        open: true, 
+        message: 'Survey link copied to clipboard!', 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to copy link. Please copy manually.', 
+        severity: 'error' 
+      });
+    }
+  };
+
+  const shareViaWhatsApp = (surveyURL: string, surveyTitle: string) => {
+    const message = `🏥 *Hope Hospital Survey*\n\n*${surveyTitle}*\n\nPlease take a few minutes to complete this survey. Your feedback is valuable to us.\n\n🔗 ${surveyURL}\n\nThank you for your participation!`;
+    const whatsappURL = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
+  };
+
+  const shareViaEmail = (surveyURL: string, surveyTitle: string) => {
+    const subject = `Survey: ${surveyTitle} - Hope Hospital`;
+    const body = `Dear Team,
+
+You are invited to participate in the following survey:
+
+Survey: ${surveyTitle}
+
+Please click on the link below to complete the survey:
+${surveyURL}
+
+Your feedback is important for our continuous improvement and NABH accreditation process.
+
+Thank you for your time and participation.
+
+Best regards,
+Hope Hospital Quality Team
+Dr. Shiraz (Quality Coordinator)`;
+
+    const mailtoURL = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoURL, '_blank');
+  };
+
+  const handleShareSurvey = (survey: Survey) => {
+    setSelectedSurvey(survey);
+    setIsShareDialogOpen(true);
   };
 
   return (
@@ -645,6 +710,38 @@ export default function SurveysPage() {
                       {survey.responseCount} responses
                     </Typography>
                   </Box>
+
+                  {/* Survey URL for Active Surveys */}
+                  {survey.status === 'active' && (
+                    <Box mb={2} p={1} bgcolor="primary.50" borderRadius={1} border="1px solid" borderColor="primary.200">
+                      <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <LinkIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                          <Typography variant="caption" fontWeight="bold" color="primary.main">
+                            Survey Link:
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={() => copyToClipboard(generateSurveyURL(survey.id))}
+                          sx={{ p: 0.25 }}
+                        >
+                          <ContentCopyIcon sx={{ fontSize: 12 }} />
+                        </IconButton>
+                      </Box>
+                      <Typography 
+                        variant="caption" 
+                        color="primary.main" 
+                        sx={{ 
+                          wordBreak: 'break-all',
+                          fontSize: '0.7rem',
+                          fontFamily: 'monospace'
+                        }}
+                      >
+                        {generateSurveyURL(survey.id)}
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
 
                 <CardActions sx={{ justifyContent: 'space-between' }}>
@@ -660,6 +757,12 @@ export default function SurveysPage() {
                     </IconButton>
                     <IconButton size="small">
                       <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleShareSurvey(survey)}
+                    >
+                      <ShareIcon />
                     </IconButton>
                     <IconButton 
                       size="small"
@@ -683,13 +786,24 @@ export default function SurveysPage() {
                       </Button>
                     )}
                     {survey.status === 'active' && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<DownloadIcon />}
-                      >
-                        Download
-                      </Button>
+                      <>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<ShareIcon />}
+                          onClick={() => handleShareSurvey(survey)}
+                          sx={{ mr: 1 }}
+                        >
+                          Share
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DownloadIcon />}
+                        >
+                          Download
+                        </Button>
+                      </>
                     )}
                   </Box>
                 </CardActions>
@@ -718,7 +832,30 @@ export default function SurveysPage() {
                   <Typography variant="body2">
                     <strong>Active Until:</strong> {new Date(survey.endDate).toLocaleDateString()}
                   </Typography>
+                  <Box mt={2}>
+                    <Typography variant="body2" color="primary.main" sx={{ wordBreak: 'break-all' }}>
+                      <strong>Survey URL:</strong> {generateSurveyURL(survey.id)}
+                    </Typography>
+                  </Box>
                 </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<ShareIcon />}
+                    onClick={() => handleShareSurvey(survey)}
+                  >
+                    Share
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={() => copyToClipboard(generateSurveyURL(survey.id))}
+                  >
+                    Copy Link
+                  </Button>
+                </CardActions>
               </Card>
             </Grid>
           ))}
@@ -748,7 +885,34 @@ export default function SurveysPage() {
                   <Typography variant="body2">
                     <strong>Last Conducted:</strong> {new Date(survey.startDate).toLocaleDateString()}
                   </Typography>
+                  {survey.status === 'active' && (
+                    <Box mt={2}>
+                      <Typography variant="body2" color="primary.main" sx={{ wordBreak: 'break-all' }}>
+                        <strong>Survey URL:</strong> {generateSurveyURL(survey.id)}
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<ShareIcon />}
+                    onClick={() => handleShareSurvey(survey)}
+                  >
+                    Share
+                  </Button>
+                  {survey.status === 'active' && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<ContentCopyIcon />}
+                      onClick={() => copyToClipboard(generateSurveyURL(survey.id))}
+                    >
+                      Copy Link
+                    </Button>
+                  )}
+                </CardActions>
               </Card>
             </Grid>
           ))}
@@ -1010,6 +1174,144 @@ export default function SurveysPage() {
             onClick={() => selectedSurvey && handleDeleteSurvey(selectedSurvey.id)}
           >
             Delete Survey
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Share Survey Dialog */}
+      <Dialog open={isShareDialogOpen} onClose={() => setIsShareDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Share Survey: {selectedSurvey?.title}
+        </DialogTitle>
+        <DialogContent>
+          {selectedSurvey && (
+            <Box>
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  Share this survey link with your team via WhatsApp, email, or copy the URL directly.
+                </Typography>
+              </Alert>
+
+              {/* Survey URL Display */}
+              <Box mb={3}>
+                <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+                  Survey URL:
+                </Typography>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    {generateSurveyURL(selectedSurvey.id)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Quick Actions */}
+              <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+                <Button
+                  variant="outlined"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={() => copyToClipboard(generateSurveyURL(selectedSurvey.id))}
+                  fullWidth
+                >
+                  Copy Link
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<QrCodeIcon />}
+                  disabled
+                  fullWidth
+                >
+                  QR Code (Coming Soon)
+                </Button>
+              </Box>
+
+              {/* Share Options */}
+              <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+                Share via:
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Button
+                    variant="contained"
+                    startIcon={<WhatsAppIcon />}
+                    onClick={() => shareViaWhatsApp(generateSurveyURL(selectedSurvey.id), selectedSurvey.title)}
+                    fullWidth
+                    sx={{ 
+                      bgcolor: '#25D366', 
+                      '&:hover': { bgcolor: '#20B858' },
+                      color: 'white' 
+                    }}
+                  >
+                    WhatsApp
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="contained"
+                    startIcon={<EmailIcon />}
+                    onClick={() => shareViaEmail(generateSurveyURL(selectedSurvey.id), selectedSurvey.title)}
+                    fullWidth
+                    sx={{ 
+                      bgcolor: '#1976d2', 
+                      '&:hover': { bgcolor: '#1565c0' } 
+                    }}
+                  >
+                    Email
+                  </Button>
+                </Grid>
+              </Grid>
+
+              {/* Survey Details */}
+              <Box mt={3} p={2} bgcolor="grey.50" borderRadius={1}>
+                <Typography variant="subtitle2" fontWeight="bold" mb={1}>
+                  Survey Details:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • <strong>Target:</strong> {selectedSurvey.targetAudience}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • <strong>Questions:</strong> {selectedSurvey.questions.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • <strong>Status:</strong> {selectedSurvey.status}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • <strong>Active Until:</strong> {new Date(selectedSurvey.endDate).toLocaleDateString()}
+                </Typography>
+                {selectedSurvey.nabhRelevant && (
+                  <Typography variant="body2" color="error.main">
+                    • <strong>NABH Required Survey</strong>
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Instructions */}
+              <Alert severity="success" sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  <strong>Pro Tip:</strong> Copy the link and paste it in your WhatsApp groups, email lists, or share directly with team members. 
+                  The survey will automatically track responses for NABH audit evidence.
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsShareDialogOpen(false)}>Close</Button>
+          <Button
+            variant="contained"
+            startIcon={<ContentCopyIcon />}
+            onClick={() => selectedSurvey && copyToClipboard(generateSurveyURL(selectedSurvey.id))}
+          >
+            Copy & Close
           </Button>
         </DialogActions>
       </Dialog>
