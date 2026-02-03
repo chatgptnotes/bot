@@ -17,7 +17,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
-import { doctorsMaster, syncDoctorsToDatabase, Doctor } from '../data/doctorsMaster';
+import { doctorsMaster, syncDoctorsToDatabase } from '../data/doctorsMaster';
+import type { Doctor } from '../data/doctorsMaster';
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);

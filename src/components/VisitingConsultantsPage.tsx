@@ -6,6 +6,7 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Icon from '@mui/material/Icon';
+import IconButton from '@mui/material/IconButton';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -17,6 +18,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { visitingConsultantsMaster, syncConsultantsToDatabase } from '../data/visitingConsultantsMaster';
 import type { VisitingConsultant } from '../data/visitingConsultantsMaster';
 
@@ -26,6 +31,14 @@ export default function VisitingConsultantsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingConsultant, setEditingConsultant] = useState<VisitingConsultant | null>(null);
+  const [formData, setFormData] = useState<VisitingConsultant>({
+    name: '',
+    specialization: '',
+    registrationNumber: ''
+  });
+  
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -58,12 +71,50 @@ export default function VisitingConsultantsPage() {
   const loadConsultants = async () => {
     setIsLoading(true);
     try {
-      // In this version, we primary show from the master file
       setConsultants(visitingConsultantsMaster);
     } catch (error) {
       console.error('Error loading consultants:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOpenDialog = (consultant?: VisitingConsultant) => {
+    if (consultant) {
+      setEditingConsultant(consultant);
+      setFormData({ ...consultant });
+    } else {
+      setEditingConsultant(null);
+      setFormData({ name: '', specialization: '', registrationNumber: '' });
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingConsultant(null);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.specialization) {
+      setSnackbar({ open: true, message: 'Name and Specialization are required', severity: 'error' });
+      return;
+    }
+
+    if (editingConsultant) {
+      setConsultants(consultants.map(c => c.name === editingConsultant.name ? formData : c));
+      setSnackbar({ open: true, message: 'Consultant updated locally', severity: 'success' });
+    } else {
+      setConsultants([formData, ...consultants]);
+      setSnackbar({ open: true, message: 'Consultant added locally', severity: 'success' });
+    }
+    handleCloseDialog();
+  };
+
+  const handleDelete = (name: string) => {
+    if (confirm(`Are you sure you want to delete ${name}?`)) {
+      setConsultants(consultants.filter(c => c.name !== name));
+      setSnackbar({ open: true, message: 'Consultant removed locally', severity: 'success' });
     }
   };
 
@@ -100,14 +151,23 @@ export default function VisitingConsultantsPage() {
             Master list of visiting doctors and their registrations
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={isSyncing ? <CircularProgress size={20} color="inherit" /> : <Icon>sync</Icon>}
-          onClick={handleSync}
-          disabled={isSyncing}
-        >
-          {isSyncing ? 'Syncing...' : 'Sync to Database'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={isSyncing ? <CircularProgress size={20} color="inherit" /> : <Icon>sync</Icon>}
+            onClick={handleSync}
+            disabled={isSyncing}
+          >
+            {isSyncing ? 'Syncing...' : 'Sync to Database'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Icon>add</Icon>}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Consultant
+          </Button>
+        </Box>
       </Box>
 
       {/* Search */}
@@ -137,7 +197,7 @@ export default function VisitingConsultantsPage() {
                 <TableCell sx={{ fontWeight: 600 }}>Doctor Name</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Specialization</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>Registration Number</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -169,8 +229,13 @@ export default function VisitingConsultantsPage() {
                         {consultant.registrationNumber}
                       </Typography>
                     </TableCell>
-                    <TableCell>
-                      <Chip label="Master List" size="small" color="success" />
+                    <TableCell align="center">
+                      <IconButton size="small" color="primary" onClick={() => handleOpenDialog(consultant)}>
+                        <Icon>edit</Icon>
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(consultant.name)}>
+                        <Icon>delete</Icon>
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))
@@ -191,6 +256,37 @@ export default function VisitingConsultantsPage() {
           }}
         />
       </Paper>
+
+      {/* Add/Edit Dialog */}
+      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingConsultant ? 'Edit Consultant' : 'Add New Consultant'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              label="Doctor Name"
+              fullWidth
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            <TextField
+              label="Specialization"
+              fullWidth
+              value={formData.specialization}
+              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+            />
+            <TextField
+              label="Registration Number"
+              fullWidth
+              value={formData.registrationNumber}
+              onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave}>Save</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}
