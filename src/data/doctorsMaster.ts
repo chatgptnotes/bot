@@ -11,6 +11,7 @@ export interface Doctor {
   qualification: string;
   department: string;
   role: 'RMO' | 'Full-time' | 'Resident';
+  emp_id_no?: string;
   is_active: boolean;
 }
 
@@ -26,6 +27,7 @@ export const doctorsMaster: Doctor[] = [
     registrationNumber: "2013/05/1577",
     department: "Casualty/Ward",
     role: "RMO",
+    emp_id_no: "HOPE/DOC/001",
     is_active: true
   },
   {
@@ -35,6 +37,7 @@ export const doctorsMaster: Doctor[] = [
     registrationNumber: "2014/01/0082",
     department: "ICU/Ward",
     role: "RMO",
+    emp_id_no: "HOPE/DOC/002",
     is_active: true
   },
   {
@@ -44,6 +47,7 @@ export const doctorsMaster: Doctor[] = [
     registrationNumber: "I-76632-A",
     department: "Ward/ICU",
     role: "RMO",
+    emp_id_no: "HOPE/DOC/003",
     is_active: true
   },
   {
@@ -53,6 +57,7 @@ export const doctorsMaster: Doctor[] = [
     registrationNumber: "I-78901-A",
     department: "Ward",
     role: "RMO",
+    emp_id_no: "HOPE/DOC/004",
     is_active: true
   },
   {
@@ -62,6 +67,7 @@ export const doctorsMaster: Doctor[] = [
     registrationNumber: "54321",
     department: "Ward",
     role: "RMO",
+    emp_id_no: "HOPE/DOC/005",
     is_active: true
   }
 ];
@@ -79,7 +85,14 @@ export const syncDoctorsToDatabase = async () => {
         .eq('name', doc.name)
         .maybeSingle();
 
-      if (existing) continue;
+      if (existing) {
+        // Update Emp ID
+        await supabase
+          .from('nabh_team_members')
+          .update({ emp_id_no: doc.emp_id_no } as never)
+          .eq('name', doc.name);
+        continue;
+      }
 
       const { error } = await supabase
         .from('nabh_team_members')
@@ -88,6 +101,7 @@ export const syncDoctorsToDatabase = async () => {
           designation: `${doc.role} (${doc.qualification})`,
           department: doc.department,
           role: 'Medical Staff',
+          emp_id_no: doc.emp_id_no,
           is_active: true,
           responsibilities: [`Registration: ${doc.registrationNumber}`, `Specialization: ${doc.specialization}`]
         } as never);
