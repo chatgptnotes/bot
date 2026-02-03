@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -10,39 +10,28 @@ import {
   Button,
   Chip,
   Grid,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
   Tabs,
   Tab,
   Paper,
   Alert,
-  Autocomplete,
   Badge,
   IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Assignment as AssignmentIcon,
   Groups as GroupsIcon,
   Poll as PollIcon,
-  Apartment as ApartmentIcon,
-  MedicalServices as MedicalServicesIcon,
   Description as DescriptionIcon,
   Quiz as QuizIcon,
   Analytics as AnalyticsIcon,
   Clear as ClearIcon,
-  FilterList as FilterListIcon,
   Visibility as VisibilityIcon,
   OpenInNew as OpenInNewIcon,
   Star as StarIcon,
   AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useNABHStore } from '../store/nabhStore';
 
 // Search interfaces
 interface SearchResult {
@@ -60,13 +49,6 @@ interface SearchResult {
   url: string;
   matchedFields: string[];
   searchScore: number;
-}
-
-interface SearchFilters {
-  type: string[];
-  chapter: string[];
-  priority: string[];
-  dateRange: string;
 }
 
 // Search categories configuration
@@ -310,19 +292,12 @@ const generateMockSearchData = (): SearchResult[] => [
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const { chapters } = useNABHStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isSearching, setIsSearching] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [filters, setFilters] = useState<SearchFilters>({
-    type: [],
-    chapter: [],
-    priority: [],
-    dateRange: 'all'
-  });
 
   // Mock search data
   const mockData = useMemo(() => generateMockSearchData(), []);
@@ -419,7 +394,7 @@ export default function SearchPage() {
     return matchedFields;
   };
 
-  // Filter results based on selected category and filters
+  // Filter results based on selected category
   const filteredResults = useMemo(() => {
     let results = searchResults;
 
@@ -428,10 +403,8 @@ export default function SearchPage() {
       results = results.filter(result => result.type === selectedCategory);
     }
 
-    // Additional filters would be applied here
-
     return results;
-  }, [searchResults, selectedCategory, filters]);
+  }, [searchResults, selectedCategory]);
 
   // Handle search input
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -456,16 +429,6 @@ export default function SearchPage() {
   const getCategoryIcon = (type: string) => {
     const category = SEARCH_CATEGORIES.find(cat => cat.id === type);
     return category?.icon || DescriptionIcon;
-  };
-
-  // Get priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
-      default: return 'default';
-    }
   };
 
   // Navigate to result
@@ -572,7 +535,7 @@ export default function SearchPage() {
           <Paper sx={{ mb: 3 }}>
             <Tabs
               value={selectedCategory}
-              onChange={(_, newValue) => setSelectedCategory(newValue)}
+              onChange={(_: React.SyntheticEvent, newValue: string) => setSelectedCategory(newValue)}
               variant="scrollable"
               scrollButtons="auto"
             >
