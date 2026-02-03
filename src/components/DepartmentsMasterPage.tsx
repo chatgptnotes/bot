@@ -120,7 +120,7 @@ const DepartmentsMasterPage: React.FC = () => {
       case 'Under Review':
         return { icon: Warning, color: 'warning' as const, label: 'Under Review' };
       default:
-        return { icon: Warning, color: 'inherit' as const, label: 'Not Assessed' };
+        return { icon: Warning, color: 'secondary' as const, label: 'Not Assessed' };
     }
   };
 

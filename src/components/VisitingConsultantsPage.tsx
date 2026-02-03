@@ -6,7 +6,6 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Icon from '@mui/material/Icon';
-import IconButton from '@mui/material/IconButton';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -17,10 +16,6 @@ import TablePagination from '@mui/material/TablePagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import Chip from '@mui/material/Chip';
 import { visitingConsultantsMaster, syncConsultantsToDatabase } from '../data/visitingConsultantsMaster';
 import type { VisitingConsultant } from '../data/visitingConsultantsMaster';
@@ -30,8 +25,6 @@ export default function VisitingConsultantsPage() {
   const [filteredConsultants, setFilteredConsultants] = useState<VisitingConsultant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingConsultant, setEditingConsultant] = useState<VisitingConsultant | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
