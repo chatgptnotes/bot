@@ -16,10 +16,6 @@ import {
   Select,
   MenuItem,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Snackbar,
   Alert,
@@ -32,7 +28,6 @@ import {
   Rating,
   LinearProgress,
   Paper,
-  Divider,
 } from '@mui/material';
 import {
   Poll as PollIcon,
@@ -42,13 +37,9 @@ import {
   Visibility as ViewIcon,
   Download as DownloadIcon,
   ExpandMore as ExpandMoreIcon,
-  Star as StarIcon,
-  People as PeopleIcon,
   Assignment as AssignmentIcon,
-  TrendingUp as TrendingUpIcon,
   Send as SendIcon,
 } from '@mui/icons-material';
-import { supabase } from '../lib/supabase';
 
 // Survey Interfaces
 interface SurveyQuestion {
@@ -77,15 +68,16 @@ interface Survey {
   frequency: 'one_time' | 'weekly' | 'monthly' | 'quarterly' | 'annually';
 }
 
-interface SurveyResponse {
-  id: string;
-  surveyId: string;
-  respondentId: string;
-  respondentType: 'patient' | 'staff' | 'visitor' | 'consultant';
-  responses: Record<string, any>;
-  submittedAt: string;
-  completionTime: number; // in minutes
-}
+// SurveyResponse interface - for future use
+// interface SurveyResponse {
+//   id: string;
+//   surveyId: string;
+//   respondentId: string;
+//   respondentType: 'patient' | 'staff' | 'visitor' | 'consultant';
+//   responses: Record<string, any>;
+//   submittedAt: string;
+//   completionTime: number; // in minutes
+// }
 
 // Survey Templates
 const SURVEY_TEMPLATES = [
@@ -352,7 +344,6 @@ export default function SurveysPage() {
   const [tabValue, setTabValue] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -503,7 +494,7 @@ export default function SurveysPage() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary" fontWeight="bold">
@@ -515,7 +506,7 @@ export default function SurveysPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main" fontWeight="bold">
@@ -527,7 +518,7 @@ export default function SurveysPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main" fontWeight="bold">
@@ -539,7 +530,7 @@ export default function SurveysPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main" fontWeight="bold">
@@ -551,7 +542,7 @@ export default function SurveysPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main" fontWeight="bold">
@@ -567,7 +558,7 @@ export default function SurveysPage() {
 
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
+        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
           <Tab label="All Surveys" />
           <Tab label="Active" />
           <Tab label="NABH Required" />
@@ -580,7 +571,7 @@ export default function SurveysPage() {
         {/* All Surveys */}
         <Grid container spacing={3}>
           {surveys.map(survey => (
-            <Grid item xs={12} md={6} lg={4} key={survey.id}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={survey.id}>
               <Card elevation={2}>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
@@ -712,7 +703,7 @@ export default function SurveysPage() {
         {/* Active Surveys */}
         <Grid container spacing={3}>
           {surveys.filter(s => s.status === 'active').map(survey => (
-            <Grid item xs={12} md={6} key={survey.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={survey.id}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" fontWeight="bold">
@@ -738,7 +729,7 @@ export default function SurveysPage() {
         {/* NABH Required Surveys */}
         <Grid container spacing={3}>
           {surveys.filter(s => s.nabhRelevant).map(survey => (
-            <Grid item xs={12} md={6} key={survey.id}>
+            <Grid size={{ xs: 12, md: 6 }} key={survey.id}>
               <Card>
                 <CardContent>
                   <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -768,7 +759,7 @@ export default function SurveysPage() {
         {/* Survey Templates */}
         <Grid container spacing={3}>
           {SURVEY_TEMPLATES.map((template, index) => (
-            <Grid item xs={12} md={6} lg={4} key={index}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" fontWeight="bold" mb={1}>
