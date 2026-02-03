@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -22,6 +22,7 @@ import {
   Menu,
   Icon,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,6 +35,32 @@ import {
   Schedule as ExpiringIcon,
   Error as ExpiredIcon,
 } from '@mui/icons-material';
+import { supabase } from '../lib/supabase';
+
+// Database interface
+interface LicenseDB {
+  id: string;
+  name: string;
+  category: string;
+  license_number: string | null;
+  issuing_authority: string | null;
+  issue_date: string | null;
+  expiry_date: string | null;
+  validity_period: string | null;
+  status: string;
+  description: string | null;
+  attached_document: string | null;
+  renewal_process: string | null;
+  responsible_person: string | null;
+  reminder_days: number;
+  last_renewal_date: string | null;
+  renewal_cost: string | null;
+  documents_link: string | null;
+  hospital_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface License {
   id: string;
@@ -57,367 +84,57 @@ interface License {
   updatedAt: string;
 }
 
-// Comprehensive list of licenses and statutory requirements for Hope Hospital
-const DEFAULT_LICENSES: License[] = [
-  // MEDICAL LICENSES
-  {
-    id: 'med_001',
-    name: 'Hospital Registration Certificate',
-    category: 'Medical',
-    licenseNumber: 'HOPE/REG/2024/001',
-    issuingAuthority: 'Directorate of Health Services, Maharashtra',
-    issueDate: '2024-01-15',
-    expiryDate: '2029-01-14',
-    validityPeriod: '5 Years',
-    status: 'Valid',
-    description: 'Primary hospital registration certificate under Maharashtra Nursing Homes Registration Act',
-    renewalProcess: 'Submit renewal application 3 months before expiry with updated documents',
-    responsiblePerson: 'Dr. Murali BK',
-    reminderDays: 90,
-    renewalCost: '₹50,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'med_002',
-    name: 'Clinical Establishment License',
-    category: 'Medical',
-    licenseNumber: 'CEA/HOPE/2024/015',
-    issuingAuthority: 'Clinical Establishments Authority, Maharashtra',
-    issueDate: '2024-02-01',
-    expiryDate: '2027-01-31',
-    validityPeriod: '3 Years',
-    status: 'Valid',
-    description: 'Clinical Establishment Act license for medical practice and patient care',
-    renewalProcess: 'Online application through CEA portal with compliance certificate',
-    responsiblePerson: 'Viji Murali',
-    reminderDays: 90,
-    renewalCost: '₹25,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'med_003',
-    name: 'Drug License (Retail)',
-    category: 'Medical',
-    licenseNumber: 'DL/HOPE/2024/R/032',
-    issuingAuthority: 'Food & Drug Administration, Maharashtra',
-    issueDate: '2024-04-01',
-    expiryDate: '2026-03-31',
-    validityPeriod: '2 Years',
-    status: 'Expiring Soon',
-    description: 'Drug license for retail sale and dispensing of medicines',
-    renewalProcess: 'Submit Form 19 with inspection certificate and fees',
-    responsiblePerson: 'Abhishek (Pharmacist)',
-    reminderDays: 60,
-    renewalCost: '₹15,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'med_004',
-    name: 'X-Ray License',
-    category: 'Medical',
-    licenseNumber: 'RAD/HOPE/2024/009',
-    issuingAuthority: 'Atomic Energy Regulatory Board (AERB)',
-    issueDate: '2024-03-15',
-    expiryDate: '2027-03-14',
-    validityPeriod: '3 Years',
-    status: 'Valid',
-    description: 'Radiation safety license for X-ray and imaging equipment operation',
-    renewalProcess: 'AERB inspection and compliance certificate required',
-    responsiblePerson: 'Nitin Bawane (Radiology Technician)',
-    reminderDays: 120,
-    renewalCost: '₹30,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'med_005',
-    name: 'Biomedical Waste Authorization',
-    category: 'Medical',
-    licenseNumber: 'BMW/HOPE/2024/045',
-    issuingAuthority: 'Maharashtra Pollution Control Board',
-    issueDate: '2024-01-01',
-    expiryDate: '2026-12-31',
-    validityPeriod: '3 Years',
-    status: 'Valid',
-    description: 'Authorization for biomedical waste generation, collection, and disposal',
-    renewalProcess: 'Annual returns submission and triennial renewal with MPCB',
-    responsiblePerson: 'Shilpi (Infection Control Nurse)',
-    reminderDays: 90,
-    renewalCost: '₹20,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // FIRE SAFETY LICENSES
-  {
-    id: 'fire_001',
-    name: 'Fire Safety Certificate',
-    category: 'Fire Safety',
-    licenseNumber: 'FSC/HOPE/2024/078',
-    issuingAuthority: 'Chief Fire Officer, Nagpur',
-    issueDate: '2024-06-15',
-    expiryDate: '2025-06-14',
-    validityPeriod: '1 Year',
-    status: 'Expiring Soon',
-    description: 'Fire safety compliance certificate for hospital building and operations',
-    renewalProcess: 'Annual inspection by Fire Department with compliance report',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 45,
-    renewalCost: '₹10,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'fire_002',
-    name: 'Fire NOC for Building',
-    category: 'Fire Safety',
-    licenseNumber: 'NOC/FIRE/2023/234',
-    issuingAuthority: 'Fire Department, Nagpur Municipal Corporation',
-    issueDate: '2023-08-20',
-    expiryDate: '2026-08-19',
-    validityPeriod: '3 Years',
-    status: 'Valid',
-    description: 'Fire No Objection Certificate for hospital building construction and use',
-    renewalProcess: 'Building compliance inspection and structural fire safety audit',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 90,
-    renewalCost: '₹25,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // ENVIRONMENTAL LICENSES
-  {
-    id: 'env_001',
-    name: 'Air Pollution Consent',
-    category: 'Environmental',
-    licenseNumber: 'AIR/HOPE/2024/089',
-    issuingAuthority: 'Maharashtra Pollution Control Board',
-    issueDate: '2024-01-10',
-    expiryDate: '2026-01-09',
-    validityPeriod: '2 Years',
-    status: 'Valid',
-    description: 'Consent for air pollution activities including DG set and incinerator operation',
-    renewalProcess: 'Annual environmental compliance report and stack monitoring',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 60,
-    renewalCost: '₹15,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'env_002',
-    name: 'Water Pollution Consent',
-    category: 'Environmental',
-    licenseNumber: 'WATER/HOPE/2024/067',
-    issuingAuthority: 'Maharashtra Pollution Control Board',
-    issueDate: '2024-02-15',
-    expiryDate: '2026-02-14',
-    validityPeriod: '2 Years',
-    status: 'Valid',
-    description: 'Consent for water pollution activities and wastewater discharge',
-    renewalProcess: 'Water quality monitoring reports and compliance certificate',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 60,
-    renewalCost: '₹12,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // BUILDING LICENSES
-  {
-    id: 'build_001',
-    name: 'Building Use Permission',
-    category: 'Building',
-    licenseNumber: 'BUP/HOPE/2023/156',
-    issuingAuthority: 'Nagpur Municipal Corporation',
-    issueDate: '2023-12-01',
-    expiryDate: 'Permanent',
-    validityPeriod: 'Permanent',
-    status: 'Valid',
-    description: 'Building use permission for hospital and medical facility operations',
-    renewalProcess: 'Structural audit every 10 years for buildings above 15 years',
-    responsiblePerson: 'Dr. Murali BK',
-    reminderDays: 365,
-    renewalCost: 'N/A',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'build_002',
-    name: 'Lift Safety Certificate',
-    category: 'Building',
-    licenseNumber: 'LIFT/HOPE/2024/023',
-    issuingAuthority: 'Directorate of Industrial Safety & Health',
-    issueDate: '2024-07-01',
-    expiryDate: '2025-06-30',
-    validityPeriod: '1 Year',
-    status: 'Expiring Soon',
-    description: 'Annual lift safety inspection and operation certificate',
-    renewalProcess: 'Annual inspection by registered lift inspector',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 30,
-    renewalCost: '₹8,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // BUSINESS LICENSES
-  {
-    id: 'bus_001',
-    name: 'GST Registration Certificate',
-    category: 'Business',
-    licenseNumber: '27AABCH1234C1Z5',
-    issuingAuthority: 'Goods & Services Tax Department',
-    issueDate: '2023-07-01',
-    expiryDate: 'Permanent',
-    validityPeriod: 'Permanent',
-    status: 'Valid',
-    description: 'GST registration for hospital services and medical equipment',
-    renewalProcess: 'Annual returns filing and quarterly compliance',
-    responsiblePerson: 'K J Shashank (HR & Finance)',
-    reminderDays: 30,
-    renewalCost: 'N/A',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'bus_002',
-    name: 'Professional Tax Registration',
-    category: 'Business',
-    licenseNumber: 'PT/HOPE/2024/891',
-    issuingAuthority: 'Commercial Tax Department, Maharashtra',
-    issueDate: '2024-04-01',
-    expiryDate: '2025-03-31',
-    validityPeriod: '1 Year',
-    status: 'Valid',
-    description: 'Professional tax registration for hospital and staff',
-    renewalProcess: 'Annual renewal with payment of professional tax',
-    responsiblePerson: 'K J Shashank (HR & Finance)',
-    reminderDays: 45,
-    renewalCost: '₹2,500',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'bus_003',
-    name: 'ESI Registration',
-    category: 'Business',
-    licenseNumber: '40000123456789000',
-    issuingAuthority: 'Employees State Insurance Corporation',
-    issueDate: '2023-08-15',
-    expiryDate: 'Permanent',
-    validityPeriod: 'Permanent',
-    status: 'Valid',
-    description: 'ESI registration for employee medical benefits and insurance',
-    renewalProcess: 'Monthly contribution and annual compliance',
-    responsiblePerson: 'K J Shashank (HR & Finance)',
-    reminderDays: 30,
-    renewalCost: 'Monthly Contribution',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'bus_004',
-    name: 'PF Registration',
-    category: 'Business',
-    licenseNumber: 'MH/NGP/0012345/000',
-    issuingAuthority: 'Employees Provident Fund Organisation',
-    issueDate: '2023-08-15',
-    expiryDate: 'Permanent',
-    validityPeriod: 'Permanent',
-    status: 'Valid',
-    description: 'Provident Fund registration for employee retirement benefits',
-    renewalProcess: 'Monthly PF contribution and annual compliance',
-    responsiblePerson: 'K J Shashank (HR & Finance)',
-    reminderDays: 30,
-    renewalCost: 'Monthly Contribution',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // PROFESSIONAL LICENSES
-  {
-    id: 'prof_001',
-    name: 'Dr. Murali BK - Medical Registration',
-    category: 'Professional',
-    licenseNumber: 'MCI-12345-2020',
-    issuingAuthority: 'Maharashtra Medical Council',
-    issueDate: '2020-01-15',
-    expiryDate: '2025-01-14',
-    validityPeriod: '5 Years',
-    status: 'Expiring Soon',
-    description: 'Medical Council registration for Dr. Murali BK - Orthopedic Surgeon',
-    renewalProcess: 'CME credits completion and renewal application',
-    responsiblePerson: 'Dr. Murali BK',
-    reminderDays: 90,
-    renewalCost: '₹5,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-  {
-    id: 'prof_002',
-    name: 'Dr. Ruby Ammon - Medical Registration',
-    category: 'Professional',
-    licenseNumber: 'MCI-67890-2018',
-    issuingAuthority: 'Maharashtra Medical Council',
-    issueDate: '2018-03-20',
-    expiryDate: '2026-03-19',
-    validityPeriod: '5 Years',
-    status: 'Valid',
-    description: 'Medical Council registration for Dr. Ruby Ammon - Medical Director',
-    renewalProcess: 'CME credits completion and renewal application',
-    responsiblePerson: 'Dr. Ruby Ammon',
-    reminderDays: 90,
-    renewalCost: '₹5,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-
-  // EQUIPMENT LICENSES
-  {
-    id: 'equip_001',
-    name: 'Boiler Inspection Certificate',
-    category: 'Equipment',
-    licenseNumber: 'BOILER/HOPE/2024/007',
-    issuingAuthority: 'Chief Inspector of Boilers, Maharashtra',
-    issueDate: '2024-09-01',
-    expiryDate: '2025-08-31',
-    validityPeriod: '1 Year',
-    status: 'Valid',
-    description: 'Annual boiler inspection and safety certificate for steam sterilization',
-    renewalProcess: 'Annual inspection by registered boiler inspector',
-    responsiblePerson: 'Suraj Rajput (Infrastructure)',
-    reminderDays: 45,
-    renewalCost: '₹12,000',
-    documentsLink: '',
-    createdAt: '2026-02-03T10:00:00.000Z',
-    updatedAt: '2026-02-03T10:00:00.000Z',
-  },
-];
+// Helper function to convert DB record to License
+const dbToLicense = (db: LicenseDB): License => ({
+  id: db.id,
+  name: db.name,
+  category: db.category as License['category'],
+  licenseNumber: db.license_number || '',
+  issuingAuthority: db.issuing_authority || '',
+  issueDate: db.issue_date || '',
+  expiryDate: db.expiry_date || '',
+  validityPeriod: db.validity_period || '',
+  status: db.status as License['status'],
+  description: db.description || '',
+  attachedDocument: db.attached_document || undefined,
+  renewalProcess: db.renewal_process || '',
+  responsiblePerson: db.responsible_person || '',
+  reminderDays: db.reminder_days,
+  lastRenewalDate: db.last_renewal_date || undefined,
+  renewalCost: db.renewal_cost || undefined,
+  documentsLink: db.documents_link || undefined,
+  createdAt: db.created_at,
+  updatedAt: db.updated_at,
+});
 
 export default function LicensesMasterPage() {
-  const [licenses, setLicenses] = useState<License[]>(DEFAULT_LICENSES);
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch licenses from Supabase
+  useEffect(() => {
+    const fetchLicenses = async () => {
+      try {
+        const { data, error } = await (supabase.from('licenses') as any)
+          .select('*')
+          .eq('is_active', true)
+          .order('category', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching licenses:', error);
+        } else {
+          const mappedLicenses = (data as LicenseDB[] || []).map(dbToLicense);
+          setLicenses(mappedLicenses);
+        }
+      } catch (err) {
+        console.error('Error fetching licenses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLicenses();
+  }, []);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -476,18 +193,43 @@ export default function LicensesMasterPage() {
     }
   };
 
-  const handleAddLicense = () => {
-    const newLicense: License = {
-      id: `license_${Date.now()}`,
-      ...(licenseForm as Omit<License, 'id' | 'createdAt' | 'updatedAt'>),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  const handleAddLicense = async () => {
+    try {
+      const { data, error } = await (supabase.from('licenses') as any)
+        .insert({
+          name: licenseForm.name,
+          category: licenseForm.category,
+          license_number: licenseForm.licenseNumber,
+          issuing_authority: licenseForm.issuingAuthority,
+          issue_date: licenseForm.issueDate || null,
+          expiry_date: licenseForm.expiryDate,
+          validity_period: licenseForm.validityPeriod,
+          status: licenseForm.status,
+          description: licenseForm.description,
+          renewal_process: licenseForm.renewalProcess,
+          responsible_person: licenseForm.responsiblePerson,
+          reminder_days: licenseForm.reminderDays,
+          renewal_cost: licenseForm.renewalCost,
+          documents_link: licenseForm.documentsLink,
+        })
+        .select()
+        .single();
 
-    setLicenses([...licenses, newLicense]);
-    resetForm();
-    setIsAddDialogOpen(false);
-    setSnackbar({ open: true, message: 'License added successfully', severity: 'success' });
+      if (error) {
+        console.error('Error adding license:', error);
+        setSnackbar({ open: true, message: 'Failed to add license', severity: 'error' });
+        return;
+      }
+
+      const newLicense = dbToLicense(data as LicenseDB);
+      setLicenses([...licenses, newLicense]);
+      resetForm();
+      setIsAddDialogOpen(false);
+      setSnackbar({ open: true, message: 'License added successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error adding license:', err);
+      setSnackbar({ open: true, message: 'Failed to add license', severity: 'error' });
+    }
   };
 
   const handleEditLicense = (license: License) => {
@@ -497,19 +239,50 @@ export default function LicensesMasterPage() {
     setMenuAnchor(null);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!selectedLicense) return;
 
-    const updatedLicense = {
-      ...selectedLicense,
-      ...licenseForm,
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const { error } = await (supabase.from('licenses') as any)
+        .update({
+          name: licenseForm.name,
+          category: licenseForm.category,
+          license_number: licenseForm.licenseNumber,
+          issuing_authority: licenseForm.issuingAuthority,
+          issue_date: licenseForm.issueDate || null,
+          expiry_date: licenseForm.expiryDate,
+          validity_period: licenseForm.validityPeriod,
+          status: licenseForm.status,
+          description: licenseForm.description,
+          renewal_process: licenseForm.renewalProcess,
+          responsible_person: licenseForm.responsiblePerson,
+          reminder_days: licenseForm.reminderDays,
+          renewal_cost: licenseForm.renewalCost,
+          documents_link: licenseForm.documentsLink,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedLicense.id);
 
-    setLicenses(licenses.map(l => l.id === selectedLicense.id ? updatedLicense : l));
-    setIsEditDialogOpen(false);
-    resetForm();
-    setSnackbar({ open: true, message: 'License updated successfully', severity: 'success' });
+      if (error) {
+        console.error('Error updating license:', error);
+        setSnackbar({ open: true, message: 'Failed to update license', severity: 'error' });
+        return;
+      }
+
+      const updatedLicense = {
+        ...selectedLicense,
+        ...licenseForm,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setLicenses(licenses.map(l => l.id === selectedLicense.id ? updatedLicense : l));
+      setIsEditDialogOpen(false);
+      resetForm();
+      setSnackbar({ open: true, message: 'License updated successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error updating license:', err);
+      setSnackbar({ open: true, message: 'Failed to update license', severity: 'error' });
+    }
   };
 
   const handleDeleteLicense = (license: License) => {
@@ -518,12 +291,28 @@ export default function LicensesMasterPage() {
     setMenuAnchor(null);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedLicense) return;
 
-    setLicenses(licenses.filter(l => l.id !== selectedLicense.id));
-    setIsDeleteDialogOpen(false);
-    setSnackbar({ open: true, message: 'License deleted successfully', severity: 'success' });
+    try {
+      // Soft delete - set is_active to false
+      const { error } = await (supabase.from('licenses') as any)
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', selectedLicense.id);
+
+      if (error) {
+        console.error('Error deleting license:', error);
+        setSnackbar({ open: true, message: 'Failed to delete license', severity: 'error' });
+        return;
+      }
+
+      setLicenses(licenses.filter(l => l.id !== selectedLicense.id));
+      setIsDeleteDialogOpen(false);
+      setSnackbar({ open: true, message: 'License deleted successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error deleting license:', err);
+      setSnackbar({ open: true, message: 'Failed to delete license', severity: 'error' });
+    }
   };
 
   const resetForm = () => {
@@ -646,9 +435,28 @@ export default function LicensesMasterPage() {
         </Box>
       </Box>
 
+      {/* Loading State */}
+      {loading && (
+        <Box display="flex" justifyContent="center" py={6}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {/* Licenses Grid */}
-      <Box display="flex" gap={3} flexWrap="wrap">
-        {licenses.map(license => (
+      {!loading && (
+        <Box display="flex" gap={3} flexWrap="wrap">
+          {licenses.length === 0 ? (
+            <Box textAlign="center" py={6} width="100%">
+              <LicenseIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                No licenses found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Click "Add License" to create your first license.
+              </Typography>
+            </Box>
+          ) : (
+            licenses.map(license => (
           <Box flex="1" minWidth="400px" key={license.id}>
             <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
@@ -798,8 +606,10 @@ export default function LicensesMasterPage() {
               </CardContent>
             </Card>
           </Box>
-        ))}
-      </Box>
+            ))
+          )}
+        </Box>
+      )}
 
       {/* Actions Menu */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>

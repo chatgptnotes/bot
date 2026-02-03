@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -21,7 +21,7 @@ import {
   IconButton,
   Menu,
   Icon,
-  // LinearProgress removed - unused import
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,6 +33,36 @@ import {
   Visibility as ViewIcon,
   Update as UpdateIcon,
 } from '@mui/icons-material';
+import { supabase } from '../lib/supabase';
+
+// Database interface
+interface HospitalManualDB {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  version: string;
+  author: string | null;
+  department: string | null;
+  created_date: string | null;
+  last_updated: string | null;
+  next_review_date: string | null;
+  status: string;
+  approved_by: string | null;
+  file_url: string | null;
+  file_size: string | null;
+  page_count: number | null;
+  nabh_relevant: boolean;
+  nabh_standards: string[] | null;
+  tags: string[] | null;
+  review_frequency: string;
+  documents_link: string | null;
+  distribution_list: string[] | null;
+  implementation_date: string | null;
+  training_required: boolean;
+  hospital_id: string;
+  is_active: boolean;
+}
 
 interface HospitalManual {
   id: string;
@@ -60,172 +90,61 @@ interface HospitalManual {
   trainingRequired: boolean;
 }
 
-const DEFAULT_MANUALS: HospitalManual[] = [
-  {
-    id: 'manual1',
-    title: 'Hospital Infection Control Manual',
-    description: 'Comprehensive guidelines for infection prevention and control across all hospital departments',
-    category: 'Infection Control',
-    version: '3.2',
-    author: 'Shilpi',
-    department: 'Infection Control',
-    createdDate: '2024-01-15',
-    lastUpdated: '2026-01-15',
-    nextReviewDate: '2026-07-15',
-    status: 'Current',
-    approvedBy: 'Dr. Shiraz Khan',
-    fileSize: '2.4 MB',
-    pageCount: 156,
-    nabhRelevant: true,
-    nabhStandards: ['HIC.1', 'HIC.2', 'HIC.3', 'HIC.4'],
-    tags: ['Hand Hygiene', 'PPE', 'Sterilization', 'Isolation Protocols'],
-    reviewFrequency: 'Half-yearly',
-    distributionList: ['All Clinical Staff', 'Housekeeping', 'Security'],
-    implementationDate: '2024-02-01',
-    trainingRequired: true,
-  },
-  {
-    id: 'manual2',
-    title: 'Emergency Response & Disaster Management Manual',
-    description: 'Protocols for emergency response, disaster preparedness, and crisis management',
-    category: 'Emergency Response',
-    version: '2.1',
-    author: 'Gaurav Agrawal',
-    department: 'Administration',
-    createdDate: '2024-03-01',
-    lastUpdated: '2025-12-01',
-    nextReviewDate: '2026-06-01',
-    status: 'Current',
-    approvedBy: 'Dr. Murali BK',
-    fileSize: '1.8 MB',
-    pageCount: 98,
-    nabhRelevant: true,
-    nabhStandards: ['FMS.1', 'FMS.2', 'PSQ.1'],
-    tags: ['Fire Safety', 'Code Blue', 'Evacuation', 'Mass Casualty'],
-    reviewFrequency: 'Yearly',
-    distributionList: ['All Staff', 'Security', 'Maintenance'],
-    implementationDate: '2024-04-01',
-    trainingRequired: true,
-  },
-  {
-    id: 'manual3',
-    title: 'Quality Management System Manual',
-    description: 'NABH quality management system policies, procedures, and continuous improvement processes',
-    category: 'Quality Management',
-    version: '4.0',
-    author: 'Sonali',
-    department: 'Quality Department',
-    createdDate: '2023-06-01',
-    lastUpdated: '2026-01-01',
-    nextReviewDate: '2026-12-31',
-    status: 'Current',
-    approvedBy: 'Dr. Shiraz Khan',
-    fileSize: '3.1 MB',
-    pageCount: 245,
-    nabhRelevant: true,
-    nabhStandards: ['CQI.1', 'CQI.2', 'CQI.3', 'PSQ.2', 'PSQ.3'],
-    tags: ['NABH Standards', 'Quality Indicators', 'PDCA Cycle', 'Risk Management'],
-    reviewFrequency: 'Yearly',
-    distributionList: ['Quality Team', 'Department Heads', 'Senior Management'],
-    implementationDate: '2023-07-01',
-    trainingRequired: true,
-  },
-  {
-    id: 'manual4',
-    title: 'Medication Management & Safety Manual',
-    description: 'Comprehensive guide for safe medication practices, storage, and administration',
-    category: 'Clinical Protocols',
-    version: '2.5',
-    author: 'Abhishek',
-    department: 'Pharmacy',
-    createdDate: '2024-05-01',
-    lastUpdated: '2025-11-15',
-    nextReviewDate: '2026-05-15',
-    status: 'Current',
-    approvedBy: 'Dr. Sachin',
-    fileSize: '1.6 MB',
-    pageCount: 112,
-    nabhRelevant: true,
-    nabhStandards: ['PCC.8', 'PCC.9', 'MOM.2'],
-    tags: ['High Alert Drugs', '5 Rights', 'Drug Storage', 'Adverse Events'],
-    reviewFrequency: 'Half-yearly',
-    distributionList: ['Nursing Staff', 'Pharmacy', 'Doctors'],
-    implementationDate: '2024-06-01',
-    trainingRequired: true,
-  },
-  {
-    id: 'manual5',
-    title: 'Human Resources Policy Manual',
-    description: 'HR policies, procedures, staff recruitment, training, and performance management',
-    category: 'HR & Admin',
-    version: '1.8',
-    author: 'K J Shashank',
-    department: 'Human Resources',
-    createdDate: '2024-02-01',
-    lastUpdated: '2025-08-01',
-    nextReviewDate: '2026-08-01',
-    status: 'Under Review',
-    approvedBy: 'Viji Murali',
-    fileSize: '2.2 MB',
-    pageCount: 134,
-    nabhRelevant: true,
-    nabhStandards: ['HRM.1', 'HRM.2', 'HRM.3'],
-    tags: ['Recruitment', 'Training', 'Performance', 'Disciplinary'],
-    reviewFrequency: 'Yearly',
-    distributionList: ['HR Team', 'Department Heads', 'Management'],
-    implementationDate: '2024-03-01',
-    trainingRequired: false,
-  },
-  {
-    id: 'manual6',
-    title: 'Medical Records Management Manual',
-    description: 'Guidelines for medical record creation, maintenance, storage, and retrieval',
-    category: 'Clinical Protocols',
-    version: '3.0',
-    author: 'Azhar',
-    department: 'Medical Records',
-    createdDate: '2024-04-01',
-    lastUpdated: '2026-01-20',
-    nextReviewDate: '2026-10-20',
-    status: 'Current',
-    approvedBy: 'Dr. Shiraz Khan',
-    fileSize: '1.9 MB',
-    pageCount: 87,
-    nabhRelevant: true,
-    nabhStandards: ['MOM.1', 'MOM.3', 'MOM.4'],
-    tags: ['Documentation', 'Record Retention', 'Confidentiality', 'Audit Trail'],
-    reviewFrequency: 'Half-yearly',
-    distributionList: ['MRD Staff', 'Clinical Staff', 'Quality Team'],
-    implementationDate: '2024-05-01',
-    trainingRequired: true,
-  },
-  {
-    id: 'manual7',
-    title: 'Patient Safety & Risk Management Manual',
-    description: 'Comprehensive patient safety protocols, incident reporting, and risk mitigation strategies',
-    category: 'Safety & Security',
-    version: '2.3',
-    author: 'Sonali',
-    department: 'Quality Department',
-    createdDate: '2024-01-01',
-    lastUpdated: '2025-10-01',
-    nextReviewDate: '2026-04-01',
-    status: 'Current',
-    approvedBy: 'Dr. Murali BK',
-    fileSize: '2.7 MB',
-    pageCount: 178,
-    nabhRelevant: true,
-    nabhStandards: ['PSQ.1', 'PSQ.2', 'PSQ.3', 'PSQ.4'],
-    tags: ['Patient Safety', 'Risk Assessment', 'Incident Reporting', 'Root Cause Analysis'],
-    reviewFrequency: 'Half-yearly',
-    distributionList: ['All Clinical Staff', 'Quality Team', 'Management'],
-    implementationDate: '2024-02-01',
-    trainingRequired: true,
-  },
-];
+// Helper function to convert DB record to HospitalManual
+const dbToManual = (db: HospitalManualDB): HospitalManual => ({
+  id: db.id,
+  title: db.title,
+  description: db.description || '',
+  category: db.category as HospitalManual['category'],
+  version: db.version,
+  author: db.author || '',
+  department: db.department || '',
+  createdDate: db.created_date || '',
+  lastUpdated: db.last_updated || '',
+  nextReviewDate: db.next_review_date || '',
+  status: db.status as HospitalManual['status'],
+  approvedBy: db.approved_by || '',
+  fileUrl: db.file_url || undefined,
+  fileSize: db.file_size || undefined,
+  pageCount: db.page_count || undefined,
+  nabhRelevant: db.nabh_relevant,
+  nabhStandards: db.nabh_standards || [],
+  tags: db.tags || [],
+  reviewFrequency: db.review_frequency as HospitalManual['reviewFrequency'],
+  documentsLink: db.documents_link || undefined,
+  distributionList: db.distribution_list || [],
+  implementationDate: db.implementation_date || undefined,
+  trainingRequired: db.training_required,
+});
 
 export default function HospitalManualsMasterPage() {
-  const [manuals, setManuals] = useState<HospitalManual[]>(DEFAULT_MANUALS);
+  const [manuals, setManuals] = useState<HospitalManual[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch manuals from Supabase
+  useEffect(() => {
+    const fetchManuals = async () => {
+      try {
+        const { data, error } = await (supabase.from('hospital_manuals') as any)
+          .select('*')
+          .eq('is_active', true)
+          .order('title', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching manuals:', error);
+        } else {
+          const mappedManuals = (data as HospitalManualDB[] || []).map(dbToManual);
+          setManuals(mappedManuals);
+        }
+      } catch (err) {
+        console.error('Error fetching manuals:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchManuals();
+  }, []);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -257,21 +176,54 @@ export default function HospitalManualsMasterPage() {
   const [nabhStandardsText, setNabhStandardsText] = useState('');
   const [distributionText, setDistributionText] = useState('');
 
-  const handleAddManual = () => {
-    const newManual: HospitalManual = {
-      id: `manual_${Date.now()}`,
-      ...(manualForm as Omit<HospitalManual, 'id'>),
-      tags: tagsText.split(',').map(tag => tag.trim()).filter(tag => tag),
-      nabhStandards: nabhStandardsText.split(',').map(std => std.trim()).filter(std => std),
-      distributionList: distributionText.split(',').map(dist => dist.trim()).filter(dist => dist),
-      lastUpdated: new Date().toISOString().split('T')[0],
-      nextReviewDate: getNextReviewDate(manualForm.reviewFrequency || 'Yearly'),
-    };
+  const handleAddManual = async () => {
+    const tags = tagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+    const nabhStandards = nabhStandardsText.split(',').map(std => std.trim()).filter(std => std);
+    const distributionList = distributionText.split(',').map(dist => dist.trim()).filter(dist => dist);
+    const lastUpdated = new Date().toISOString().split('T')[0];
+    const nextReviewDate = getNextReviewDate(manualForm.reviewFrequency || 'Yearly');
 
-    setManuals([...manuals, newManual]);
-    resetForm();
-    setIsAddDialogOpen(false);
-    setSnackbar({ open: true, message: 'Manual added successfully', severity: 'success' });
+    try {
+      const { data, error } = await (supabase.from('hospital_manuals') as any)
+        .insert({
+          title: manualForm.title,
+          description: manualForm.description,
+          category: manualForm.category,
+          version: manualForm.version,
+          author: manualForm.author,
+          department: manualForm.department,
+          created_date: manualForm.createdDate || new Date().toISOString().split('T')[0],
+          last_updated: lastUpdated,
+          next_review_date: nextReviewDate,
+          status: manualForm.status,
+          approved_by: manualForm.approvedBy,
+          nabh_relevant: manualForm.nabhRelevant,
+          nabh_standards: nabhStandards,
+          tags: tags,
+          review_frequency: manualForm.reviewFrequency,
+          documents_link: manualForm.documentsLink,
+          distribution_list: distributionList,
+          implementation_date: manualForm.implementationDate,
+          training_required: manualForm.trainingRequired,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding manual:', error);
+        setSnackbar({ open: true, message: 'Failed to add manual', severity: 'error' });
+        return;
+      }
+
+      const newManual = dbToManual(data as HospitalManualDB);
+      setManuals([...manuals, newManual]);
+      resetForm();
+      setIsAddDialogOpen(false);
+      setSnackbar({ open: true, message: 'Manual added successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error adding manual:', err);
+      setSnackbar({ open: true, message: 'Failed to add manual', severity: 'error' });
+    }
   };
 
   const handleEditManual = (manual: HospitalManual) => {
@@ -284,22 +236,63 @@ export default function HospitalManualsMasterPage() {
     setMenuAnchor(null);
   };
 
-  const handleUpdateManual = () => {
+  const handleUpdateManual = async () => {
     if (!selectedManual) return;
 
-    const updatedManual: HospitalManual = {
-      ...selectedManual,
-      ...manualForm,
-      tags: tagsText.split(',').map(tag => tag.trim()).filter(tag => tag),
-      nabhStandards: nabhStandardsText.split(',').map(std => std.trim()).filter(std => std),
-      distributionList: distributionText.split(',').map(dist => dist.trim()).filter(dist => dist),
-      lastUpdated: new Date().toISOString().split('T')[0],
-    } as HospitalManual;
+    const tags = tagsText.split(',').map(tag => tag.trim()).filter(tag => tag);
+    const nabhStandards = nabhStandardsText.split(',').map(std => std.trim()).filter(std => std);
+    const distributionList = distributionText.split(',').map(dist => dist.trim()).filter(dist => dist);
+    const lastUpdated = new Date().toISOString().split('T')[0];
 
-    setManuals(manuals.map(m => m.id === selectedManual.id ? updatedManual : m));
-    resetForm();
-    setIsEditDialogOpen(false);
-    setSnackbar({ open: true, message: 'Manual updated successfully', severity: 'success' });
+    try {
+      const { error } = await (supabase.from('hospital_manuals') as any)
+        .update({
+          title: manualForm.title,
+          description: manualForm.description,
+          category: manualForm.category,
+          version: manualForm.version,
+          author: manualForm.author,
+          department: manualForm.department,
+          created_date: manualForm.createdDate,
+          last_updated: lastUpdated,
+          next_review_date: manualForm.nextReviewDate,
+          status: manualForm.status,
+          approved_by: manualForm.approvedBy,
+          nabh_relevant: manualForm.nabhRelevant,
+          nabh_standards: nabhStandards,
+          tags: tags,
+          review_frequency: manualForm.reviewFrequency,
+          documents_link: manualForm.documentsLink,
+          distribution_list: distributionList,
+          implementation_date: manualForm.implementationDate,
+          training_required: manualForm.trainingRequired,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedManual.id);
+
+      if (error) {
+        console.error('Error updating manual:', error);
+        setSnackbar({ open: true, message: 'Failed to update manual', severity: 'error' });
+        return;
+      }
+
+      const updatedManual: HospitalManual = {
+        ...selectedManual,
+        ...manualForm,
+        tags,
+        nabhStandards,
+        distributionList,
+        lastUpdated,
+      } as HospitalManual;
+
+      setManuals(manuals.map(m => m.id === selectedManual.id ? updatedManual : m));
+      resetForm();
+      setIsEditDialogOpen(false);
+      setSnackbar({ open: true, message: 'Manual updated successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error updating manual:', err);
+      setSnackbar({ open: true, message: 'Failed to update manual', severity: 'error' });
+    }
   };
 
   const handleDeleteManual = (manual: HospitalManual) => {
@@ -308,12 +301,28 @@ export default function HospitalManualsMasterPage() {
     setMenuAnchor(null);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedManual) return;
-    
-    setManuals(manuals.filter(m => m.id !== selectedManual.id));
-    setIsDeleteDialogOpen(false);
-    setSnackbar({ open: true, message: 'Manual deleted successfully', severity: 'success' });
+
+    try {
+      // Soft delete - set is_active to false
+      const { error } = await (supabase.from('hospital_manuals') as any)
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', selectedManual.id);
+
+      if (error) {
+        console.error('Error deleting manual:', error);
+        setSnackbar({ open: true, message: 'Failed to delete manual', severity: 'error' });
+        return;
+      }
+
+      setManuals(manuals.filter(m => m.id !== selectedManual.id));
+      setIsDeleteDialogOpen(false);
+      setSnackbar({ open: true, message: 'Manual deleted successfully', severity: 'success' });
+    } catch (err) {
+      console.error('Error deleting manual:', err);
+      setSnackbar({ open: true, message: 'Failed to delete manual', severity: 'error' });
+    }
   };
 
   const resetForm = () => {
@@ -459,9 +468,28 @@ export default function HospitalManualsMasterPage() {
         </Card>
       </Box>
 
+      {/* Loading State */}
+      {loading && (
+        <Box display="flex" justifyContent="center" py={6}>
+          <CircularProgress />
+        </Box>
+      )}
+
       {/* Manuals Grid */}
-      <Box display="flex" gap={3} flexWrap="wrap">
-        {manuals.map(manual => (
+      {!loading && (
+        <Box display="flex" gap={3} flexWrap="wrap">
+          {manuals.length === 0 ? (
+            <Box textAlign="center" py={6} width="100%">
+              <ManualIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                No manuals found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Click "Add Manual" to create your first hospital manual.
+              </Typography>
+            </Box>
+          ) : (
+            manuals.map(manual => (
           <Box flex="1" minWidth="400px" key={manual.id}>
             <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flexGrow: 1 }}>
@@ -609,8 +637,10 @@ export default function HospitalManualsMasterPage() {
               </CardContent>
             </Card>
           </Box>
-        ))}
-      </Box>
+            ))
+          )}
+        </Box>
+      )}
 
       {/* Actions Menu */}
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
