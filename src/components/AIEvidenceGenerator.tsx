@@ -31,14 +31,13 @@ import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import CardMedia from '@mui/material/CardMedia';
-import Autocomplete from '@mui/material/Autocomplete';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { useNABHStore } from '../store/nabhStore';
 import { getHospitalInfo, getNABHCoordinator, NABH_ASSESSOR_PROMPT } from '../config/hospitalConfig';
-import { getClaudeApiKey, getGeminiApiKey, supabase } from '../lib/supabase';
+import { getClaudeApiKey, getGeminiApiKey } from '../lib/supabase';
 import {
   generateInfographic,
   svgToDataUrl,
@@ -147,15 +146,15 @@ Use this HTML template structure:
   <table class="info-table">
     <tr><th>Document No</th><td>[DOC-XXX-001]</td><th>Version</th><td>1.0</td></tr>
     <tr><th>Department</th><td>[Department]</td><th>Category</th><td>[Policy/SOP/Record]</td></tr>
-    <tr><th>Effective Date</th><td>[DD/MM/YYYY]</td><th>Review Date</th><td>[DD/MM/YYYY]</td></tr>
+    <tr><th>Effective Date</th><td>29/12/2025</td><th>Review Date</th><td>29/12/2025</td></tr>
   </table>
 
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name:<br>Designation:<br>Date:<br><br>Signature:</td>
-      <td>Name: ${config.qualityCoordinator}<br>Designation: ${config.qualityCoordinatorDesignation}<br>Date:<br><br>Signature:</td>
+      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
     </tr>
   </table>
 
@@ -303,7 +302,7 @@ function updateHTMLWithText(
   _originalHTML: string,
   editedText: string,
   hospitalConfig: { name: string; address: string; qualityCoordinator: string; qualityCoordinatorDesignation: string; phone: string; email: string; website: string },
-  signatories?: SignatoryData
+  _signatories?: SignatoryData
 ): string {
   // Parse the edited text to extract sections
   const lines = editedText.split('\n');
@@ -381,7 +380,7 @@ function updateHTMLWithText(
 
   <table class="info-table">
     <tr><th>Document No</th><td>DOC-001</td><th>Version</th><td>1.0</td></tr>
-    <tr><th>Effective Date</th><td>${new Date().toLocaleDateString()}</td><th>Review Date</th><td>${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString()}</td></tr>
+    <tr><th>Effective Date</th><td>29/12/2025</td><th>Review Date</th><td>29/12/2025</td></tr>
   </table>
 
   ${sectionHTML}
@@ -389,9 +388,9 @@ function updateHTMLWithText(
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name: ${signatories?.preparedBy?.name || ''}<br>Designation: ${signatories?.preparedBy?.designation || ''}<br>Date: ${signatories?.preparedBy?.date || ''}<br><br>Signature:</td>
-      <td>Name: ${signatories?.reviewedBy?.name || ''}<br>Designation: ${signatories?.reviewedBy?.designation || ''}<br>Date: ${signatories?.reviewedBy?.date || ''}<br><br>Signature:</td>
-      <td>Name: ${signatories?.approvedBy?.name || hospitalConfig.qualityCoordinator}<br>Designation: ${signatories?.approvedBy?.designation || hospitalConfig.qualityCoordinatorDesignation}<br>Date: ${signatories?.approvedBy?.date || ''}<br><br>Signature:</td>
+      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
     </tr>
   </table>
 
@@ -578,33 +577,11 @@ export default function AIEvidenceGenerator() {
   const [editablePreviewIndex, setEditablePreviewIndex] = useState<number | null>(null);
   const editableIframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Employee dropdown state for signatories
-  const [employees, setEmployees] = useState<{id: string, name: string, designation: string}[]>([]);
-  const [preparedBy, setPreparedBy] = useState({ name: '', designation: '', date: '' });
-  const [reviewedBy, setReviewedBy] = useState({ name: '', designation: '', date: '' });
-  const [approvedBy, setApprovedBy] = useState({ name: '', designation: '', date: '' });
-
-  // Fetch employees from Supabase on mount
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from('nabh_team_members')
-        .select('id, name, designation')
-        .eq('is_active', true)
-        .order('name');
-      if (data && !error) {
-        // Type assertion for employee data
-        const employeeData = data as unknown as {id: string, name: string, designation: string}[];
-        setEmployees(employeeData);
-        // Set default approved by to NABH coordinator if available
-        const coordinator = employeeData.find(e => e.designation?.toLowerCase().includes('nabh coordinator'));
-        if (coordinator) {
-          setApprovedBy({ name: coordinator.name, designation: coordinator.designation, date: new Date().toISOString().split('T')[0] });
-        }
-      }
-    };
-    fetchEmployees();
-  }, []);
+  // Fixed static signatories for all documents - Date: 29 December 2025
+  const fixedDate = '29/12/2025';
+  const preparedBy = { name: 'Sonali Kakde', designation: 'Clinical Audit Coordinator', date: fixedDate };
+  const reviewedBy = { name: 'Gaurav Agrawal', designation: 'Hospital Administrator', date: fixedDate };
+  const approvedBy = { name: 'Dr. Shiraz Khan', designation: 'NABH Coordinator / Administrator', date: fixedDate };
 
   // Auto-populate from store if navigated from ObjectiveDetailPage
   useEffect(() => {
@@ -825,13 +802,17 @@ export default function AIEvidenceGenerator() {
         });
       }
 
-      if (dataContext) {
-        dataContext += '\n\nCRITICAL INSTRUCTIONS:';
-        dataContext += '\n1. Use EXACT patient names, Visit IDs, admission dates, and discharge dates from the data above.';
-        dataContext += '\n2. For PREPARED BY section: Use first staff member name and their designation from the staff data above.';
-        dataContext += '\n3. For REVIEWED BY section: Use second staff member name (preferably Head/Senior role) and their designation.';
-        dataContext += '\n4. Do NOT use placeholder text like "[PREPARED BY NAME]", "[REVIEWED BY NAME]", or "John Doe".';
-        dataContext += '\n5. Fill ALL name fields with actual names from the database provided above.';
+      // Always add signatory and date instructions
+      dataContext += '\n\nCRITICAL SIGNATORY & DATE INSTRUCTIONS:';
+      dataContext += '\n1. For PREPARED BY section: ALWAYS use "Sonali Kakde" with designation "Clinical Audit Coordinator" and date "29/12/2025".';
+      dataContext += '\n2. For REVIEWED BY section: ALWAYS use "Gaurav Agrawal" with designation "Hospital Administrator" and date "29/12/2025".';
+      dataContext += '\n3. For APPROVED BY section: ALWAYS use "Dr. Shiraz Khan" with designation "NABH Coordinator / Administrator" and date "29/12/2025".';
+      dataContext += '\n4. For Effective Date: ALWAYS use "29/12/2025". For Review Date: ALWAYS use "29/12/2025".';
+      dataContext += '\n5. Do NOT use placeholder text like "[PREPARED BY NAME]", "[REVIEWED BY NAME]", "[DD/MM/YYYY]", or "John Doe".';
+      dataContext += '\n6. Do NOT use any other names or dates for signatories - only use the exact names and dates specified above.';
+      dataContext += '\n7. IMPORTANT: Any register, log, record, or data table MUST have AT LEAST 15 ROWS of realistic sample data. Generate complete filled data, not just 3-4 rows.';
+      if (relevantData.patients && relevantData.patients.length > 0) {
+        dataContext += '\n8. Use EXACT patient names, Visit IDs, admission dates, and discharge dates from the patient data above.';
       }
 
       // Build NABH objective info for the document header
@@ -985,17 +966,6 @@ Generate complete, ready-to-use content/template for this evidence in ENGLISH ON
         content: updateHTMLWithText(updated[index].content, newText, hospitalConfig, signatories),
       };
       return updated;
-    });
-  };
-
-  // Apply signatories to all generated documents
-  const applySignatoriesToDocuments = () => {
-    const signatories: SignatoryData = { preparedBy, reviewedBy, approvedBy };
-    setGeneratedContents(prev => {
-      return prev.map(gc => ({
-        ...gc,
-        content: updateHTMLWithText(gc.content, gc.editableText, hospitalConfig, signatories),
-      }));
     });
   };
 
@@ -1786,139 +1756,6 @@ ${trimmed}
                         <Typography variant="body2">{saveMessage}</Typography>
                       </Alert>
                     )}
-
-                    {/* Document Signatories Section */}
-                    <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
-                      <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Icon color="primary">badge</Icon>
-                        Document Signatories
-                      </Typography>
-                      <Grid container spacing={2}>
-                        {/* PREPARED BY */}
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>PREPARED BY</Typography>
-                          <Autocomplete
-                            size="small"
-                            options={employees}
-                            getOptionLabel={(option) => option.name}
-                            value={employees.find(e => e.name === preparedBy.name) || null}
-                            onChange={(_, newValue) => {
-                              if (newValue) {
-                                setPreparedBy({ ...preparedBy, name: newValue.name, designation: newValue.designation });
-                              } else {
-                                setPreparedBy({ ...preparedBy, name: '', designation: '' });
-                              }
-                            }}
-                            renderInput={(params) => <TextField {...params} label="Select Name" />}
-                            sx={{ mb: 1 }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Designation"
-                            value={preparedBy.designation}
-                            InputProps={{ readOnly: true }}
-                            sx={{ mb: 1, bgcolor: 'white' }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Date"
-                            type="date"
-                            value={preparedBy.date}
-                            onChange={(e) => setPreparedBy({ ...preparedBy, date: e.target.value })}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ bgcolor: 'white' }}
-                          />
-                        </Grid>
-
-                        {/* REVIEWED BY */}
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>REVIEWED BY</Typography>
-                          <Autocomplete
-                            size="small"
-                            options={employees}
-                            getOptionLabel={(option) => option.name}
-                            value={employees.find(e => e.name === reviewedBy.name) || null}
-                            onChange={(_, newValue) => {
-                              if (newValue) {
-                                setReviewedBy({ ...reviewedBy, name: newValue.name, designation: newValue.designation });
-                              } else {
-                                setReviewedBy({ ...reviewedBy, name: '', designation: '' });
-                              }
-                            }}
-                            renderInput={(params) => <TextField {...params} label="Select Name" />}
-                            sx={{ mb: 1 }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Designation"
-                            value={reviewedBy.designation}
-                            InputProps={{ readOnly: true }}
-                            sx={{ mb: 1, bgcolor: 'white' }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Date"
-                            type="date"
-                            value={reviewedBy.date}
-                            onChange={(e) => setReviewedBy({ ...reviewedBy, date: e.target.value })}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ bgcolor: 'white' }}
-                          />
-                        </Grid>
-
-                        {/* APPROVED BY */}
-                        <Grid size={{ xs: 12, md: 4 }}>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>APPROVED BY</Typography>
-                          <Autocomplete
-                            size="small"
-                            options={employees}
-                            getOptionLabel={(option) => option.name}
-                            value={employees.find(e => e.name === approvedBy.name) || null}
-                            onChange={(_, newValue) => {
-                              if (newValue) {
-                                setApprovedBy({ ...approvedBy, name: newValue.name, designation: newValue.designation });
-                              } else {
-                                setApprovedBy({ ...approvedBy, name: '', designation: '' });
-                              }
-                            }}
-                            renderInput={(params) => <TextField {...params} label="Select Name" />}
-                            sx={{ mb: 1 }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Designation"
-                            value={approvedBy.designation}
-                            InputProps={{ readOnly: true }}
-                            sx={{ mb: 1, bgcolor: 'white' }}
-                          />
-                          <TextField
-                            size="small"
-                            fullWidth
-                            label="Date"
-                            type="date"
-                            value={approvedBy.date}
-                            onChange={(e) => setApprovedBy({ ...approvedBy, date: e.target.value })}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ bgcolor: 'white' }}
-                          />
-                        </Grid>
-                      </Grid>
-                      <Box sx={{ mt: 2, textAlign: 'center' }}>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          startIcon={<Icon>check</Icon>}
-                          onClick={applySignatoriesToDocuments}
-                        >
-                          Apply to All Documents
-                        </Button>
-                      </Box>
-                    </Paper>
 
                     {generatedContents.map((gc, index) => (
                       <Accordion key={index} defaultExpanded={index === 0} sx={{ mb: 2 }}>
