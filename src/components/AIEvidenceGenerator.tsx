@@ -152,8 +152,8 @@ Use this HTML template structure:
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:</td>
-      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Sonali's signature.png" alt="Sonali Kakde Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
+      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Gaurav's signature.png" alt="Gaurav Agrawal Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
       <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
     </tr>
   </table>
@@ -388,8 +388,8 @@ function updateHTMLWithText(
   <table class="auth-table">
     <tr><th>PREPARED BY</th><th>REVIEWED BY</th><th>APPROVED BY</th></tr>
     <tr>
-      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:</td>
-      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
+      <td>Name: Sonali Kakde<br>Designation: Clinical Audit Coordinator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Sonali's signature.png" alt="Sonali Kakde Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
+      <td>Name: Gaurav Agrawal<br>Designation: Hospital Administrator<br>Date: 29/12/2025<br><br>Signature:<br><img src="/Gaurav's signature.png" alt="Gaurav Agrawal Signature" style="height: 50px; max-width: 120px; object-fit: contain;"></td>
       <td>Name: Dr. Shiraz Khan<br>Designation: NABH Coordinator / Administrator<br>Date: 29/12/2025<br><br>Signature:</td>
     </tr>
   </table>
