@@ -207,6 +207,13 @@ const NABH_MANDATORY_COMMITTEES = [
     meetingFrequency: 'Quarterly' as const,
     minMeetingsRequired: 4,
   },
+  {
+    name: 'Internal Complaints Committee',
+    description: 'Addresses internal complaints and grievances from staff and stakeholders',
+    objectives: ['Handle internal grievances', 'Ensure fair resolution process', 'Maintain workplace harmony', 'Document complaint handling'],
+    meetingFrequency: 'Monthly' as const,
+    minMeetingsRequired: 6,
+  },
 ];
 
 export default function CommitteesPageEnhanced() {
