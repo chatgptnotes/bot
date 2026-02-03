@@ -22,6 +22,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'departments', label: 'Departments', icon: 'apartment', path: '/departments', description: 'Hospital departments master' },
   { id: 'equipment', label: 'Equipment', icon: 'medical_services', path: '/equipment', description: 'Medical equipment inventory' },
   { id: 'manuals', label: 'Hospital Manuals', icon: 'menu_book', path: '/manuals', description: 'Manage hospital policies, procedures & operational manuals' },
+  { id: 'licenses', label: 'Licenses & Statutory', icon: 'gavel', path: '/licenses', description: 'Track hospital licenses, certificates & statutory requirements with expiry monitoring' },
   { id: 'programs', label: 'Hospital Programs', icon: 'local_hospital', path: '/programs', description: 'Manage hospital programs and initiatives' },
   { id: 'clinical-audits', label: 'Clinical Audits', icon: 'fact_check', path: '/clinical-audits', description: 'Manage clinical audits and quality assessments' },
   { id: 'evidence-prompt', label: 'Evidence Prompt Master', icon: 'assignment', path: '/evidence-prompt', description: 'NABH evidence generation prompts & templates' },
