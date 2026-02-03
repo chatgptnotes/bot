@@ -425,6 +425,91 @@ export interface Database {
           updated_at?: string;
         };
       };
+      rmo_doctors: {
+        Row: {
+          id: string;
+          sr_no: number;
+          emp_id_no: string;
+          name: string;
+          qualification: string;
+          designation: string;
+          registration_no: string | null;
+          doctor_type: string;
+          hospital_id: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          sr_no: number;
+          emp_id_no: string;
+          name: string;
+          qualification: string;
+          designation: string;
+          registration_no?: string | null;
+          doctor_type?: string;
+          hospital_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          sr_no?: number;
+          emp_id_no?: string;
+          name?: string;
+          qualification?: string;
+          designation?: string;
+          registration_no?: string | null;
+          doctor_type?: string;
+          hospital_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      visiting_consultants: {
+        Row: {
+          id: string;
+          sr_no: number;
+          name: string;
+          department: string;
+          qualification: string | null;
+          registration_no: string | null;
+          registered_council: string;
+          hospital_id: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          sr_no: number;
+          name: string;
+          department: string;
+          qualification?: string | null;
+          registration_no?: string | null;
+          registered_council?: string;
+          hospital_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          sr_no?: number;
+          name?: string;
+          department?: string;
+          qualification?: string | null;
+          registration_no?: string | null;
+          registered_council?: string;
+          hospital_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

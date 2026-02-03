@@ -36,7 +36,8 @@ import {
   Link as LinkIcon,
   // Removed MoreVertIcon as we use direct buttons now
 } from '@mui/icons-material';
-import { NABH_TEAM } from '../config/hospitalConfig';
+// NABH_TEAM import removed - now fetching from Supabase nabh_team_members table
+import { supabase } from '../lib/supabase';
 
 // Enhanced interfaces
 interface CommitteeMember {
@@ -76,39 +77,60 @@ interface Committee {
   documentsLink?: string; // Google Docs/Sheets link
 }
 
-// Master data sources - These would come from your actual master APIs
-const MOCK_DOCTORS = [
-  { id: 'doc1', name: 'Dr. Murali BK', designation: 'Chairman & Managing Director', department: 'Orthopedics', phone: '+919373111709' },
-  { id: 'doc2', name: 'Dr. Ruby Ammon', designation: 'Medical Director', department: 'Administration', phone: '+917276623928' },
-  { id: 'doc3', name: 'Dr. Shiraz Navedkhan Khan', designation: 'Quality Coordinator & SOP Admin', department: 'Quality', phone: '+919370914454' },
-  { id: 'doc4', name: 'Dr. Sachin', designation: 'Senior Doctor', department: 'Emergency', phone: '+917208252712' },
-];
+// Master data sources - Doctors and Employees fetched from Supabase
+interface MasterPersonData {
+  id: string;
+  name: string;
+  designation: string;
+  department: string;
+  phone: string;
+}
 
-const MOCK_EMPLOYEES = [
-  { id: 'emp1', name: 'Sonali', designation: 'Clinical Audit Coordinator', department: 'Quality', phone: '+917218750394' },
-  { id: 'emp2', name: 'Gaurav Agrawal', designation: 'NABH Coordination Lead', department: 'Quality', phone: '+919822202396' },
-  { id: 'emp3', name: 'K J Shashank', designation: 'Quality Manager / HR', department: 'Human Resources', phone: '+917620456896' },
-  { id: 'emp4', name: 'Diksha', designation: 'Front Office Manager', department: 'Front Office', phone: '+918605300668' },
-  { id: 'emp5', name: 'Neesha', designation: 'Patient Experience Coordinator', department: 'Quality', phone: '+918007241707' },
-  { id: 'emp6', name: 'Shilpi', designation: 'Infection Control Nurse', department: 'Nursing', phone: '+916268716635' },
-  { id: 'emp7', name: 'Farsana', designation: 'Head Nurse', department: 'Nursing', phone: '' },
-  { id: 'emp8', name: 'Abhishek', designation: 'Pharmacist', department: 'Pharmacy', phone: '+919529991074' },
-  { id: 'emp9', name: 'Azhar', designation: 'NABH Champion / MRD', department: 'Medical Records', phone: '+919595585788' },
-  { id: 'emp10', name: 'Nitin Bawane', designation: 'Radiology Technician', department: 'Radiology', phone: '+919021031409' },
-];
+// RMO Doctor type from Supabase
+interface RmoDoctor {
+  id: string;
+  sr_no: number;
+  emp_id_no: string;
+  name: string;
+  qualification: string;
+  designation: string;
+  registration_no: string | null;
+  doctor_type: string;
+  hospital_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-const MOCK_CONSULTANTS = [
-  { id: 'con1', name: 'Dr. Visiting Cardiologist', designation: 'Consultant Cardiologist', department: 'Cardiology', phone: '' },
-  { id: 'con2', name: 'Dr. Visiting Neurologist', designation: 'Consultant Neurologist', department: 'Neurology', phone: '' },
-  { id: 'con3', name: 'Dr. Visiting Surgeon', designation: 'Consultant General Surgeon', department: 'Surgery', phone: '' },
-];
+// Team Member type from Supabase
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+  designation: string;
+  department: string;
+  responsibilities: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-const MASTER_TYPES = [
-  { value: 'doctors', label: 'Doctors Master', icon: 'medical_services', data: MOCK_DOCTORS },
-  { value: 'employees', label: 'Employees Master', icon: 'badge', data: MOCK_EMPLOYEES },
-  { value: 'consultants', label: 'Consultants Master', icon: 'medical_information', data: MOCK_CONSULTANTS },
-  { value: 'nabh_team', label: 'NABH Team', icon: 'groups', data: NABH_TEAM.map(m => ({ id: m.name, name: m.name, designation: m.role, department: m.department || 'General', phone: '' })) },
-];
+// Visiting Consultant type from Supabase
+interface VisitingConsultant {
+  id: string;
+  sr_no: number;
+  name: string;
+  department: string;
+  qualification: string | null;
+  registration_no: string | null;
+  registered_council: string;
+  hospital_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// MASTER_TYPES will be created dynamically inside the component to use state for doctors
 
 const NABH_MANDATORY_COMMITTEES = [
   {
@@ -143,6 +165,9 @@ const NABH_MANDATORY_COMMITTEES = [
 
 export default function CommitteesPageEnhanced() {
   const [committees, setCommittees] = useState<Committee[]>([]);
+  const [doctorsData, setDoctorsData] = useState<MasterPersonData[]>([]);
+  const [employeesData, setEmployeesData] = useState<MasterPersonData[]>([]);
+  const [consultantsData, setConsultantsData] = useState<MasterPersonData[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [isGenerateMinutesDialogOpen, setIsGenerateMinutesDialogOpen] = useState(false);
@@ -151,6 +176,14 @@ export default function CommitteesPageEnhanced() {
   const [selectedCommittee, setSelectedCommittee] = useState<Committee | null>(null);
   // Removed menu anchor state as we now use direct buttons
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  // Dynamic MASTER_TYPES using fetched data from Supabase
+  const MASTER_TYPES = [
+    { value: 'doctors', label: 'Doctors Master', icon: 'medical_services', data: doctorsData },
+    { value: 'employees', label: 'Employees Master', icon: 'badge', data: employeesData },
+    { value: 'consultants', label: 'Consultants Master', icon: 'medical_information', data: consultantsData },
+    { value: 'nabh_team', label: 'NABH Team', icon: 'groups', data: employeesData },
+  ];
 
   // New committee form
   const [newCommittee, setNewCommittee] = useState({
@@ -228,6 +261,105 @@ export default function CommitteesPageEnhanced() {
 
     return meetings;
   };
+
+  // Fetch doctors from Supabase rmo_doctors table
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('rmo_doctors')
+          .select('*')
+          .eq('is_active', true)
+          .order('sr_no', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching doctors:', error);
+          return;
+        }
+
+        if (data) {
+          const formattedDoctors: MasterPersonData[] = (data as RmoDoctor[]).map(doc => ({
+            id: doc.emp_id_no,
+            name: doc.name,
+            designation: doc.designation,
+            department: doc.doctor_type === 'Allopathic' ? 'Medical' : 'AYUSH',
+            phone: '',
+          }));
+          setDoctorsData(formattedDoctors);
+        }
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  // Fetch employees from Supabase nabh_team_members table
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('nabh_team_members')
+          .select('*')
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching employees:', error);
+          return;
+        }
+
+        if (data) {
+          const formattedEmployees: MasterPersonData[] = (data as TeamMember[]).map(emp => ({
+            id: emp.id,
+            name: emp.name,
+            designation: emp.designation,
+            department: emp.department,
+            phone: '',
+          }));
+          setEmployeesData(formattedEmployees);
+        }
+      } catch (err) {
+        console.error('Error fetching employees:', err);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  // Fetch consultants from Supabase visiting_consultants table
+  useEffect(() => {
+    const fetchConsultants = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('visiting_consultants')
+          .select('*')
+          .eq('is_active', true)
+          .order('sr_no', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching consultants:', error);
+          return;
+        }
+
+        if (data) {
+          const formattedConsultants: MasterPersonData[] = (data as VisitingConsultant[]).map(con => ({
+            id: con.id,
+            name: con.name,
+            designation: con.qualification || 'Visiting Consultant',
+            department: con.department,
+            phone: '',
+          }));
+          setConsultantsData(formattedConsultants);
+        }
+      } catch (err) {
+        console.error('Error fetching consultants:', err);
+      }
+    };
+
+    fetchConsultants();
+  }, []);
 
   // Initialize with NABH committees
   useEffect(() => {
