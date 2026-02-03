@@ -193,23 +193,24 @@ export default function VisitingConsultantsPage() {
         <TableContainer sx={{ maxHeight: 600 }}>
           <Table stickyHeader>
             <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Doctor Name</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Specialization</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Registration Number</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
+              <TableRow sx={{ bgcolor: '#000000' }}>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emp. ID</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Doctor Name</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specialization</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registration Number</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredConsultants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">No consultants found</Typography>
                   </TableCell>
                 </TableRow>
@@ -218,6 +219,11 @@ export default function VisitingConsultantsPage() {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((consultant, index) => (
                   <TableRow key={index} hover>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600} color="primary">
+                        {consultant.emp_id_no || '---'}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>{consultant.name}</Typography>
                     </TableCell>
@@ -262,6 +268,13 @@ export default function VisitingConsultantsPage() {
         <DialogTitle>{editingConsultant ? 'Edit Consultant' : 'Add New Consultant'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              label="Emp. ID No."
+              fullWidth
+              value={formData.emp_id_no}
+              onChange={(e) => setFormData({ ...formData, emp_id_no: e.target.value })}
+              placeholder="e.g., HOPE/VC/001"
+            />
             <TextField
               label="Doctor Name"
               fullWidth

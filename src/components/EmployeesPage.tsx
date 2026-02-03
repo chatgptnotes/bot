@@ -31,6 +31,7 @@ interface Employee {
   designation: string;
   department: string;
   role: string;
+  emp_id_no?: string;
   is_active: boolean;
   created_at: string;
 }
@@ -40,6 +41,7 @@ interface EmployeeFormData {
   designation: string;
   department: string;
   role: string;
+  emp_id_no: string;
 }
 
 const initialFormData: EmployeeFormData = {
@@ -47,6 +49,7 @@ const initialFormData: EmployeeFormData = {
   designation: '',
   department: '',
   role: '',
+  emp_id_no: '',
 };
 
 export default function EmployeesPage() {
@@ -130,6 +133,7 @@ export default function EmployeesPage() {
         designation: employee.designation,
         department: employee.department,
         role: employee.role,
+        emp_id_no: employee.emp_id_no || '',
       });
     } else {
       setEditingEmployee(null);
@@ -163,6 +167,7 @@ export default function EmployeesPage() {
           designation: formData.designation.trim(),
           department: formData.department.trim() || 'General',
           role: formData.role.trim() || 'Staff',
+          emp_id_no: formData.emp_id_no.trim(),
           updated_at: new Date().toISOString(),
         };
         const { error } = await supabase
@@ -183,6 +188,7 @@ export default function EmployeesPage() {
           designation: formData.designation.trim(),
           department: formData.department.trim() || 'General',
           role: formData.role.trim() || 'Staff',
+          emp_id_no: formData.emp_id_no.trim(),
           is_active: true,
           responsibilities: [] as string[],
         };
@@ -292,25 +298,26 @@ export default function EmployeesPage() {
         <TableContainer sx={{ maxHeight: 500, overflow: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'primary.main' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }}>Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }}>Designation</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }}>Department</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }}>Role</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 600 }} align="center">Actions</TableCell>
+              <TableRow sx={{ bgcolor: '#000000' }}>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emp. ID</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Designation</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredEmployees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
                       {searchQuery ? 'No employees found' : 'No employees added yet. Click "Add Employee" to start.'}
                     </Typography>
@@ -321,6 +328,11 @@ export default function EmployeesPage() {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((employee) => (
                   <TableRow key={employee.id} hover>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600} color="primary">
+                        {employee.emp_id_no || '---'}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>{employee.name}</Typography>
                     </TableCell>
@@ -378,11 +390,17 @@ export default function EmployeesPage() {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
+              label="Emp. ID No."
+              value={formData.emp_id_no}
+              onChange={(e) => setFormData({ ...formData, emp_id_no: e.target.value })}
+              fullWidth
+              placeholder="e.g., HOPE001"
+            />
+            <TextField
               label="Name *"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
-              autoFocus
             />
             <TextField
               label="Designation *"
