@@ -23,6 +23,8 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  Menu,
+  IconButton,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,6 +32,9 @@ import {
   Groups as GroupsIcon,
   EventNote as EventNoteIcon,
   AutoAwesome as AutoAwesomeIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { NABH_TEAM } from '../config/hospitalConfig';
 
@@ -140,7 +145,10 @@ export default function CommitteesPageEnhanced() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [isGenerateMinutesDialogOpen, setIsGenerateMinutesDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCommittee, setSelectedCommittee] = useState<Committee | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   // New committee form
@@ -148,7 +156,18 @@ export default function CommitteesPageEnhanced() {
     name: '',
     description: '',
     type: 'mandatory' as 'mandatory' | 'recommended' | 'custom',
-    meetingFrequency: 'Monthly' as const,
+    meetingFrequency: 'Monthly' as 'Weekly' | 'Bi-weekly' | 'Monthly' | 'Quarterly' | 'Half-yearly' | 'Yearly',
+    objectives: '',
+    minMeetingsRequired: 6,
+  });
+
+  // Edit committee form
+  const [editCommittee, setEditCommittee] = useState({
+    id: '',
+    name: '',
+    description: '',
+    type: 'mandatory' as 'mandatory' | 'recommended' | 'custom',
+    meetingFrequency: 'Monthly' as 'Weekly' | 'Bi-weekly' | 'Monthly' | 'Quarterly' | 'Half-yearly' | 'Yearly',
     objectives: '',
     minMeetingsRequired: 6,
   });
@@ -314,6 +333,62 @@ export default function CommitteesPageEnhanced() {
     });
   };
 
+  const handleEditCommittee = (committee: Committee) => {
+    setEditCommittee({
+      id: committee.id,
+      name: committee.name,
+      description: committee.description,
+      type: committee.type,
+      meetingFrequency: committee.meetingFrequency,
+      objectives: committee.objectives.join('\n'),
+      minMeetingsRequired: committee.minMeetingsRequired,
+    });
+    setSelectedCommittee(committee);
+    setIsEditDialogOpen(true);
+    setMenuAnchor(null);
+  };
+
+  const handleSaveEditCommittee = () => {
+    if (!selectedCommittee) return;
+
+    const updatedCommittee: Committee = {
+      ...selectedCommittee,
+      name: editCommittee.name,
+      description: editCommittee.description,
+      type: editCommittee.type,
+      meetingFrequency: editCommittee.meetingFrequency,
+      objectives: editCommittee.objectives.split('\n').filter(obj => obj.trim()),
+      minMeetingsRequired: editCommittee.minMeetingsRequired,
+    };
+
+    setCommittees(committees.map(c => c.id === selectedCommittee.id ? updatedCommittee : c));
+    setIsEditDialogOpen(false);
+    setSnackbar({ open: true, message: 'Committee updated successfully', severity: 'success' });
+  };
+
+  const handleDeleteCommittee = (committee: Committee) => {
+    setSelectedCommittee(committee);
+    setIsDeleteDialogOpen(true);
+    setMenuAnchor(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!selectedCommittee) return;
+
+    setCommittees(committees.filter(c => c.id !== selectedCommittee.id));
+    setIsDeleteDialogOpen(false);
+    setSnackbar({ open: true, message: 'Committee deleted successfully', severity: 'success' });
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, committee: Committee) => {
+    setMenuAnchor(event.currentTarget);
+    setSelectedCommittee(committee);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
   const getSelectedMasterData = () => {
     return MASTER_TYPES.find(m => m.value === memberForm.selectedMasterType)?.data || [];
   };
@@ -419,12 +494,27 @@ export default function CommitteesPageEnhanced() {
                   <Typography variant="subtitle2" gutterBottom>
                     Chairperson:
                   </Typography>
-                  <Typography variant="body2">
-                    {committee.chairperson ? 
-                      `${committee.chairperson.name} (${committee.chairperson.designation})` : 
-                      'Not assigned'
-                    }
-                  </Typography>
+                  <Box 
+                    onClick={() => {
+                      setSelectedCommittee(committee);
+                      setIsMemberDialogOpen(true);
+                    }}
+                    sx={{ 
+                      cursor: 'pointer', 
+                      p: 1, 
+                      borderRadius: 1, 
+                      '&:hover': { bgcolor: 'action.hover' },
+                      display: 'inline-block'
+                    }}
+                  >
+                    <Typography variant="body2" color={committee.chairperson ? 'text.primary' : 'text.secondary'}>
+                      {committee.chairperson ? 
+                        `${committee.chairperson.name} (${committee.chairperson.designation})` : 
+                        'Click to assign chairperson'
+                      }
+                      <EditIcon sx={{ ml: 1, fontSize: 14, opacity: 0.5 }} />
+                    </Typography>
+                  </Box>
                 </Box>
 
                 <Box mb={2}>
@@ -498,6 +588,14 @@ export default function CommitteesPageEnhanced() {
                 >
                   Generate Minutes
                 </Button>
+                <Box sx={{ ml: 'auto' }}>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleMenuOpen(e, committee)}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Box>
               </CardActions>
             </Card>
           </Box>
@@ -714,6 +812,119 @@ export default function CommitteesPageEnhanced() {
             startIcon={<AutoAwesomeIcon />}
           >
             Generate Minutes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Committee Actions Menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={() => selectedCommittee && handleEditCommittee(selectedCommittee)}>
+          <EditIcon sx={{ mr: 1 }} />
+          Edit Committee
+        </MenuItem>
+        <MenuItem 
+          onClick={() => selectedCommittee && handleDeleteCommittee(selectedCommittee)}
+          sx={{ color: 'error.main' }}
+        >
+          <DeleteIcon sx={{ mr: 1 }} />
+          Delete Committee
+        </MenuItem>
+      </Menu>
+
+      {/* Edit Committee Dialog */}
+      <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Committee</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Committee Name"
+            value={editCommittee.name}
+            onChange={(e) => setEditCommittee({ ...editCommittee, name: e.target.value })}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Description"
+            value={editCommittee.description}
+            onChange={(e) => setEditCommittee({ ...editCommittee, description: e.target.value })}
+            margin="normal"
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Committee Type</InputLabel>
+            <Select
+              value={editCommittee.type}
+              onChange={(e) => setEditCommittee({ ...editCommittee, type: e.target.value as any })}
+            >
+              <MenuItem value="mandatory">Mandatory</MenuItem>
+              <MenuItem value="recommended">Recommended</MenuItem>
+              <MenuItem value="custom">Custom</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Meeting Frequency</InputLabel>
+            <Select
+              value={editCommittee.meetingFrequency}
+              onChange={(e) => setEditCommittee({ ...editCommittee, meetingFrequency: e.target.value as any })}
+            >
+              <MenuItem value="Weekly">Weekly</MenuItem>
+              <MenuItem value="Bi-weekly">Bi-weekly</MenuItem>
+              <MenuItem value="Monthly">Monthly</MenuItem>
+              <MenuItem value="Quarterly">Quarterly</MenuItem>
+              <MenuItem value="Half-yearly">Half-yearly</MenuItem>
+              <MenuItem value="Yearly">Yearly</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            type="number"
+            label="Minimum Meetings Required"
+            value={editCommittee.minMeetingsRequired}
+            onChange={(e) => setEditCommittee({ ...editCommittee, minMeetingsRequired: parseInt(e.target.value) || 6 })}
+            margin="normal"
+            helperText="Minimum number of meetings required for NABH compliance"
+          />
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Objectives (one per line)"
+            value={editCommittee.objectives}
+            onChange={(e) => setEditCommittee({ ...editCommittee, objectives: e.target.value })}
+            margin="normal"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveEditCommittee}>Save Changes</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Committee</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete <strong>{selectedCommittee?.name}</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This action cannot be undone. All committee members and meeting records will be permanently deleted.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={handleConfirmDelete}
+            startIcon={<DeleteIcon />}
+          >
+            Delete Committee
           </Button>
         </DialogActions>
       </Dialog>
