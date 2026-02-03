@@ -25,6 +25,7 @@ import VisitingConsultantsPage from './components/VisitingConsultantsPage';
 import DoctorsPage from './components/DoctorsPage';
 import DepartmentsMasterPage from './components/DepartmentsMasterPage';
 import EquipmentMasterPage from './components/EquipmentMasterPage';
+import EvidencePromptMasterPage from './components/EvidencePromptMasterPage';
 import Footer from './components/Footer';
 import { useNABHStore } from './store/nabhStore';
 
@@ -257,6 +258,7 @@ function MainContent() {
   const isDoctorsPage = location.pathname === '/doctors';
   const isDepartmentsPage = location.pathname === '/departments';
   const isEquipmentPage = location.pathname === '/equipment';
+  const isEvidencePromptPage = location.pathname === '/evidence-prompt';
   const isDashboardPage = location.pathname === '/dashboard';
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
@@ -318,6 +320,10 @@ function MainContent() {
 
   if (isEquipmentPage) {
     return <EquipmentMasterPage />;
+  }
+
+  if (isEvidencePromptPage) {
+    return <EvidencePromptMasterPage />;
   }
 
   if (isDashboardPage) {
