@@ -21,6 +21,7 @@ const MANAGEMENT_SECTIONS = [
   { id: 'committees', label: 'Committees', icon: 'groups', path: '/committees', description: 'Manage hospital committees' },
   { id: 'departments', label: 'Departments', icon: 'apartment', path: '/departments', description: 'Hospital departments master' },
   { id: 'equipment', label: 'Equipment', icon: 'medical_services', path: '/equipment', description: 'Medical equipment inventory' },
+  { id: 'emergency-codes', label: 'Emergency Codes', icon: 'emergency', path: '/emergency-codes', description: 'Code Blue, Code Red & Code Pink protocols and documentation' },
   { id: 'manuals', label: 'Hospital Manuals', icon: 'menu_book', path: '/manuals', description: 'Manage hospital policies, procedures & operational manuals' },
   { id: 'licenses', label: 'Licenses & Statutory', icon: 'gavel', path: '/licenses', description: 'Track hospital licenses, certificates & statutory requirements with expiry monitoring' },
   { id: 'mous', label: 'MOUs & Partnerships', icon: 'handshake', path: '/mous', description: 'Manage Memoranda of Understanding and strategic partnerships with multiple document support' },
