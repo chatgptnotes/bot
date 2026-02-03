@@ -366,7 +366,7 @@ export const useNABHStore = create<NABHStore>()(
       name: 'nabh-user-preferences',
       version: 2,
       // Only persist user preferences, NOT the chapters data (too large for localStorage)
-      partializeState: (state) => ({
+      partialize: (state: NABHStore) => ({
         selectedChapter: state.selectedChapter,
         selectedObjective: state.selectedObjective,
         searchQuery: state.searchQuery,

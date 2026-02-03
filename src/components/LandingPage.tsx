@@ -77,14 +77,6 @@ export default function LandingPage() {
     navigate('/ai-generator');
   };
 
-  // Calculate overall progress
-  const totalElements = chapters.reduce((acc, ch) => acc + ch.objectives.length, 0);
-  const completedElements = chapters.reduce(
-    (acc, ch) => acc + ch.objectives.filter(o => o.status === 'Completed').length,
-    0
-  );
-  const progressPercentage = totalElements > 0 ? Math.round((completedElements / totalElements) * 100) : 0;
-
   // Use Ayushman logo if selected, otherwise default
   const logoUrl = hospitalConfig.id === 'ayushman' ? '/ayushman-logo.png' : '/hospital-logo.png';
 
