@@ -1,46 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getGeminiApiKey } from '../lib/supabase';
+import { callGeminiAPI } from '../lib/supabase';
 import type { InfographicConfig } from './infographicGenerator';
 
-export const testGeminiConnection = async (customKey?: string): Promise<string> => {
-  const apiKey = customKey || getGeminiApiKey();
-  if (!apiKey) throw new Error('No API Key provided');
-
+export const testGeminiConnection = async (): Promise<string> => {
   try {
-    // We can't use listModels() directly from the client SDK easily in all versions, 
-    // but we can try a simple generation with the most basic model to "ping" it.
-    // If this works, the key is good.
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    await model.generateContent('Hello');
-    return 'Success! gemini-2.0-flash is available.';
+    // Test connection using backend proxy
+    await callGeminiAPI('Hello', 0.7, 100);
+    return 'Success! Backend proxy connection working.';
   } catch (error: any) {
     return `Error: ${error.message}`;
   }
 };
 
-export const generateGeminiInfographic = async (config: InfographicConfig, customKey?: string): Promise<string> => {
-  const apiKey = customKey || getGeminiApiKey();
-  if (!apiKey) {
-    throw new Error('Gemini API key is missing. Please enter a valid key.');
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  // Model fallback strategy - Exhaustive list of aliases (gemini-2.0 first)
-  const modelsToTry = [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-pro',
-    'gemini-1.5-pro-latest',
-    'gemini-1.5-pro-001',
-    'gemini-1.0-pro',
-    'gemini-pro'
-  ];
-  let model = null;
-  let text = '';
-  let lastError = null;
-
+export const generateGeminiInfographic = async (config: InfographicConfig): Promise<string> => {
   const prompt = `
     You are an expert graphic designer and SVG artist.
     Create a modern, stylish, professional SVG infographic for a hospital accreditation objective.
@@ -71,29 +42,15 @@ export const generateGeminiInfographic = async (config: InfographicConfig, custo
     - **Footer**: Compliance tagline in English & Hindi.
   `;
 
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`Attempting to generate with model: ${modelName}`);
-      model = genAI.getGenerativeModel({ model: modelName });
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      text = response.text();
-      
-      // If we got here, it worked
-      break;
-    } catch (error) {
-      console.warn(`Failed with model ${modelName}:`, error);
-      lastError = error;
-      // Continue to next model
-    }
-  }
-
-  if (!text && lastError) {
-    throw lastError; // Throw the last error if all failed
-  }
-
   try {
+    console.log(`Generating infographic via backend proxy`);
+    const data = await callGeminiAPI(prompt, 0.7, 4096);
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    if (!text) {
+      throw new Error('No content generated');
+    }
+
     // Cleanup markdown if present
     text = text.replace(/```svg/g, '').replace(/```/g, '').trim();
     

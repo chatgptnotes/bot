@@ -29,3 +29,4 @@ dist-ssr
 migrate-*.js
 add-*.sql
 *.bak
+.env*.local

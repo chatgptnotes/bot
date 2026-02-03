@@ -1,27 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Building2, 
-  Users, 
   Clock, 
-  Phone, 
   CheckCircle, 
   XCircle, 
   AlertCircle,
   Search,
-  Filter,
   BarChart3,
   Download,
   Plus
 } from 'lucide-react';
 import {
   departmentsMaster,
-  getDepartmentsByCategory,
-  getDepartmentsByType,
   getEmergencyDepartments,
   getNABHComplianceStats,
   getDepartmentCategorySummary,
   exportDepartmentListForAudit,
-  type Department,
   type DepartmentCategory,
   type DepartmentType
 } from '../data/departmentsMaster';
