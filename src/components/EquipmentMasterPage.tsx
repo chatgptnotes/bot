@@ -139,7 +139,7 @@ const EquipmentMasterPage: React.FC = () => {
       case 'Pending Calibration':
         return { icon: Schedule, color: 'info' as const, label: 'Pending Calibration' };
       default:
-        return { icon: Warning, color: 'inherit' as const, label: 'Unknown' };
+        return { icon: Warning, color: 'secondary' as const, label: 'Unknown' };
     }
   };
 
@@ -155,7 +155,7 @@ const EquipmentMasterPage: React.FC = () => {
       case 'Maintenance Due':
         return { icon: Build, color: 'warning' as const, label: 'Maintenance Due' };
       default:
-        return { icon: Warning, color: 'inherit' as const, label: 'Pending Inspection' };
+        return { icon: Warning, color: 'secondary' as const, label: 'Pending Inspection' };
     }
   };
 
