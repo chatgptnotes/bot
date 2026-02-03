@@ -34,18 +34,21 @@ export default function VisitingConsultantsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingConsultant, setEditingConsultant] = useState<VisitingConsultant | null>(null);
   const [formData, setFormData] = useState<VisitingConsultant>({
+    sr_no: 0,
     name: '',
-    specialization: '',
-    registrationNumber: ''
+    department: '',
+    qualification: '',
+    registration_no: '',
+    registered_council: 'Maharashtra Medical Council'
   });
-  
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error',
   });
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   useEffect(() => {
     loadConsultants();
@@ -58,8 +61,9 @@ export default function VisitingConsultantsPage() {
         consultants.filter(
           (c) =>
             c.name.toLowerCase().includes(query) ||
-            c.specialization.toLowerCase().includes(query) ||
-            c.registrationNumber.toLowerCase().includes(query)
+            c.department.toLowerCase().includes(query) ||
+            c.qualification.toLowerCase().includes(query) ||
+            c.registration_no.toLowerCase().includes(query)
         )
       );
     } else {
@@ -85,7 +89,14 @@ export default function VisitingConsultantsPage() {
       setFormData({ ...consultant });
     } else {
       setEditingConsultant(null);
-      setFormData({ name: '', specialization: '', registrationNumber: '' });
+      setFormData({
+        sr_no: consultants.length + 1,
+        name: '',
+        department: '',
+        qualification: '',
+        registration_no: '',
+        registered_council: 'Maharashtra Medical Council'
+      });
     }
     setIsDialogOpen(true);
   };
@@ -96,8 +107,8 @@ export default function VisitingConsultantsPage() {
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.specialization) {
-      setSnackbar({ open: true, message: 'Name and Specialization are required', severity: 'error' });
+    if (!formData.name || !formData.department) {
+      setSnackbar({ open: true, message: 'Name and Department are required', severity: 'error' });
       return;
     }
 
@@ -148,7 +159,7 @@ export default function VisitingConsultantsPage() {
             Visiting Consultants
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Master list of visiting doctors and their registrations
+            22 Visiting Consultants with Registration Numbers - Hope Hospital
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -174,7 +185,7 @@ export default function VisitingConsultantsPage() {
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search by name, specialization, or registration number..."
+          placeholder="Search by name, department, qualification, or registration number..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -188,51 +199,61 @@ export default function VisitingConsultantsPage() {
         />
       </Paper>
 
+      {/* Stats */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Chip label={`Total: ${filteredConsultants.length} Consultants`} color="primary" />
+        <Chip label="All Registered with Maharashtra Medical Council" variant="outlined" />
+      </Box>
+
       {/* Table */}
       <Paper>
         <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
+          <Table stickyHeader size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#000000' }}>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emp. ID</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Doctor Name</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Specialization</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registration Number</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }} align="center">Actions</TableCell>
+              <TableRow>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Sr.</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Doctor Name</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Department</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Qualification</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Registration No.</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : filteredConsultants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">No consultants found</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredConsultants
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((consultant, index) => (
-                  <TableRow key={index} hover>
+                  .map((consultant) => (
+                  <TableRow key={consultant.sr_no} hover>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600} color="primary">
-                        {consultant.emp_id_no || '---'}
+                        {consultant.sr_no}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>{consultant.name}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={consultant.specialization} size="small" variant="outlined" color="primary" />
+                      <Chip label={consultant.department} size="small" variant="outlined" color="primary" />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                        {consultant.registrationNumber}
+                      <Typography variant="body2">{consultant.qualification}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                        {consultant.registration_no}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -269,29 +290,41 @@ export default function VisitingConsultantsPage() {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="Emp. ID No."
-              fullWidth
-              value={formData.emp_id_no}
-              onChange={(e) => setFormData({ ...formData, emp_id_no: e.target.value })}
-              placeholder="e.g., HOPE/VC/001"
-            />
-            <TextField
               label="Doctor Name"
               fullWidth
+              required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Dr. John Smith"
             />
             <TextField
-              label="Specialization"
+              label="Department"
               fullWidth
-              value={formData.specialization}
-              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+              required
+              value={formData.department}
+              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+              placeholder="e.g., CARDIOLOGY"
+            />
+            <TextField
+              label="Qualification"
+              fullWidth
+              value={formData.qualification}
+              onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+              placeholder="e.g., MBBS, MD, DM"
             />
             <TextField
               label="Registration Number"
               fullWidth
-              value={formData.registrationNumber}
-              onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+              value={formData.registration_no}
+              onChange={(e) => setFormData({ ...formData, registration_no: e.target.value })}
+              placeholder="e.g., 2020/01/1234"
+            />
+            <TextField
+              label="Registered Council"
+              fullWidth
+              value={formData.registered_council}
+              onChange={(e) => setFormData({ ...formData, registered_council: e.target.value })}
+              placeholder="Maharashtra Medical Council"
             />
           </Box>
         </DialogContent>

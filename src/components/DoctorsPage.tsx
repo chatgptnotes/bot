@@ -22,6 +22,8 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import { doctorsMaster, syncDoctorsToDatabase } from '../data/doctorsMaster';
 import type { Doctor } from '../data/doctorsMaster';
 
@@ -33,45 +35,59 @@ export default function DoctorsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState<Doctor>({
+    sr_no: 0,
+    emp_id_no: '',
     name: '',
-    qualification: '',
+    qualification: 'M.B.B.S',
     specialization: 'Resident Medical Officer',
+    designation: 'RMO',
     registrationNumber: '',
-    department: 'Ward',
+    department: 'Hospital',
     role: 'RMO',
+    doctor_type: 'Allopathic',
     is_active: true
   });
-  
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success' as 'success' | 'error',
   });
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   useEffect(() => {
     loadDoctors();
   }, []);
 
   useEffect(() => {
+    let filtered = doctors;
+
+    // Filter by tab (doctor type)
+    if (tabValue === 1) {
+      filtered = filtered.filter(d => d.doctor_type === 'Allopathic');
+    } else if (tabValue === 2) {
+      filtered = filtered.filter(d => d.doctor_type === 'Non-Allopathic');
+    }
+
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      setFilteredDoctors(
-        doctors.filter(
-          (d) =>
-            d.name.toLowerCase().includes(query) ||
-            d.qualification.toLowerCase().includes(query) ||
-            d.registrationNumber.toLowerCase().includes(query) ||
-            d.department.toLowerCase().includes(query)
-        )
+      filtered = filtered.filter(
+        (d) =>
+          d.name.toLowerCase().includes(query) ||
+          d.qualification.toLowerCase().includes(query) ||
+          d.registrationNumber.toLowerCase().includes(query) ||
+          d.emp_id_no.toLowerCase().includes(query) ||
+          d.designation.toLowerCase().includes(query)
       );
-    } else {
-      setFilteredDoctors(doctors);
     }
+
+    setFilteredDoctors(filtered);
     setPage(0);
-  }, [doctors, searchQuery]);
+  }, [doctors, searchQuery, tabValue]);
 
   const loadDoctors = async () => {
     setIsLoading(true);
@@ -91,12 +107,16 @@ export default function DoctorsPage() {
     } else {
       setEditingDoctor(null);
       setFormData({
+        sr_no: doctors.length + 1,
+        emp_id_no: `H${String(doctors.length + 1).padStart(3, '0')}`,
         name: '',
-        qualification: '',
+        qualification: 'M.B.B.S',
         specialization: 'Resident Medical Officer',
+        designation: 'RMO',
         registrationNumber: '',
-        department: 'Ward',
+        department: 'Hospital',
         role: 'RMO',
+        doctor_type: 'Allopathic',
         is_active: true
       });
     }
@@ -115,18 +135,18 @@ export default function DoctorsPage() {
     }
 
     if (editingDoctor) {
-      setDoctors(doctors.map(d => d.name === editingDoctor.name ? formData : d));
+      setDoctors(doctors.map(d => d.emp_id_no === editingDoctor.emp_id_no ? formData : d));
       setSnackbar({ open: true, message: 'Doctor updated locally', severity: 'success' });
     } else {
-      setDoctors([formData, ...doctors]);
+      setDoctors([...doctors, formData]);
       setSnackbar({ open: true, message: 'Doctor added locally', severity: 'success' });
     }
     handleCloseDialog();
   };
 
-  const handleDelete = (name: string) => {
-    if (confirm(`Are you sure you want to delete Dr. ${name}?`)) {
-      setDoctors(doctors.filter(d => d.name !== name));
+  const handleDelete = (empId: string, name: string) => {
+    if (confirm(`Are you sure you want to delete ${name}?`)) {
+      setDoctors(doctors.filter(d => d.emp_id_no !== empId));
       setSnackbar({ open: true, message: 'Doctor removed locally', severity: 'success' });
     }
   };
@@ -151,6 +171,9 @@ export default function DoctorsPage() {
     }
   };
 
+  const allopathicCount = doctors.filter(d => d.doctor_type === 'Allopathic').length;
+  const nonAllopathicCount = doctors.filter(d => d.doctor_type === 'Non-Allopathic').length;
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
@@ -158,10 +181,10 @@ export default function DoctorsPage() {
         <Box>
           <Typography variant="h4" fontWeight={700} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Icon color="primary">medication_liquid</Icon>
-            Resident Doctors (RMO)
+            Resident Medical Officers (RMO)
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Master list of full-time hospital doctors and RMOs
+            {doctors.length} RMO Doctors ({allopathicCount} Allopathic + {nonAllopathicCount} Non-Allopathic) - Hope Hospital
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -183,11 +206,20 @@ export default function DoctorsPage() {
         </Box>
       </Box>
 
+      {/* Tabs */}
+      <Paper sx={{ mb: 2 }}>
+        <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+          <Tab label={`All (${doctors.length})`} />
+          <Tab label={`Allopathic - MBBS (${allopathicCount})`} />
+          <Tab label={`Non-Allopathic - BHMS/BAMS/BUMS (${nonAllopathicCount})`} />
+        </Tabs>
+      </Paper>
+
       {/* Search */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search by name, qualification, or registration..."
+          placeholder="Search by name, Emp ID, qualification, or registration..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -204,16 +236,16 @@ export default function DoctorsPage() {
       {/* Table */}
       <Paper>
         <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
+          <Table stickyHeader size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#000000' }}>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emp. ID</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Doctor Name</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Qualification</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reg. Number</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</TableCell>
-                <TableCell sx={{ color: '#ffffff', fontWeight: '900 !important', fontSize: '1.1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }} align="center">Actions</TableCell>
+              <TableRow>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Emp. ID</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Doctor Name</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Qualification</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Designation</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Reg. Number</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }}>Type</TableCell>
+                <TableCell sx={{ bgcolor: '#1976d2', color: '#fff', fontWeight: 700 }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -232,33 +264,44 @@ export default function DoctorsPage() {
               ) : (
                 filteredDoctors
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((doc, index) => (
-                  <TableRow key={index} hover>
+                  .map((doc) => (
+                  <TableRow key={doc.emp_id_no} hover>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600} color="primary">
-                        {doc.emp_id_no || '---'}
+                        {doc.emp_id_no}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>{doc.name}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={doc.qualification} size="small" variant="outlined" />
+                      <Chip
+                        label={doc.qualification}
+                        size="small"
+                        variant="outlined"
+                        color={doc.doctor_type === 'Allopathic' ? 'primary' : 'secondary'}
+                      />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                      <Typography variant="body2">{doc.designation}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
                         {doc.registrationNumber}
                       </Typography>
                     </TableCell>
-                    <TableCell>{doc.department}</TableCell>
                     <TableCell>
-                      <Chip label={doc.role} size="small" color="primary" />
+                      <Chip
+                        label={doc.doctor_type}
+                        size="small"
+                        color={doc.doctor_type === 'Allopathic' ? 'success' : 'warning'}
+                      />
                     </TableCell>
                     <TableCell align="center">
                       <IconButton size="small" color="primary" onClick={() => handleOpenDialog(doc)}>
                         <Icon>edit</Icon>
                       </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(doc.name)}>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(doc.emp_id_no, doc.name)}>
                         <Icon>delete</Icon>
                       </IconButton>
                     </TableCell>
@@ -284,51 +327,63 @@ export default function DoctorsPage() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingDoctor ? 'Edit Resident Doctor' : 'Add New Resident Doctor'}</DialogTitle>
+        <DialogTitle>{editingDoctor ? 'Edit RMO Doctor' : 'Add New RMO Doctor'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
               label="Emp. ID No."
               fullWidth
+              required
               value={formData.emp_id_no}
               onChange={(e) => setFormData({ ...formData, emp_id_no: e.target.value })}
-              placeholder="e.g., HOPE/DOC/001"
+              placeholder="e.g., H001"
             />
             <TextField
               label="Doctor Name"
               fullWidth
+              required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Dr. John Smith"
             />
             <TextField
               label="Qualification"
               fullWidth
+              required
+              select
+              slotProps={{ select: { native: true } }}
               value={formData.qualification}
               onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+            >
+              <option value="M.B.B.S">M.B.B.S (Allopathic)</option>
+              <option value="B.H.M.S">B.H.M.S (Homeopathy)</option>
+              <option value="B.A.M.S">B.A.M.S (Ayurveda)</option>
+              <option value="B.U.M.S">B.U.M.S (Unani)</option>
+            </TextField>
+            <TextField
+              label="Designation"
+              fullWidth
+              value={formData.designation}
+              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+              placeholder="e.g., RMO, RMO / Quality Coordinator"
             />
             <TextField
               label="Registration Number"
               fullWidth
               value={formData.registrationNumber}
               onChange={(e) => setFormData({ ...formData, registrationNumber: e.target.value })}
+              placeholder="e.g., 2020/01/1234"
             />
             <TextField
-              label="Department"
-              fullWidth
-              value={formData.department}
-              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            />
-            <TextField
-              label="Role"
+              label="Doctor Type"
               fullWidth
               select
               slotProps={{ select: { native: true } }}
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'RMO' | 'Full-time' | 'Resident' })}
+              value={formData.doctor_type}
+              onChange={(e) => setFormData({ ...formData, doctor_type: e.target.value as 'Allopathic' | 'Non-Allopathic' })}
             >
-              <option value="RMO">RMO</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Resident">Resident</option>
+              <option value="Allopathic">Allopathic (MBBS)</option>
+              <option value="Non-Allopathic">Non-Allopathic (BHMS/BAMS/BUMS)</option>
             </TextField>
           </Box>
         </DialogContent>
