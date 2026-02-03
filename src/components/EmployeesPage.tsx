@@ -298,14 +298,14 @@ export default function EmployeesPage() {
         <TableContainer sx={{ maxHeight: 500, overflow: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'primary.main' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Emp. ID</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Designation</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '0.05em' }} align="center">Actions</TableCell>
+              <TableRow sx={{ bgcolor: '#000000' }}>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Emp. ID</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Name</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Designation</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Department</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Role</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }}>Status</TableCell>
+                <TableCell sx={{ color: '#ffffff', fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid white' }} align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
