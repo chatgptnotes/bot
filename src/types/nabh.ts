@@ -61,6 +61,7 @@ export interface ObjectiveElement {
   category: ElementCategory;    // Core, Commitment, Achievement, Excellence
   isCore: boolean;              // Quick check for core elements
   evidencesList: string;
+  documentsLink?: string;       // Google Docs/Sheets link
   evidenceLinks: string;
   evidenceFiles: EvidenceFile[]; // Uploaded evidence files (images, PDFs)
   youtubeVideos: YouTubeVideo[]; // YouTube training videos

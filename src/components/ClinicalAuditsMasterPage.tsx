@@ -56,53 +56,48 @@ interface ClinicalAudit {
   followUpDate?: string;
   createdAt: string;
   lastUpdated: string;
+  documentsLink?: string; // Google Docs/Sheets link
 }
 
 const DEFAULT_AUDITS: ClinicalAudit[] = [
   {
     id: 'audit1',
-    title: 'Hand Hygiene Compliance Audit',
-    description: 'Monthly audit of hand hygiene compliance across all clinical areas',
+    title: 'Hand Hygiene Compliance Audit - NABH Priority',
+    description: 'Critical NABH audit for hand hygiene compliance across Hope Hospital - WHO 5 Moments focus',
     category: 'Infection Control',
     auditType: 'Internal',
     department: 'Infection Control',
     auditor: 'Shilpi',
-    startDate: '2026-01-01',
-    completionDate: '2026-01-31',
-    status: 'Completed',
+    startDate: '2026-02-04',
+    status: 'Planned',
     frequency: 'Monthly',
     criteria: [
-      'WHO 5 moments of hand hygiene followed',
-      'Proper handwashing technique observed',
-      'Use of alcohol-based hand rub when appropriate',
-      'Availability of hand hygiene facilities'
+      'WHO 5 Moments: Before patient contact',
+      'WHO 5 Moments: Before clean/aseptic procedures', 
+      'WHO 5 Moments: After body fluid exposure',
+      'WHO 5 Moments: After patient contact',
+      'WHO 5 Moments: After contact with patient surroundings',
+      'Proper technique (20 seconds soap/water or alcohol rub)',
+      'Availability of hand hygiene stations'
     ],
-    findings: [
-      'Overall compliance: 88%',
-      'ICU compliance highest at 95%',
-      'OPD areas need improvement (78%)',
-      'Night shift compliance lower than day shift'
-    ],
-    recommendations: [
-      'Increase training frequency for OPD staff',
-      'Install additional dispensers in high-traffic areas',
-      'Implement peer observation program',
-      'Conduct surprise audits during night shifts'
-    ],
+    findings: [],
+    recommendations: [],
     actionItems: [
-      'Schedule additional training sessions',
-      'Purchase 10 additional dispensers',
-      'Develop peer observation checklist',
-      'Create night shift audit schedule'
+      'Observe 50 hand hygiene opportunities across all departments',
+      'Document compliance for each WHO moment',
+      'Provide immediate feedback to staff',
+      'Identify areas needing additional dispensers',
+      'Schedule re-audit after 3 days of intervention'
     ],
-    compliance: 88,
-    samplesReviewed: 250,
-    totalSamples: 300,
+    compliance: 0,
+    samplesReviewed: 0,
+    totalSamples: 50,
     nabhStandard: 'HIC.1',
     priority: 'High',
-    followUpDate: '2026-02-15',
-    createdAt: '2025-12-15',
-    lastUpdated: '2026-02-01',
+    followUpDate: '2026-02-10',
+    createdAt: '2026-02-03',
+    lastUpdated: '2026-02-03',
+    documentsLink: '', // Ready for Google Docs link
   },
   {
     id: 'audit2',
@@ -147,6 +142,7 @@ const DEFAULT_AUDITS: ClinicalAudit[] = [
     followUpDate: '2026-03-01',
     createdAt: '2026-01-01',
     lastUpdated: '2026-02-03',
+    documentsLink: '', // Ready for Google Docs link
   },
   {
     id: 'audit3',
@@ -192,6 +188,7 @@ const DEFAULT_AUDITS: ClinicalAudit[] = [
     followUpDate: '2026-02-28',
     createdAt: '2025-11-15',
     lastUpdated: '2026-01-05',
+    documentsLink: '', // Ready for Google Docs link
   },
   {
     id: 'audit4',
@@ -225,6 +222,43 @@ const DEFAULT_AUDITS: ClinicalAudit[] = [
     priority: 'Medium',
     createdAt: '2026-01-25',
     lastUpdated: '2026-02-01',
+    documentsLink: '', // Ready for Google Docs link
+  },
+  {
+    id: 'audit5',
+    title: 'Patient Identification Audit',
+    description: 'Critical patient safety audit to ensure proper patient identification protocols',
+    category: 'Patient Safety',
+    auditType: 'Internal', 
+    department: 'Quality Department',
+    auditor: 'Sonali',
+    startDate: '2026-02-04',
+    status: 'Planned',
+    frequency: 'Monthly',
+    criteria: [
+      'Patient wristband present with 2 identifiers (Name + UHID)',
+      'Staff verify patient identity before medication administration',
+      'Staff verify patient identity before procedures',
+      'Wristband information matches medical records',
+      'Missing/damaged bands replaced immediately'
+    ],
+    findings: [],
+    recommendations: [],
+    actionItems: [
+      'Conduct systematic check of all admitted patients',
+      'Replace any missing or damaged identification bands',
+      'Train staff on proper verification protocols',
+      'Document non-compliance and corrective actions'
+    ],
+    compliance: 0,
+    samplesReviewed: 0,
+    totalSamples: 100,
+    nabhStandard: 'PSQ.1',
+    priority: 'High',
+    followUpDate: '2026-02-10',
+    createdAt: '2026-02-03',
+    lastUpdated: '2026-02-03',
+    documentsLink: '', // Ready for Google Docs link
   },
 ];
 
@@ -553,6 +587,45 @@ export default function ClinicalAuditsMasterPage() {
                     )}
                   </Box>
                 )}
+
+                {/* Documents Link Section */}
+                <Box sx={{ mt: 2 }}>
+                  <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                    <TrendingUpIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                    <Typography variant="caption" fontWeight="medium" color="text.secondary">
+                      Audit Documents:
+                    </Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Google Docs/Sheets link..."
+                      value={audit.documentsLink || ''}
+                      onChange={(e) => {
+                        const updatedAudit = { ...audit, documentsLink: e.target.value };
+                        setAudits(audits.map(a => a.id === audit.id ? updatedAudit : a));
+                      }}
+                      variant="outlined"
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': {
+                          fontSize: '0.75rem',
+                          height: '32px',
+                        }
+                      }}
+                    />
+                    {audit.documentsLink && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => window.open(audit.documentsLink, '_blank')}
+                        sx={{ minWidth: 'auto', px: 1, height: 32, fontSize: '0.7rem' }}
+                      >
+                        Open
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Box>

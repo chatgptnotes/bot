@@ -48,22 +48,596 @@ interface StationeryItem {
   status: 'pending' | 'extracted' | 'improved' | 'approved';
   createdAt: string;
   updatedAt: string;
+  documentsLink?: string; // Google Docs/Sheets link
 }
 
 const STATIONERY_CATEGORIES = [
-  { id: 'forms', label: 'Patient Forms', icon: 'assignment', examples: ['Registration Form', 'Consent Form', 'Discharge Summary'] },
-  { id: 'registers', label: 'Registers', icon: 'menu_book', examples: ['OPD Register', 'IPD Register', 'Medication Error Register'] },
-  { id: 'letterheads', label: 'Letterheads', icon: 'mail', examples: ['Official Letterhead', 'Prescription Pad', 'Medical Certificate'] },
-  { id: 'certificates', label: 'Certificates', icon: 'workspace_premium', examples: ['Birth Certificate', 'Death Certificate', 'Fitness Certificate'] },
-  { id: 'consent', label: 'Consent Forms', icon: 'fact_check', examples: ['Surgical Consent', 'Blood Transfusion Consent', 'Anesthesia Consent'] },
-  { id: 'reports', label: 'Report Templates', icon: 'summarize', examples: ['Lab Report', 'Radiology Report', 'Discharge Report'] },
+  { id: 'forms', label: 'Patient Forms', icon: 'assignment', examples: ['Registration Form', 'History Form', 'Discharge Summary', 'Complaint Form'] },
+  { id: 'consent', label: 'Consent Forms', icon: 'fact_check', examples: ['Surgical Consent', 'Blood Transfusion Consent', 'Anesthesia Consent', 'High-Risk Consent'] },
+  { id: 'checklists', label: 'Safety Checklists', icon: 'checklist', examples: ['WHO Surgical Safety', 'Code Blue Emergency', 'Medication Admin', 'Fire Safety', 'Infection Control'] },
+  { id: 'registers', label: 'Registers & Logs', icon: 'menu_book', examples: ['OPD Register', 'IPD Register', 'OT Register', 'Error Register', 'Equipment Register'] },
+  { id: 'certificates', label: 'Certificates', icon: 'workspace_premium', examples: ['Birth Certificate', 'Death Certificate', 'Fitness Certificate', 'Disability Certificate'] },
+  { id: 'reports', label: 'Report Templates', icon: 'summarize', examples: ['Lab Report', 'Radiology Report', 'Pathology Report'] },
+  { id: 'letterheads', label: 'Official Documents', icon: 'mail', examples: ['Hospital Letterhead', 'Prescription Pad', 'Medical Certificate'] },
   { id: 'labels', label: 'Labels & Tags', icon: 'label', examples: ['Patient Wristband', 'Medication Label', 'Sample Label'] },
-  { id: 'checklists', label: 'Checklists', icon: 'checklist', examples: ['Surgical Safety Checklist', 'Nursing Checklist', 'Audit Checklist'] },
-  { id: 'sops', label: 'SOPs', icon: 'description', examples: ['Procedure SOPs', 'Safety SOPs', 'Quality SOPs'] },
-  { id: 'other', label: 'Other Documents', icon: 'folder', examples: ['Policies', 'Guidelines', 'Manuals'] },
+  { id: 'sops', label: 'Standard Procedures', icon: 'description', examples: ['Hand Hygiene SOP', 'Medication SOP', 'Emergency SOP', 'Infection Control SOP'] },
+  { id: 'other', label: 'Safety & Quality Forms', icon: 'folder', examples: ['Incident Reports', 'Sentinel Events', 'Near-Miss Forms', 'Handover Formats', 'Safety Rounds'] },
 ];
 
 const WORKFLOW_STEPS = ['Upload Document', 'Extract Content', 'Add Suggestions', 'Generate Improved'];
+
+// Comprehensive Default Stationery Items for Hope Hospital
+const DEFAULT_STATIONERY_ITEMS: StationeryItem[] = [
+  // PATIENT FORMS
+  {
+    id: 'form_001',
+    name: 'Patient Registration Form',
+    category: 'forms',
+    description: 'Complete patient admission and registration form with demographics and insurance details',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'form_002',
+    name: 'Patient History & Physical Examination Form',
+    category: 'forms',
+    description: 'Comprehensive medical history and physical examination documentation',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'form_003',
+    name: 'Discharge Summary Template',
+    category: 'forms',
+    description: 'Standardized discharge summary with diagnosis, treatment, and follow-up instructions',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'form_004',
+    name: 'Patient Complaint & Feedback Form',
+    category: 'forms',
+    description: 'Patient satisfaction and complaint documentation form',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'form_005',
+    name: 'Insurance Authorization Form',
+    category: 'forms',
+    description: 'Insurance pre-authorization and claim submission form',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // CONSENT FORMS
+  {
+    id: 'consent_001',
+    name: 'General Surgical Consent Form',
+    category: 'consent',
+    description: 'Standard surgical procedure consent with risks and complications',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'consent_002',
+    name: 'Anesthesia Consent Form',
+    category: 'consent',
+    description: 'Anesthesia administration consent with risk disclosure',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'consent_003',
+    name: 'Blood Transfusion Consent Form',
+    category: 'consent',
+    description: 'Blood product transfusion consent with associated risks',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'consent_004',
+    name: 'High-Risk Procedure Consent',
+    category: 'consent',
+    description: 'Special consent for high-risk medical procedures',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // CHECKLISTS
+  {
+    id: 'checklist_001',
+    name: 'WHO Surgical Safety Checklist',
+    category: 'checklists',
+    description: 'WHO standard surgical safety checklist for pre, intra, and post-operative phases',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_002',
+    name: 'Nursing Handover Checklist',
+    category: 'checklists',
+    description: 'Comprehensive nursing shift handover checklist for patient care continuity',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_003',
+    name: 'Code Blue Emergency Checklist',
+    category: 'checklists',
+    description: 'Emergency response checklist for cardiac arrest situations',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_004',
+    name: 'Patient Discharge Checklist',
+    category: 'checklists',
+    description: 'Complete discharge preparation and medication reconciliation checklist',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_005',
+    name: 'Medication Administration Checklist',
+    category: 'checklists',
+    description: '5 Rights of medication administration verification checklist',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_006',
+    name: 'Fire Safety & Evacuation Checklist',
+    category: 'checklists',
+    description: 'Emergency fire response and patient evacuation checklist',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'checklist_007',
+    name: 'Infection Control Checklist',
+    category: 'checklists',
+    description: 'Hand hygiene and PPE compliance verification checklist',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // REGISTERS
+  {
+    id: 'register_001',
+    name: 'OPD Patient Register',
+    category: 'registers',
+    description: 'Outpatient department daily patient registration log',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'register_002',
+    name: 'IPD Admission & Discharge Register',
+    category: 'registers',
+    description: 'Inpatient admission and discharge tracking register',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'register_003',
+    name: 'Operation Theatre Register',
+    category: 'registers',
+    description: 'Surgical procedure scheduling and outcome register',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'register_004',
+    name: 'Medication Error Register',
+    category: 'registers',
+    description: 'Incident reporting register for medication errors and near misses',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'register_005',
+    name: 'Equipment Maintenance Register',
+    category: 'registers',
+    description: 'Medical equipment maintenance and calibration tracking register',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'register_006',
+    name: 'Staff Attendance Register',
+    category: 'registers',
+    description: 'Daily staff attendance and duty roster register',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // CERTIFICATES
+  {
+    id: 'cert_001',
+    name: 'Birth Certificate Template',
+    category: 'certificates',
+    description: 'Official birth certificate format as per government requirements',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'cert_002',
+    name: 'Death Certificate Template',
+    category: 'certificates',
+    description: 'Medical death certificate with cause of death documentation',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'cert_003',
+    name: 'Fitness Certificate for Employment',
+    category: 'certificates',
+    description: 'Medical fitness certificate for employment purposes',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'cert_004',
+    name: 'Disability Certificate',
+    category: 'certificates',
+    description: 'Medical disability assessment and certification form',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // REPORT TEMPLATES
+  {
+    id: 'report_001',
+    name: 'Laboratory Report Template',
+    category: 'reports',
+    description: 'Standardized laboratory investigation report format',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'report_002',
+    name: 'Radiology Report Template',
+    category: 'reports',
+    description: 'X-ray, CT, MRI, and ultrasound report standardized format',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'report_003',
+    name: 'Pathology Report Template',
+    category: 'reports',
+    description: 'Histopathology and cytology report standard format',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // LETTERHEADS & OFFICIAL DOCUMENTS
+  {
+    id: 'letter_001',
+    name: 'Official Hospital Letterhead',
+    category: 'letterheads',
+    description: 'Hope Hospital official letterhead for correspondence',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'letter_002',
+    name: 'Prescription Pad Template',
+    category: 'letterheads',
+    description: 'Doctor prescription pad with hospital branding',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'letter_003',
+    name: 'Medical Certificate Format',
+    category: 'letterheads',
+    description: 'Standard medical certificate for leave and fitness',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // LABELS & IDENTIFICATION
+  {
+    id: 'label_001',
+    name: 'Patient Identification Wristband',
+    category: 'labels',
+    description: 'Patient safety wristband with name, UHID, and emergency contacts',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'label_002',
+    name: 'Medication Label Template',
+    category: 'labels',
+    description: 'Pharmacy medication dispensing label with dosage instructions',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'label_003',
+    name: 'Laboratory Sample Label',
+    category: 'labels',
+    description: 'Patient sample identification label for laboratory tests',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // SOPs (Standard Operating Procedures)
+  {
+    id: 'sop_001',
+    name: 'Hand Hygiene SOP',
+    category: 'sops',
+    description: 'WHO 5 moments hand hygiene standard operating procedure',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'sop_002',
+    name: 'Medication Administration SOP',
+    category: 'sops',
+    description: 'Safe medication administration and verification procedure',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'sop_003',
+    name: 'Emergency Response SOP',
+    category: 'sops',
+    description: 'Code blue and emergency response procedure',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'sop_004',
+    name: 'Infection Control SOP',
+    category: 'sops',
+    description: 'Hospital infection prevention and control procedures',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+
+  // OTHER IMPORTANT DOCUMENTS
+  {
+    id: 'other_001',
+    name: 'Patient Rights & Responsibilities',
+    category: 'other',
+    description: 'Patient rights charter and responsibilities document',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_002',
+    name: 'Visitor Guidelines',
+    category: 'other',
+    description: 'Hospital visiting hours and guidelines for relatives',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_003',
+    name: 'Nursing Handover Format',
+    category: 'other',
+    description: 'Structured nursing shift handover communication format',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_004',
+    name: 'Incident Reporting Form',
+    category: 'other',
+    description: 'Comprehensive incident reporting form for medical incidents, near-misses, and safety events',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_005',
+    name: 'Sentinel Event Reporting Form',
+    category: 'other',
+    description: 'Critical sentinel event reporting form for serious safety events requiring immediate investigation',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_006',
+    name: 'Adverse Event Reporting Form',
+    category: 'other',
+    description: 'Standardized adverse event reporting form for patient safety monitoring and analysis',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_007',
+    name: 'Near-Miss Event Reporting Form',
+    category: 'other',
+    description: 'Near-miss incident reporting form for proactive safety improvement',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_008',
+    name: 'Medication Error Reporting Form',
+    category: 'other',
+    description: 'Specific medication error incident reporting form with root cause analysis',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_009',
+    name: 'Patient Fall Incident Form',
+    category: 'other',
+    description: 'Patient fall incident reporting form with injury assessment and prevention measures',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_010',
+    name: 'Equipment Malfunction Report Form',
+    category: 'other',
+    description: 'Medical equipment failure and malfunction incident reporting form',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+  {
+    id: 'other_011',
+    name: 'Patient Safety Rounds Notes',
+    category: 'other',
+    description: 'Daily patient safety rounds documentation format',
+    status: 'pending',
+    userSuggestions: [],
+    createdAt: '2026-02-03T10:00:00.000Z',
+    updatedAt: '2026-02-03T10:00:00.000Z',
+    documentsLink: '',
+  },
+];
 
 export default function StationeryPage() {
   const { selectedHospital } = useNABHStore();
@@ -95,11 +669,17 @@ export default function StationeryPage() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load stationery items from localStorage
+  // Load stationery items from localStorage or initialize with defaults
   useEffect(() => {
     const saved = localStorage.getItem('nabh_stationery_items');
     if (saved) {
-      setStationeryItems(JSON.parse(saved));
+      const savedItems = JSON.parse(saved);
+      // If saved items exist, use them
+      setStationeryItems(savedItems);
+    } else {
+      // If no saved items, initialize with comprehensive default list
+      setStationeryItems(DEFAULT_STATIONERY_ITEMS);
+      localStorage.setItem('nabh_stationery_items', JSON.stringify(DEFAULT_STATIONERY_ITEMS));
     }
   }, []);
 
@@ -230,6 +810,7 @@ export default function StationeryPage() {
       status: improvedContent ? 'improved' : extractedText ? 'extracted' : 'pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      documentsLink: '', // Initialize with empty Google Docs link
     };
 
     setStationeryItems(prev => [...prev, newItem]);
@@ -432,6 +1013,47 @@ export default function StationeryPage() {
                       <img src={item.originalFile} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </Box>
                   )}
+
+                  {/* Google Docs/Sheets Link Section */}
+                  <Box sx={{ mt: 2 }}>
+                    <Box display="flex" alignItems="center" gap={0.5} mb={1}>
+                      <Icon sx={{ fontSize: 16, color: 'primary.main' }}>link</Icon>
+                      <Typography variant="caption" fontWeight="medium" color="text.secondary">
+                        Google Docs Link:
+                      </Typography>
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="Paste Google Docs/Sheets link..."
+                        value={item.documentsLink || ''}
+                        onChange={(e) => {
+                          const updatedItem = { ...item, documentsLink: e.target.value, updatedAt: new Date().toISOString() };
+                          const updatedItems = stationeryItems.map(i => i.id === item.id ? updatedItem : i);
+                          setStationeryItems(updatedItems);
+                          localStorage.setItem('nabh_stationery_items', JSON.stringify(updatedItems));
+                        }}
+                        variant="outlined"
+                        sx={{ 
+                          '& .MuiOutlinedInput-root': {
+                            fontSize: '0.75rem',
+                            height: '32px',
+                          }
+                        }}
+                      />
+                      {item.documentsLink && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => window.open(item.documentsLink, '_blank')}
+                          sx={{ minWidth: 'auto', px: 1, height: 32, fontSize: '0.7rem' }}
+                        >
+                          Open
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
                   <Box>

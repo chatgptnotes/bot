@@ -28,6 +28,8 @@ import EquipmentMasterPage from './components/EquipmentMasterPage';
 import EvidencePromptMasterPage from './components/EvidencePromptMasterPage';
 import HospitalProgramsMasterPage from './components/HospitalProgramsMasterPage';
 import ClinicalAuditsMasterPage from './components/ClinicalAuditsMasterPage';
+import HospitalManualsMasterPage from './components/HospitalManualsMasterPage';
+import LicensesMasterPage from './components/LicensesMasterPage';
 import Footer from './components/Footer';
 import { useNABHStore } from './store/nabhStore';
 
@@ -263,6 +265,8 @@ function MainContent() {
   const isEvidencePromptPage = location.pathname === '/evidence-prompt';
   const isProgramsPage = location.pathname === '/programs';
   const isClinicalAuditsPage = location.pathname === '/clinical-audits';
+  const isManualsPage = location.pathname === '/manuals';
+  const isLicensesPage = location.pathname === '/licenses';
   const isDashboardPage = location.pathname === '/dashboard';
   const isLandingPage = location.pathname === '/' && !selectedChapter;
 
@@ -338,6 +342,14 @@ function MainContent() {
     return <ClinicalAuditsMasterPage />;
   }
 
+  if (isManualsPage) {
+    return <HospitalManualsMasterPage />;
+  }
+
+  if (isLicensesPage) {
+    return <LicensesMasterPage />;
+  }
+
   if (isDashboardPage) {
     return <Dashboard />;
   }
@@ -367,7 +379,7 @@ function AppContent() {
   const isAIPage = location.pathname === '/ai-generator';
   const isObjectiveDetailPage = location.pathname.startsWith('/objective/');
   const isKPIDetailPage = location.pathname.startsWith('/kpi/');
-  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations', '/nabh-master', '/migration', '/patients', '/employees', '/consultants', '/doctors', '/departments', '/equipment', '/programs', '/clinical-audits', '/evidence-prompt', '/dashboard'].includes(location.pathname) || isKPIDetailPage;
+  const isManagementPage = ['/stationery', '/committees', '/kpis', '/presentations', '/nabh-master', '/migration', '/patients', '/employees', '/consultants', '/doctors', '/departments', '/equipment', '/programs', '/clinical-audits', '/manuals', '/licenses', '/evidence-prompt', '/dashboard'].includes(location.pathname) || isKPIDetailPage;
   const isLandingPage = location.pathname === '/' && !selectedChapter;
   const showSidebar = !isAIPage && !isLandingPage && !isObjectiveDetailPage || isManagementPage;
 
