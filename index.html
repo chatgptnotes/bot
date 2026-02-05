@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawdBot Dashboard - Dr. Murali BK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .countdown-banner {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.4em;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        
+        .card.critical h2::before { background: #e74c3c; }
+        .card.high h2::before { background: #f39c12; }
+        .card.info h2::before { background: #3498db; }
+        .card.success h2::before { background: #27ae60; }
+        
+        .mission {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .mission.critical {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .mission h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .mission .priority {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .mission .priority.critical {
+            background: #e74c3c;
+        }
+        
+        .contact-list {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .contact {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .contact .name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .contact .role {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .contact .phone {
+            color: #27ae60;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .schedule-item .time {
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 60px;
+        }
+        
+        .schedule-item .task {
+            flex: 1;
+            margin-left: 15px;
+        }
+        
+        .whatsapp-group {
+            background: #e8f5e8;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #25d366;
+        }
+        
+        .whatsapp-group .group-name {
+            font-weight: bold;
+            color: #25d366;
+        }
+        
+        .whatsapp-group .jid {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #666;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-top: 4px solid #3498db;
+        }
+        
+        .metric.critical {
+            border-top-color: #e74c3c;
+        }
+        
+        .metric .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .metric .label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 30px;
+            padding: 20px;
+        }
+        
+        .objective {
+            background: #fff;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 3px solid #27ae60;
+            font-size: 0.9em;
+        }
+        
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .urgent-banner {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 ClawdBot Dashboard</h1>
+            <div class="subtitle">Complete OpenBot Reference - Dr. Murali BK</div>
+            <div style="margin-top: 15px; color: #7f8c8d;">
+                <strong>Primary Contact:</strong> +91 93731 11709 | <strong>Timezone:</strong> IST (UTC+5:30)
+            </div>
+        </div>
+        
+        <div class="urgent-banner">
+            🚨 CRITICAL COUNTDOWN: NABH AUDIT FEB 13-14, 2026 - 8 DAYS REMAINING 🚨
+        </div>
+        
+        <div class="countdown-banner">
+            🎯 TRIPLE MISSION SUCCESS BY APRIL 2026: NABH ACCREDITATION ✓ | 75 BEDS COMBINED | 30 LAKHS/MONTH SOFTWARE
+        </div>
+        
+        <div class="grid">
+            <!-- Profile Card -->
+            <div class="card info">
+                <h2>👨‍⚕️ Dr. Murali BK Profile</h2>
+                <div class="contact">
+                    <div class="name">Dr. Murali BK</div>
+                    <div class="role">Orthopedic Surgeon, CMD Hope Hospital</div>
+                    <div class="phone">+91 93731 11709</div>
+                </div>
+                <div style="margin-top: 15px;">
+                    <strong>Roles:</strong>
+                    <ul style="margin-top: 8px; margin-left: 20px;">
+                        <li>Chairman & Managing Director - Hope Hospital</li>
+                        <li>Orthopedic Surgeon - Primary practice</li>
+                        <li>Hospital Owner - Hope + Ayushman Nagpur</li>
+                        <li>Software Company Owner - DocDRM, bettroi.com</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Critical Mission -->
+            <div class="card critical">
+                <h2>🎯 Mission 1: NABH AUDIT SUCCESS</h2>
+                <div class="mission critical">
+                    <h3>NABH Accreditation <span class="priority critical">ULTIMATE PRIORITY</span></h3>
+                    <div class="alert">
+                        <strong>AUDIT DATES:</strong> February 13-14, 2026<br>
+                        <strong>DAYS REMAINING:</strong> 8-9 Days<br>
+                        <strong>STATUS:</strong> CRITICAL COUNTDOWN
+                    </div>
+                    
+                    <div><strong>Key Coordinator:</strong></div>
+                    <div class="contact">
+                        <div class="name">Gaurav Agrawal</div>
+                        <div class="role">NABH Coordination Lead</div>
+                        <div class="phone">+91 98222 02396</div>
+                    </div>
+                    
+                    <div style="margin-top: 10px;"><strong>Daily Consultant:</strong></div>
+                    <div class="contact">
+                        <div class="name">Isaac</div>
+                        <div class="role">NABH Consultant - MANDATORY daily coordination</div>
+                        <div class="phone">+91 72765 10845</div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;"><strong>Critical Objectives:</strong></div>
+                    <div class="objective">102 core objective elements - DAILY tracking</div>
+                    <div class="objective">Department readiness - all heads trained</div>
+                    <div class="objective">Evidence documentation - all uploads complete</div>
+                    <div class="objective">Training documents - MANDATORY 4-page format</div>
+                    <div class="objective">Patient files 100% complete by Feb 10 (Dr. Sachin)</div>
+                </div>
+            </div>
+            
+            <!-- Hospital Growth Mission -->
+            <div class="card high">
+                <h2>🏥 Mission 2: Hospital Growth</h2>
+                <div class="mission">
+                    <h3>Combined Occupancy Target <span class="priority">75 BEDS by April 1</span></h3>
+                    
+                    <div><strong>Daily Occupancy Checks (7:45 AM):</strong></div>
+                    
+                    <div class="contact">
+                        <div class="name">Ayushman Nagpur Hospital</div>
+                        <div class="role">Sohail Shoib Night Reception</div>
+                        <div class="phone">+91 79720 96556</div>
+                    </div>
+                    
+                    <div class="contact">
+                        <div class="name">Hope Hospital</div>
+                        <div class="role">Dr. Sachin - Daily duty contact</div>
+                        <div class="phone">+91 72082 52712</div>
+                    </div>
+                    
+                    <div class="alert">
+                        <strong>Strategy:</strong> Post-NABH accreditation marketing boost
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Software Revenue Mission -->
+            <div class="card high">
+                <h2>💻 Mission 3: Software Revenue</h2>
+                <div class="mission">
+                    <h3>Revenue Target <span class="priority">30 LAKHS/MONTH by April</span></h3>
+                    
+                    <div><strong>Revenue Streams:</strong></div>
+                    <div class="objective"><strong>nabh.online</strong> - PRIORITY LAUNCH (immediate revenue)</div>
+                    <div class="objective"><strong>DocDRM</strong> (drmhope.com) - Hospital management</div>
+                    <div class="objective"><strong>bettroi.com</strong> - 50+ active projects (weekly follow-ups)</div>
+                    
+                    <div><strong>Email Accounts:</strong></div>
+                    <div style="font-family: monospace; font-size: 0.9em; margin-top: 8px;">
+                        • cmd@hopehospital.com, murali@drmhope.com<br>
+                        • bk@bettroi.com<br>
+                        • info@hopehospital.com
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ESIC Recovery -->
+            <div class="card critical">
+                <h2>💰 ESIC Recovery Mission</h2>
+                <div class="mission critical">
+                    <h3>Outstanding Amount <span class="priority critical">1 CRORE INR</span></h3>
+                    
+                    <div class="alert">
+                        <strong>CRITICAL CASH FLOW:</strong> Essential for business expansion<br>
+                        <strong>Files Status:</strong> 115 submitted, 95 confirmed received<br>
+                        <strong>Key Contact:</strong> Dr. Shivkumar (SMO)<br>
+                        <strong>Promised Date:</strong> February 10, 2026<br>
+                        <strong>MPKAY Bills:</strong> 38L pending (13L ready, 18L processing, 7L audit)
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Daily Schedule -->
+            <div class="card info">
+                <h2>⏰ Daily Schedule</h2>
+                <div class="schedule-item">
+                    <div class="time">06:00</div>
+                    <div class="task">Wake-up reminder</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">07:00</div>
+                    <div class="task"><strong>Medicine reminder (CRITICAL)</strong></div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">07:45</div>
+                    <div class="task">Hospital occupancy checks (both hospitals)</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">09:00</div>
+                    <div class="task">Morning huddle at hospital</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">11:00</div>
+                    <div class="task"><strong>Meeting + DAILY Isaac NABH coordination</strong></div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">12:00</div>
+                    <div class="task">CA Nikhil Rathi meeting (financial planning)</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">15:00</div>
+                    <div class="task">Daily workout with Roma (3:00-3:30 PM)</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="time">16:00</div>
+                    <div class="task">Meeting</div>
+                </div>
+            </div>
+            
+            <!-- NABH Core Team -->
+            <div class="card success">
+                <h2>👥 NABH Core Team</h2>
+                <div class="contact-list">
+                    <div class="contact">
+                        <div class="name">Dr. Shiraz Navedkhan Khan</div>
+                        <div class="role">Quality Coordinator & SOP Admin</div>
+                        <div class="phone">+91 93709 14454</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">Dr. Sachin</div>
+                        <div class="role">Senior Doctor - Patient Files 100% by Feb 10</div>
+                        <div class="phone">+91 72766 80847</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">K J Shashank</div>
+                        <div class="role">Quality Manager/HR</div>
+                        <div class="phone">+91 76204 56896</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">Diksha</div>
+                        <div class="role">Front Office Manager</div>
+                        <div class="phone">+91 86053 00668</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">Sonali</div>
+                        <div class="role">Clinical Audit Coordinator</div>
+                        <div class="phone">+91 72187 50394</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">Azhar</div>
+                        <div class="role">NABH Champion/MRD</div>
+                        <div class="phone">+91 95955 85788</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Daily Operations Team -->
+            <div class="card info">
+                <h2>🔄 Daily Operations Team</h2>
+                <div class="contact-list">
+                    <div class="contact">
+                        <div class="name">Roma</div>
+                        <div class="role">Physiotherapist - Daily workout supervision</div>
+                        <div class="phone">+91 95035 72204</div>
+                        <div style="font-size: 0.8em; color: #666;">Reminders: 8:00 AM daily + 2:00 PM pre-workout</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">CA Nikhil Rathi</div>
+                        <div class="role">Chartered Accountant - Daily 12-1 PM</div>
+                        <div class="phone">+91 94215 03171</div>
+                    </div>
+                    <div class="contact">
+                        <div class="name">Priyanka</div>
+                        <div class="role">Accountant - Cash collection every 3 hours</div>
+                        <div class="phone">+91 97663 12514</div>
+                        <div style="font-size: 0.8em; color: #666;">Schedule: 9 AM, 12 PM, 3 PM, 6 PM, 7 PM daily</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WhatsApp Groups -->
+            <div class="card success">
+                <h2>💬 WhatsApp Groups (Verified JIDs)</h2>
+                <div class="whatsapp-group">
+                    <div class="group-name">SOP Hope, Ayush, Raftaar</div>
+                    <div class="jid">120363404280816474@g.us</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">11 AM & 4 PM meeting reminders</div>
+                </div>
+                <div class="whatsapp-group">
+                    <div class="group-name">Nabh with isaac</div>
+                    <div style="color: #e74c3c; font-weight: bold;">DAILY MANDATORY NABH coordination</div>
+                    <div style="font-size: 0.8em;">(One of the groups above - needs identification)</div>
+                </div>
+                <div class="whatsapp-group">
+                    <div class="group-name">Group 2</div>
+                    <div class="jid">918600660801-1621570136@g.us</div>
+                </div>
+                <div class="whatsapp-group">
+                    <div class="group-name">Group 3 (with Dr. Murali)</div>
+                    <div class="jid">919373111709-1617712459@g.us</div>
+                </div>
+                <div class="whatsapp-group">
+                    <div class="group-name">Group 4</div>
+                    <div class="jid">919823063952-1410859110@g.us</div>
+                </div>
+                <div class="whatsapp-group">
+                    <div class="group-name">Group 5 (with Dr. Murali)</div>
+                    <div class="jid">919373111709-1576989129@g.us</div>
+                </div>
+            </div>
+            
+            <!-- Automated Systems -->
+            <div class="card info">
+                <h2>🤖 Automated Systems</h2>
+                <div class="alert">
+                    <strong>Zoom Monitoring:</strong> Continuous every 10 minutes<br>
+                    <strong>Meeting Documentation:</strong> Auto-transcription + screenshots<br>
+                    <strong>Cash Collection:</strong> Every 3 hours + 7 PM summary<br>
+                    <strong>Hospital Occupancy:</strong> Daily 7:45 AM both hospitals<br>
+                    <strong>NABH Coordination:</strong> Daily Isaac follow-up mandatory
+                </div>
+                
+                <div><strong>Zoom Meeting Link:</strong></div>
+                <div style="font-family: monospace; background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 5px; word-break: break-all;">
+                    https://us06web.zoom.us/j/9373111709?pwd=Nyd4IRhFy85B7kgcmUoZqimeVBIF1E.1
+                </div>
+            </div>
+            
+            <!-- Critical Deadlines -->
+            <div class="card critical">
+                <h2>📅 Critical Deadlines</h2>
+                <div class="metrics">
+                    <div class="metric critical">
+                        <div class="value">8</div>
+                        <div class="label">Days to NABH Audit</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value">Feb 10</div>
+                        <div class="label">Patient Files Complete</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value">Feb 10</div>
+                        <div class="label">ESIC Approval Target</div>
+                    </div>
+                    <div class="metric">
+                        <div class="value">Apr 1</div>
+                        <div class="label">75 Beds + 30L Revenue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Last Updated:</strong> February 5, 2026</p>
+            <p><strong>Next Critical Milestone:</strong> NABH Audit February 13-14, 2026</p>
+            <p><em>"This is not just business - this is Dr. Murali BK's life mission combining healthcare excellence, business growth, and personal wellbeing."</em></p>
+        </div>
+    </div>
+</body>
+</html>

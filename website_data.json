@@ -1,0 +1,434 @@
+{
+  "profile": {
+    "name": "Dr. Murali BK",
+    "title": "Orthopedic Surgeon, CMD Hope Hospital",
+    "phone": "+91 93731 11709", 
+    "timezone": "IST (UTC+5:30)",
+    "roles": [
+      "Chairman & Managing Director - Hope Hospital",
+      "Orthopedic Surgeon - Primary medical practice", 
+      "Hospital Owner - Hope Hospital + Ayushman Nagpur Hospital",
+      "Software Company Owner - DocDRM, bettroi.com"
+    ]
+  },
+  "businessPlan": {
+    "lastUpdated": "2026-02-05",
+    "missions": [
+      {
+        "id": "nabh",
+        "title": "NABH Audit Success",
+        "priority": "ULTIMATE PRIORITY - CANNOT FAIL",
+        "deadline": "2026-02-13",
+        "auditDates": "2026-02-13 to 2026-02-14",
+        "daysRemaining": 8,
+        "status": "CRITICAL_COUNTDOWN",
+        "coordinator": {
+          "name": "Gaurav Agrawal",
+          "phone": "+91 98222 02396",
+          "role": "NABH coordination lead - daily planning and execution"
+        },
+        "consultant": {
+          "name": "Isaac",
+          "phone": "+91 72765 10845", 
+          "role": "NABH consultant - DAILY coordination MANDATORY"
+        },
+        "keyStaff": {
+          "patientFiles": {
+            "name": "Dr. Sachin",
+            "phone": "+91 72766 80847",
+            "task": "Form team for 100% patient files completion by Feb 10"
+          },
+          "qualityCoordinator": {
+            "name": "Dr. Shiraz Navedkhan Khan",
+            "phone": "+91 93709 14454", 
+            "role": "Quality Coordinator & SOP Admin"
+          },
+          "evidenceNames": ["Sonali", "Gaurav", "Shiraz"]
+        },
+        "objectives": [
+          "102 core objective elements completion - DAILY tracking",
+          "Department readiness - all heads trained and confident",
+          "Evidence documentation - all uploads complete", 
+          "Staff training - Code Blue, BMW, Hand Hygiene completed",
+          "Committee meeting minutes - Quality, HIC, PTC, Medical Records current",
+          "Facility audit-ready - signages, crash carts, NO expired drugs",
+          "Training documents - MANDATORY 4-page format for all training"
+        ],
+        "dailyTasks": [
+          "Isaac coordination via 'Nabh with isaac' WhatsApp group",
+          "Department readiness verification",
+          "Evidence documentation review",
+          "Blocked items resolution"
+        ]
+      },
+      {
+        "id": "hospital_occupancy",
+        "title": "Combined Hospital Occupancy Growth",
+        "priority": "HIGH", 
+        "target": 75,
+        "targetUnit": "combined beds",
+        "currentBaseline": "Daily tracking required",
+        "deadline": "2026-04-01",
+        "daysRemaining": 55,
+        "strategy": "Post-NABH accreditation marketing boost",
+        "hospitals": [
+          {
+            "name": "Ayushman Nagpur Hospital",
+            "contact": "+91 79720 96556",
+            "contactPerson": "Sohail Shoib Night Ayushman reception",
+            "checkTime": "7:45 AM",
+            "dataRequired": ["total beds", "occupied", "admissions/discharges", "ventilator patients", "surgeries (24h)"]
+          },
+          {
+            "name": "Hope Hospital", 
+            "contact": "+91 72082 52712",
+            "contactPerson": "Dr. Sachin",
+            "checkTime": "7:45 AM",
+            "dataRequired": ["occupancy", "admissions", "discharges", "surgeries"]
+          }
+        ]
+      },
+      {
+        "id": "software_revenue",
+        "title": "Software Revenue Target",
+        "priority": "HIGH",
+        "target": 3000000,
+        "targetUnit": "INR per month",
+        "currentBaseline": "Monthly tracking required",
+        "deadline": "2026-04-01",
+        "streams": [
+          {
+            "name": "nabh.online",
+            "status": "PRIORITY LAUNCH - immediate revenue potential"
+          },
+          {
+            "name": "DocDRM",
+            "url": "drmhope.com", 
+            "tracking": "https://www.pulseofproject.com/",
+            "emails": ["cmd@hopehospital.com", "murali@drmhope.com"]
+          },
+          {
+            "name": "bettroi.com",
+            "projectCount": "50+ active projects",
+            "email": "bk@bettroi.com",
+            "requirement": "Weekly follow-ups required"
+          }
+        ]
+      },
+      {
+        "id": "esic_recovery",
+        "title": "ESIC Recovery Mission",
+        "priority": "CRITICAL CASH FLOW",
+        "amount": 10000000,
+        "amountUnit": "INR outstanding",
+        "impact": "Critical for business expansion funding",
+        "status": {
+          "totalFiles": 115,
+          "filesReceived": 95,
+          "keyContact": "Dr. Shivkumar (SMO)",
+          "promisedDate": "2026-02-10",
+          "followUpInterval": "Weekly calls every 15 days",
+          "mpkayBills": "38L pending (13L ready, 18L processing, 7L audit)"
+        },
+        "escalationContacts": [
+          "Ministry/ESIC hierarchy when delayed"
+        ]
+      }
+    ]
+  },
+  "contacts": {
+    "leadership": [
+      {
+        "name": "Dr. Ruby Ammon",
+        "role": "Medical Director",
+        "phone": "+91 72766 23928",
+        "location": "Australia timezone",
+        "responsibility": "Medical protocols, clinical excellence",
+        "dailyTask": "Send motivational messages at 9:30 PM IST"
+      },
+      {
+        "name": "Viji Murali", 
+        "role": "Hospital Director",
+        "phone": "+91 9158887857",
+        "responsibility": "Operations, team coordination",
+        "dailyTask": "Send motivational messages at 9:30 PM IST"
+      }
+    ],
+    "nabh_core_team": [
+      {
+        "name": "K J Shashank",
+        "role": "Quality Manager/HR", 
+        "phone": "+91 76204 56896"
+      },
+      {
+        "name": "Diksha",
+        "role": "Front Office Manager",
+        "phone": "+91 86053 00668"
+      },
+      {
+        "name": "Neesha", 
+        "role": "Patient Experience Coordinator",
+        "phone": "+91 80072 41707"
+      },
+      {
+        "name": "Shilpi",
+        "role": "Infection Control Nurse", 
+        "phone": "+91 6268 716635"
+      },
+      {
+        "name": "Sonali",
+        "role": "Clinical Audit Coordinator",
+        "phone": "+91 72187 50394"
+      },
+      {
+        "name": "Abhishek", 
+        "role": "Pharmacist",
+        "phone": "+91 95299 91074"
+      },
+      {
+        "name": "Azhar",
+        "role": "NABH Champion/MRD",
+        "phone": "+91 95955 85788"
+      },
+      {
+        "name": "Nitin Bawane",
+        "role": "Radiology Technician", 
+        "phone": "+91 90210 31409"
+      },
+      {
+        "name": "Sarvesh",
+        "role": "OT Safety & Protocols",
+        "phone": "+91 70833 45702",
+        "location": "Ooty"
+      },
+      {
+        "name": "Atul",
+        "role": "Biomedical Engineering",
+        "phone": "+91 89754 26665"
+      }
+    ],
+    "daily_operations": [
+      {
+        "name": "Roma", 
+        "role": "Physiotherapist",
+        "phone": "+91 95035 72204",
+        "task": "Daily workout supervision 3:00-3:30 PM",
+        "reminders": ["8:00 AM daily reminder", "2:00 PM pre-workout reminder"]
+      },
+      {
+        "name": "CA Nikhil Rathi",
+        "role": "Chartered Accountant", 
+        "phone": "+91 94215 03171",
+        "schedule": "Daily meetings 12:00-1:00 PM",
+        "focus": "Financial planning during NABH period"
+      },
+      {
+        "name": "Priyanka",
+        "role": "Accountant",
+        "phone": "+91 97663 12514",
+        "task": "Cash collection monitoring", 
+        "schedule": "Every 3 hours (9 AM, 12 PM, 3 PM, 6 PM) + 7 PM daily summary"
+      }
+    ],
+    "legal_financial": [
+      {
+        "name": "Anand Thotange",
+        "role": "Advocate",
+        "phone": "+91 90282 95905",
+        "cases": "Handles 10 critical cases"
+      }
+    ],
+    "whatsapp_groups": [
+      {
+        "name": "SOP Hope, Ayush, Raftaar",
+        "jid": "120363404280816474@g.us",
+        "purpose": "11 AM & 4 PM meeting reminders, hospital operations"
+      },
+      {
+        "name": "Group 2",
+        "jid": "918600660801-1621570136@g.us"
+      },
+      {
+        "name": "Group 3 (with Dr. Murali)",
+        "jid": "919373111709-1617712459@g.us"
+      },
+      {
+        "name": "Group 4", 
+        "jid": "919823063952-1410859110@g.us"
+      },
+      {
+        "name": "Group 5 (with Dr. Murali)",
+        "jid": "919373111709-1576989129@g.us"
+      },
+      {
+        "name": "Nabh with isaac",
+        "purpose": "DAILY MANDATORY NABH coordination",
+        "note": "One of above groups - needs identification"
+      }
+    ]
+  },
+  "schedule": {
+    "daily": [
+      {
+        "time": "06:00",
+        "task": "Wake-up reminder"
+      },
+      {
+        "time": "07:00", 
+        "task": "Medicine reminder (CRITICAL - non-negotiable)"
+      },
+      {
+        "time": "07:45",
+        "task": "Hospital occupancy checks (both hospitals)"
+      },
+      {
+        "time": "08:00",
+        "task": "1-hour morning huddle reminder + Roma daily workout reminder"
+      },
+      {
+        "time": "08:30",
+        "task": "MORNING POWER HOUR: NABH + occupancy + software + 30-min huddle reminder"
+      },
+      {
+        "time": "09:00",
+        "task": "Morning huddle at hospital"
+      },
+      {
+        "time": "10:45",
+        "task": "15-minute reminder for 11 AM meeting"
+      },
+      {
+        "time": "11:00",
+        "task": "Meeting + DAILY Isaac NABH coordination (MANDATORY)"
+      },
+      {
+        "time": "11:45",
+        "task": "CA Nikhil Rathi meeting reminder (15 min before 12 PM)"
+      },
+      {
+        "time": "12:00",
+        "task": "Daily CA meeting (financial planning)"
+      },
+      {
+        "time": "14:00",
+        "task": "MIDDAY CHECK + Roma pre-workout reminder"
+      },
+      {
+        "time": "15:00",
+        "task": "Daily workout with Roma (3:00-3:30 PM)"
+      },
+      {
+        "time": "15:45", 
+        "task": "15-minute reminder for 4 PM meeting"
+      },
+      {
+        "time": "16:00",
+        "task": "Meeting"
+      },
+      {
+        "time": "18:00",
+        "task": "EVENING REVIEW: Achievements + tomorrow's plan"
+      },
+      {
+        "time": "21:00",
+        "task": "Night-before huddle reminders (individual messages to NABH team)"
+      },
+      {
+        "time": "21:30",
+        "task": "Daily motivational messages (Ruby, Viji, Dr. Shiraz)"
+      }
+    ],
+    "zoom": {
+      "url": "https://us06web.zoom.us/j/9373111709?pwd=Nyd4IRhFy85B7kgcmUoZqimeVBIF1E.1",
+      "location": "Directors chamber in Hope Hospital (Hybrid)",
+      "requirements": [
+        "Always-on paid subscription",
+        "Auto-transcription enabled",
+        "ZoomClips ready for recording",
+        "Gaurav takes screenshots for evidence"
+      ]
+    },
+    "automated_reminders": {
+      "cash_collection": {
+        "contact": "Priyanka +91 97663 12514",
+        "schedule": ["09:00", "12:00", "15:00", "18:00", "19:00"],
+        "type": "Every 3 hours + 7 PM daily summary"
+      },
+      "workout_supervision": {
+        "contact": "Roma +91 95035 72204", 
+        "reminders": ["08:00 daily", "14:00 pre-workout"]
+      },
+      "meeting_reminders": {
+        "target": "SOP Hope, Ayush, Raftaar group",
+        "schedule": ["10:45", "15:45"],
+        "note": "15 minutes before 11 AM and 4 PM meetings"
+      }
+    }
+  },
+  "communication": {
+    "priority_system": {
+      "URGENT": "NABH-related messages (immediate response)",
+      "HIGH": "Hospital operations, medical emergencies", 
+      "MEDIUM": "Business operations, project updates",
+      "LOW": "General coordination, routine follow-ups"
+    },
+    "auto_responses": {
+      "surgery": "Professional auto-reply message",
+      "meetings": "Meeting in progress notification",
+      "medical_procedures": "Unavailable for patient care"
+    },
+    "channels": {
+      "whatsapp": "+91 93731 11709 (primary)",
+      "telegram": "@Nabhassistant_bot",
+      "email_hospital": "info@hopehospital.com",
+      "email_docdrm": ["cmd@hopehospital.com", "murali@drmhope.com"],
+      "email_bettroi": "bk@bettroi.com"
+    }
+  },
+  "success_metrics": {
+    "nabh_audit": {
+      "deadline": "2026-02-13",
+      "requirements": [
+        "102 core objective elements - 100% completion",
+        "Evidence portfolio - fully documented",
+        "Training records - 4-page format for all",
+        "Committee minutes - current and complete",
+        "Facility readiness - audit-compliant"
+      ]
+    },
+    "hospital_growth": {
+      "target": "75 combined beds by April 1, 2026",
+      "tracking": "Daily occupancy monitoring",
+      "strategy": "Post-NABH marketing boost"
+    },
+    "software_revenue": {
+      "target": "30 lakhs/month by April 2026",
+      "projects": "50+ bettroi.com projects accelerated",
+      "priority": "nabh.online immediate launch"
+    },
+    "esic_recovery": {
+      "amount": "1 crore outstanding",
+      "deadline": "Target by Feb 10 from Dr. Shivkumar",
+      "strategy": "Weekly follow-ups, escalation when needed"
+    },
+    "health_compliance": {
+      "medicine": "7:00 AM daily - CRITICAL",
+      "workout": "1 hour morning + 30 min with Roma",
+      "meetings": "100% attendance for NABH coordination"
+    }
+  },
+  "critical_deadlines": {
+    "2026-02-10": "ESIC approval promised by Dr. Shivkumar",
+    "2026-02-10": "Patient files 100% completion (Dr. Sachin team)",
+    "2026-02-13": "NABH audit begins - DAY 1",
+    "2026-02-14": "NABH audit ends - DAY 2", 
+    "2026-04-01": "Combined 75 beds target + 30 lakhs/month software revenue"
+  },
+  "monitoring": {
+    "zoom_status": "Continuous monitoring every 10 minutes",
+    "isaac_coordination": "Daily mandatory via WhatsApp",
+    "occupancy_tracking": "Both hospitals daily at 7:45 AM",
+    "cash_collection": "Every 3 hours + 7 PM summary",
+    "nabh_progress": "Daily department readiness verification"
+  }
+}
