@@ -54,8 +54,13 @@
         "name": "Dr. Sachin",
         "role": "Senior Doctor - Patient Files",
         "phone": "+91 72766 80847",
-        "task": "Form team for 100% patient files completion by Feb 10",
-        "hospital_contact": "+91 72082 52712"
+        "task": "Form team for 100% patient files completion by Feb 10"
+      },
+      {
+        "name": "Sachin (Marketing)",
+        "role": "Marketing Executive",
+        "phone": "+91 72082 52712",
+        "responsibility": "Marketing and promotions"
       },
       {
         "name": "K J Shashank",
@@ -202,9 +207,9 @@
       "name": "Hope Hospital",
       "contacts": [
         {
-          "name": "Dr. Sachin",
+          "name": "Sachin (Marketing)",
           "phone": "+91 72082 52712",
-          "role": "Daily duty contact"
+          "role": "Marketing Executive"
         }
       ]
     },

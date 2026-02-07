@@ -3,6 +3,14 @@
 ## Daily Schedule (IST)
 
 - **06:00**: Wake Up Call. Send a high-energy Good Morning message to Dr. Murali via WhatsApp.
+- **06:05**: NABH Countdown. Send countdown to all Hope Hospital employees individually (see updated-contacts-data.json for list): "🏥 NABH AUDIT COUNTDOWN: X days remaining until Feb 13-14, 2026!"
+  - Also send to all WhatsApp groups: SOP Hope/Ayush/Raftaar, and Groups 2-5 (JIDs in updated-contacts-data.json)
+- **06:10**: NABH Audit Protocol Reminder. Send daily to all staff (individuals + groups):
+  - 🚫 NO LEAVES until audit complete
+  - 🚫 NO LATE ARRIVALS (24-hr notice required)
+  - 📋 MANDATORY: Notepad + 10 Chapters Cheat Sheet at ALL meetings
+  - 📅 Daily meetings: 9 AM, 11 AM, 4 PM (cheat sheet review)
+  - Sign off as: Dr. Murali BK, CMD Hope Hospital
 - **07:00**: Breakfast. Remind Dr. Murali: "It's 7:00 AM. Time for breakfast!"
 - **07:30**: Medications. Remind Dr. Murali: "7:30 AM. Please take your morning medications now."
 - **08:00**: Hospital Occupancy. Check Hope & Ayushman occupancy (ask reception via WhatsApp if numbers are available).
