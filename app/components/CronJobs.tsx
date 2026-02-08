@@ -8,7 +8,10 @@ interface Props {
 }
 
 export default function CronJobs({ cronJobs }: Props) {
-  const formatSchedule = (schedule: string) => {
+  const formatSchedule = (schedule: any) => {
+    if (!schedule || typeof schedule !== 'string') {
+      return 'Not scheduled';
+    }
     const parts = schedule.split(' ');
     if (parts.length === 5) {
       const [min, hour] = parts;
@@ -37,7 +40,7 @@ export default function CronJobs({ cronJobs }: Props) {
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 mb-1">{job.name}</h3>
               <p className="text-sm text-gray-600 mb-2">
-                {job.action.message || job.action.prompt}
+                {job.action?.message || job.action?.prompt || 'Automated task'}
               </p>
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1">
@@ -45,7 +48,7 @@ export default function CronJobs({ cronJobs }: Props) {
                   {formatSchedule(job.schedule)}
                 </span>
                 <span className="bg-gray-100 px-2 py-1 rounded">
-                  {job.action.channel || 'System'}
+                  {job.action?.channel || 'System'}
                 </span>
               </div>
             </div>

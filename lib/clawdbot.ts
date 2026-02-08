@@ -78,7 +78,52 @@ export function readCronJobs(): CronJob[] {
     const cronPath = path.join(CRON_PATH, 'jobs.json');
     const content = fs.readFileSync(cronPath, 'utf-8');
     const data = JSON.parse(content);
-    return data.jobs || [];
+    const jobs = data.jobs || [];
+
+    // Normalize job format - handle both old and new formats
+    return jobs.map((job: any) => {
+      // Handle schedule format - can be string or object
+      let schedule = job.schedule;
+      if (typeof schedule === 'object' && schedule !== null) {
+        if (schedule.kind === 'cron') {
+          schedule = schedule.expr || 'Not scheduled';
+        } else if (schedule.kind === 'at') {
+          schedule = 'One-time task';
+        } else if (schedule.kind === 'every') {
+          schedule = `Every ${Math.floor(schedule.everyMs / 60000)} minutes`;
+        } else {
+          schedule = 'Not scheduled';
+        }
+      }
+
+      // Handle action/payload format
+      let action = job.action;
+      if (!action && job.payload) {
+        // New format uses payload instead of action
+        action = {
+          type: job.payload.kind || 'systemEvent',
+          message: job.payload.text || '',
+          prompt: job.payload.text || '',
+        };
+      }
+
+      // Ensure action exists with defaults
+      if (!action) {
+        action = {
+          type: 'unknown',
+          message: job.name || 'Automated task',
+          prompt: job.name || 'Automated task',
+        };
+      }
+
+      return {
+        id: job.id,
+        name: job.name || 'Unnamed task',
+        schedule: schedule,
+        timezone: job.timezone || 'Asia/Kolkata',
+        action: action,
+      };
+    });
   } catch (error) {
     console.error('Error reading cron jobs:', error);
     return [];

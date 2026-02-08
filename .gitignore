@@ -42,3 +42,11 @@ Thumbs.db
 *.tmp
 .vercel
 .env*.local
+
+# Zoom recordings
+*.mov
+*.mp4
+*.avi
+
+# Auto-approve agent
+auto-approve-agent/

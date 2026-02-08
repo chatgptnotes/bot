@@ -10,6 +10,7 @@ import TaskList from './components/TaskList';
 import CronJobs from './components/CronJobs';
 import HospitalStatus from './components/HospitalStatus';
 import ProjectsOverview from './components/ProjectsOverview';
+import ZoomMeetings from './components/ZoomMeetings';
 import { RefreshCw } from 'lucide-react';
 
 interface DashboardData {
@@ -101,6 +102,11 @@ export default function Dashboard() {
 
         <div className="mb-6">
           <ProjectsOverview />
+        </div>
+
+        {/* Zoom Meetings Section */}
+        <div className="mb-6">
+          <ZoomMeetings />
         </div>
 
         <footer className="text-center text-sm text-gray-500 py-6 border-t">
